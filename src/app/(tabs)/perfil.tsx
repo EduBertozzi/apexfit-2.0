@@ -10,6 +10,7 @@ import {
   NOME_SEXO,
 } from '@/features/nutricao/calculos';
 import { calcularMetaAguaMl } from '@/features/perfil/calculos';
+import { CartaoPeso } from '@/features/peso/components/CartaoPeso';
 import { usePerfilStore } from '@/features/perfil/store';
 import { formatarNumero } from '@/shared/lib/numero';
 import { espaco, familia } from '@/shared/theme/tokens';
@@ -65,6 +66,8 @@ export default function PerfilTela() {
           </View>
         ) : null}
       </Cartao>
+
+      <CartaoPeso pesoPerfilKg={perfil.pesoKg} />
 
       <Cartao titulo="Rotina e metas">
         <Linha

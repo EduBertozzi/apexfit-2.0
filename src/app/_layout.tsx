@@ -108,6 +108,10 @@ export default function RootLayout() {
             name="dieta"
             options={{ headerShown: true, title: 'SUA DIETA', headerBackTitle: 'Hoje' }}
           />
+          <Stack.Screen
+            name="peso"
+            options={{ headerShown: true, title: 'PESO', headerBackTitle: 'Perfil' }}
+          />
         </Stack.Protected>
       </Stack>
     </ThemeProvider>
