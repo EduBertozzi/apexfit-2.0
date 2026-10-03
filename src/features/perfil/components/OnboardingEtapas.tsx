@@ -5,7 +5,7 @@ import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 
 import { espaco } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
-import { BarraProgresso, Botao, Marcado, Texto } from '@/shared/ui';
+import { BarraProgresso, Botao, Logo, Marcado, Texto } from '@/shared/ui';
 
 import { CONFIG_CAMPOS, ETAPAS_ONBOARDING } from '../campos';
 import { FORMULARIO_VAZIO, perfilSchema, type FormularioPerfilValores } from '../schema';
@@ -25,6 +25,7 @@ function BoasVindas({ onComecar }: { onComecar: () => void }) {
 
   return (
     <View style={estilos.etapa}>
+      <Logo tamanho={88} />
       <Texto variante="gigante" accessibilityRole="header">
         Apex<Marcado>Fit</Marcado>
       </Texto>

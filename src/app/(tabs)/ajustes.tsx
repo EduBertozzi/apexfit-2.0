@@ -7,7 +7,9 @@ import { useAjustesStore } from '@/features/ajustes/store';
 import { AjustesLembretes } from '@/features/lembretes/components/AjustesLembretes';
 import { usePerfilStore } from '@/features/perfil/store';
 import { confirmar } from '@/shared/lib/confirmar';
-import { Botao, Cartao, Opcoes, Tela, Texto } from '@/shared/ui';
+import { View } from 'react-native';
+
+import { Botao, Cartao, Logo, Opcoes, Tela, Texto } from '@/shared/ui';
 
 const TEMAS: PreferenciaTema[] = ['sistema', 'claro', 'escuro'];
 const OPCOES_TEMA = TEMAS.map((valor) => ({ valor, rotulo: NOME_TEMA[valor] }));
@@ -66,7 +68,10 @@ export default function Ajustes() {
       </Cartao>
 
       <Cartao titulo="Sobre">
-        <Texto>ApexFit {Constants.expoConfig?.version ?? ''}</Texto>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Logo tamanho={48} />
+          <Texto variante="subtitulo">ApexFit {Constants.expoConfig?.version ?? ''}</Texto>
+        </View>
         <Texto variante="legenda" secundario>
           O ApexFit ajuda a organizar sua rotina, mas não substitui médico, nutricionista ou
           educador físico.
