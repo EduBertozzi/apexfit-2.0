@@ -2,6 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
+import { useAjustesStore } from '@/features/ajustes/store';
 import { formatarNumero } from '@/shared/lib/numero';
 import { espaco } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
@@ -32,6 +33,7 @@ export function CartaoHidratacao({ metaMl }: Props) {
   const { totalMl, podeDesfazer } = useAguaDoDia();
   const adicionar = useHidratacaoStore((state) => state.adicionar);
   const desfazer = useHidratacaoStore((state) => state.desfazer);
+  const vibracaoLigada = useAjustesStore((state) => state.vibracao);
   const [comemorando, setComemorando] = useState(false);
 
   const fracao = progresso(totalMl, metaMl);
@@ -42,7 +44,10 @@ export function CartaoHidratacao({ metaMl }: Props) {
     const bateu = bateuMetaAgora(antesMl, depoisMl, metaMl);
 
     setComemorando(bateu);
-    vibrar(bateu ? 'sucesso' : 'leve');
+
+    if (vibracaoLigada) {
+      vibrar(bateu ? 'sucesso' : 'leve');
+    }
   }
 
   function desfazerUltimo() {

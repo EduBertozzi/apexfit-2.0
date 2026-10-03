@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { useDietaStore } from '@/features/dieta/store';
-import { useHidratacaoStore } from '@/features/hidratacao/store';
+import { metaAguaEfetiva } from '@/features/ajustes/logica';
+import { useAjustesStore } from '@/features/ajustes/store';
 import {
   calcularNecessidades,
   NOME_NIVEL_ATIVIDADE,
@@ -11,7 +11,6 @@ import {
 } from '@/features/nutricao/calculos';
 import { calcularMetaAguaMl } from '@/features/perfil/calculos';
 import { usePerfilStore } from '@/features/perfil/store';
-import { confirmar } from '@/shared/lib/confirmar';
 import { formatarNumero } from '@/shared/lib/numero';
 import { espaco, familia } from '@/shared/theme/tokens';
 import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
@@ -27,9 +26,7 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
 
 export default function PerfilTela() {
   const perfil = usePerfilStore((state) => state.perfil);
-  const apagarPerfil = usePerfilStore((state) => state.apagarPerfil);
-  const apagarAgua = useHidratacaoStore((state) => state.apagarTudo);
-  const apagarDieta = useDietaStore((state) => state.apagarTudo);
+  const metaManualMl = useAjustesStore((state) => state.metaAguaManualMl);
 
   if (!perfil) {
     return null;
@@ -37,21 +34,6 @@ export default function PerfilTela() {
 
   const necessidades = calcularNecessidades(perfil);
   const naoInformado = 'Não informado';
-
-  async function apagarDados() {
-    const confirmado = await confirmar(
-      'Apagar meus dados?',
-      'Seu perfil, o histórico de água e a dieta serão apagados deste aparelho. Não dá para desfazer.',
-      'Apagar',
-    );
-
-    if (confirmado) {
-      apagarAgua();
-      apagarDieta();
-      // Sem perfil, o _layout volta sozinho para o onboarding
-      apagarPerfil();
-    }
-  }
 
   return (
     <Tela>
@@ -73,8 +55,8 @@ export default function PerfilTela() {
           }
         />
         <Linha
-          rotulo="Meta de água"
-          valor={`${formatarNumero(calcularMetaAguaMl(perfil.pesoKg))} ml`}
+          rotulo={metaManualMl === null ? 'Meta de água' : 'Meta de água (manual)'}
+          valor={`${formatarNumero(metaAguaEfetiva(calcularMetaAguaMl(perfil.pesoKg), metaManualMl))} ml`}
         />
         {perfil.restricoes ? (
           <View style={estilos.bloco}>
@@ -113,14 +95,6 @@ export default function PerfilTela() {
       </Cartao>
 
       <Botao titulo="Editar perfil" onPress={() => router.push('/editar-perfil')} />
-
-      <Cartao titulo="Privacidade">
-        <Texto variante="legenda" secundario>
-          Seus dados ficam salvos neste aparelho. Quando você pede a dieta com IA, o perfil é
-          enviado ao servidor do ApexFit e à Anthropic (empresa da IA) só para montar o plano.
-        </Texto>
-        <Botao titulo="Apagar meus dados" variante="perigo" onPress={apagarDados} />
-      </Cartao>
     </Tela>
   );
 }

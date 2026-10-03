@@ -59,6 +59,15 @@ export default function LayoutAbas() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="ajustes"
+        options={{
+          title: 'Ajustes',
+          tabBarIcon: ({ focused }) => (
+            <IconeAba nome={focused ? 'settings' : 'settings-outline'} focado={focused} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

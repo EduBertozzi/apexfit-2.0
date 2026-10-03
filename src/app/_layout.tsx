@@ -9,12 +9,13 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 
+import { useAjustesStore } from '@/features/ajustes/store';
 import { usePerfilStore } from '@/features/perfil/store';
 import { useDadosCarregados } from '@/hooks/useDadosCarregados';
 import { familia } from '@/shared/theme/tokens';
-import { useCores } from '@/shared/theme/useCores';
+import { useCores, useEsquema } from '@/shared/theme/useCores';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,8 +35,24 @@ export default function RootLayout() {
   // Se a fonte falhar, o app abre com a fonte do sistema em vez de travar na splash
   const carregado = dadosCarregados && (fontesCarregadas || erroFontes !== null);
   const temPerfil = usePerfilStore((state) => state.perfil !== null);
-  const esquema = useColorScheme();
+  const preferenciaTema = useAjustesStore((state) => state.tema);
+  const esquema = useEsquema();
   const c = useCores();
+
+  // Faz teclado, alertas e seletores nativos seguirem o tema escolhido em Ajustes
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+
+    Appearance.setColorScheme(
+      preferenciaTema === 'sistema'
+        ? 'unspecified'
+        : preferenciaTema === 'claro'
+          ? 'light'
+          : 'dark',
+    );
+  }, [preferenciaTema]);
 
   useEffect(() => {
     if (carregado) {
@@ -48,7 +65,7 @@ export default function RootLayout() {
   }
 
   // Cores da navegação (header, abas) vindas dos nossos tokens
-  const base = esquema === 'dark' ? DarkTheme : DefaultTheme;
+  const base = esquema === 'escuro' ? DarkTheme : DefaultTheme;
   const temaNavegacao = {
     ...base,
     colors: {
@@ -63,7 +80,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={temaNavegacao}>
-      <StatusBar style="auto" />
+      <StatusBar style={esquema === 'escuro' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,

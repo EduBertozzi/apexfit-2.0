@@ -2,6 +2,8 @@ export { BarraProgresso } from './BarraProgresso';
 export { Botao } from './Botao';
 export { CampoTexto } from './CampoTexto';
 export { Cartao } from './Cartao';
+export { Contador } from './Contador';
+export { Interruptor } from './Interruptor';
 export { Marcado } from './Marcado';
 export { Opcoes, type Opcao } from './Opcoes';
 export { Tela } from './Tela';

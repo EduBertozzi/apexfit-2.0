@@ -1,5 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
+import { metaAguaEfetiva } from '@/features/ajustes/logica';
+import { useAjustesStore } from '@/features/ajustes/store';
 import { CartaoDieta } from '@/features/dieta/components/CartaoDieta';
 import { CartaoHidratacao } from '@/features/hidratacao/components/CartaoHidratacao';
 import { CartaoMetas } from '@/features/nutricao/components/CartaoMetas';
@@ -12,6 +14,7 @@ import { Cartao, Marcado, Tela, Texto } from '@/shared/ui';
 
 export default function Hoje() {
   const perfil = usePerfilStore((state) => state.perfil);
+  const metaManualMl = useAjustesStore((state) => state.metaAguaManualMl);
 
   if (!perfil) {
     return null;
@@ -29,7 +32,7 @@ export default function Hoje() {
         </Texto>
       </View>
 
-      <CartaoHidratacao metaMl={calcularMetaAguaMl(perfil.pesoKg)} />
+      <CartaoHidratacao metaMl={metaAguaEfetiva(calcularMetaAguaMl(perfil.pesoKg), metaManualMl)} />
 
       <CartaoMetas perfil={perfil} />
 
