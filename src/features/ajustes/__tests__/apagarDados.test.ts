@@ -5,6 +5,7 @@ import { cancelarLembretes } from '@/features/lembretes/notificacoes';
 import { useLembretesStore } from '@/features/lembretes/store';
 import { usePerfilStore } from '@/features/perfil/store';
 import { usePesoStore } from '@/features/peso/store';
+import { useTreinosStore } from '@/features/treinos/store';
 
 import { apagarTodosOsDados } from '../apagarDados';
 import { useAjustesStore } from '../store';
@@ -18,7 +19,7 @@ jest.mock('@/features/lembretes/notificacoes', () => ({
 }));
 
 describe('apagarTodosOsDados', () => {
-  it('limpa perfil, água, peso, dieta, conversa com o coach, ajustes e lembretes', async () => {
+  it('limpa perfil, água, peso, dieta, treinos, conversa com o coach, ajustes e lembretes', async () => {
     usePerfilStore
       .getState()
       .salvarPerfil({ nome: 'Eduardo', idade: 21, alturaCm: 188, pesoKg: 75 });
@@ -29,6 +30,7 @@ describe('apagarTodosOsDados', () => {
     useCoachStore.setState({ mensagens: [{ id: '1', papel: 'usuario', texto: 'Oi' }] });
     await useLembretesStore.getState().ligar();
     jest.mocked(cancelarLembretes).mockClear();
+    useTreinosStore.getState().comecarTreino(useTreinosStore.getState().novoTreino());
 
     apagarTodosOsDados();
 
@@ -41,5 +43,7 @@ describe('apagarTodosOsDados', () => {
     await new Promise((resolver) => setTimeout(resolver, 0));
     expect(cancelarLembretes).toHaveBeenCalled();
     expect(usePesoStore.getState().registros).toEqual([]);
+    expect(useTreinosStore.getState().treinos).toEqual([]);
+    expect(useTreinosStore.getState().sessoes).toEqual([]);
   });
 });

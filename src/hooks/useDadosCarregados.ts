@@ -7,6 +7,7 @@ import { useHidratacaoStore } from '@/features/hidratacao/store';
 import { useLembretesStore } from '@/features/lembretes/store';
 import { usePerfilStore } from '@/features/perfil/store';
 import { usePesoStore } from '@/features/peso/store';
+import { useTreinosStore } from '@/features/treinos/store';
 
 // Todas as stores que salvam no aparelho entram nesta lista
 const STORES_PERSISTIDAS = [
@@ -17,6 +18,7 @@ const STORES_PERSISTIDAS = [
   useCoachStore,
   useLembretesStore,
   usePesoStore,
+  useTreinosStore,
 ];
 
 function todasCarregadas() {

@@ -14,6 +14,15 @@ import {
 import { usePesoStore } from '@/features/peso/store';
 import { calcularMetaAguaMl } from '@/features/perfil/calculos';
 import { usePerfilStore } from '@/features/perfil/store';
+import {
+  proximoTreino,
+  resumoExercicio,
+  resumoTreino,
+  sequenciaDeTreinos,
+  textoTreinosNaSemana,
+  treinosNaSemana,
+} from '@/features/treinos/logica';
+import { useTreinosStore } from '@/features/treinos/store';
 import { chaveDoDia, dataPorExtenso } from '@/shared/lib/data';
 
 import { montarContextoCoach } from './contexto';
@@ -48,7 +57,7 @@ export function contextoAtual(agora: Date = new Date()): string | null {
     },
     plano: useDietaStore.getState().plano,
     hoje: dataPorExtenso(agora),
-    extras: [blocoPeso(chaveDoDia(agora))],
+    extras: [blocoPeso(chaveDoDia(agora)), blocoTreinos(chaveDoDia(agora))],
   });
 }
 
@@ -68,4 +77,28 @@ function blocoPeso(hoje: string): string {
     variacaoPorExtenso(variacao(registros, hoje, 30), 30),
     `Últimos registros: ${ultimos}`,
   ].join('\n');
+}
+
+function blocoTreinos(hoje: string): string {
+  const { treinos, sessoes } = useTreinosStore.getState();
+
+  if (treinos.length === 0) {
+    return '## Treinos\nNenhum treino montado ainda. Pode sugerir montar na aba Treinos.';
+  }
+
+  const proximo = proximoTreino(treinos, sessoes);
+  const linhas = treinos.map(
+    (treino) =>
+      `${treino.nome} (${resumoTreino(treino)}): ` +
+      treino.exercicios.map((ex) => `${ex.nome} ${resumoExercicio(ex)}`).join('; '),
+  );
+
+  return [
+    '## Treinos',
+    `${textoTreinosNaSemana(treinosNaSemana(sessoes, hoje))}; sequência de ${sequenciaDeTreinos(sessoes, hoje)} semanas seguidas treinando`,
+    proximo ? `Próximo treino sugerido: ${proximo.nome}` : null,
+    ...linhas,
+  ]
+    .filter((linha) => linha !== null)
+    .join('\n');
 }

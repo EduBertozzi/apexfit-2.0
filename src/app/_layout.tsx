@@ -112,6 +112,18 @@ export default function RootLayout() {
             name="peso"
             options={{ headerShown: true, title: 'PESO', headerBackTitle: 'Perfil' }}
           />
+          <Stack.Screen
+            name="treino/[id]"
+            options={{ headerShown: true, title: 'EDITAR TREINO', headerBackTitle: 'Treinos' }}
+          />
+          <Stack.Screen
+            name="treino/sessao"
+            options={{ headerShown: true, title: 'TREINO DE HOJE', headerBackTitle: 'Voltar' }}
+          />
+          <Stack.Screen
+            name="treino/modelos"
+            options={{ headerShown: true, title: 'MODELOS PRONTOS', headerBackTitle: 'Treinos' }}
+          />
         </Stack.Protected>
       </Stack>
     </ThemeProvider>

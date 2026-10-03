@@ -26,11 +26,16 @@ src/
 │   ├── onboarding.tsx        ← criação do perfil (uma pergunta por tela)
 │   ├── editar-perfil.tsx     ← modal de edição
 │   ├── dieta.tsx             ← plano alimentar gerado pela IA
+│   ├── peso.tsx              ← histórico e registro de peso
+│   ├── treino/               ← editar treino, sessão do dia, modelos prontos
 │   ├── api/
-│   │   └── dieta+api.ts      ← ROTA DE SERVIDOR: recebe o perfil, chama o Claude
+│   │   ├── dieta+api.ts      ← ROTA DE SERVIDOR: recebe o perfil, devolve um plano
+│   │   └── coach+api.ts      ← ROTA DE SERVIDOR: chat com o coach em streaming
 │   └── (tabs)/
 │       ├── _layout.tsx       ← barra de abas
 │       ├── index.tsx         ← aba "Hoje"
+│       ├── treinos.tsx       ← aba "Treinos"
+│       ├── coach.tsx         ← aba "Coach" (chat com IA)
 │       ├── perfil.tsx        ← aba "Perfil"
 │       └── ajustes.tsx       ← aba "Ajustes" (tema, água, privacidade)
 │
@@ -58,6 +63,15 @@ src/
 │   │   ├── api.ts            ← o app chamando /api/dieta
 │   │   ├── store.ts          ← plano salvo no aparelho
 │   │   └── __tests__/
+│   ├── coach/
+│   │   ├── contexto.ts       ← resumo do usuário (perfil, metas, água, peso, treinos, dieta) para a IA
+│   │   ├── contextoAtual.ts  ← junta o estado das stores; feature nova entra em `extras`
+│   │   ├── servidor/         ← SÓ servidor: conversa em streaming + ferramenta atualizar_dieta
+│   │   ├── api.ts, store.ts  ← o app lendo o streaming de /api/coach; conversa salva
+│   │   └── components/ChatCoach.tsx
+│   ├── peso/                 ← registros diários, tendência de 7 dias, gráfico SVG
+│   ├── treinos/              ← treinos A/B/C, modelos prontos, sessão do dia, frequência
+│   ├── lembretes/            ← lembretes de água (notificações locais; só notificacoes.ts toca no Expo)
 │   └── ajustes/
 │       ├── logica.ts         ← tema, meta de água manual
 │       ├── apagarDados.ts    ← "Apagar meus dados": limpa TODAS as stores

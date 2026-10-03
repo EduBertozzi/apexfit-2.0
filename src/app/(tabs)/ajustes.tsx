@@ -26,7 +26,7 @@ export default function Ajustes() {
   async function apagarDados() {
     const confirmado = await confirmar(
       'Apagar meus dados?',
-      'Seu perfil, o histórico de água, a dieta, os ajustes e os lembretes serão apagados deste aparelho. Não dá para desfazer.',
+      'Seu perfil, água, peso, dieta, treinos, conversa com o coach, ajustes e lembretes serão apagados deste aparelho. Não dá para desfazer.',
       'Apagar',
     );
 
