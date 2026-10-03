@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { PlanoDietaDetalhe } from '@/features/dieta/components/PlanoDietaDetalhe';
@@ -47,6 +48,14 @@ export default function Dieta() {
             atual.
           </Texto>
         </Cartao>
+      ) : null}
+
+      {plano ? (
+        <Botao
+          titulo="Mudar algo com o coach"
+          variante="destaque"
+          onPress={() => router.push('/coach')}
+        />
       ) : null}
 
       {plano ? <PlanoDietaDetalhe plano={plano} /> : null}

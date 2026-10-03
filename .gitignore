@@ -47,3 +47,6 @@ coverage/
 
 # segredos (NUNCA versionar chaves de API)
 .env
+
+# worktrees e dados locais do Claude Code
+.claude/worktrees/

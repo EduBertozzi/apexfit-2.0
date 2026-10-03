@@ -55,8 +55,9 @@ export default function Ajustes() {
 
       <Cartao titulo="Privacidade">
         <Texto variante="legenda" secundario>
-          Seus dados ficam salvos neste aparelho. Quando você pede a dieta com IA, o perfil é
-          enviado ao servidor do ApexFit e à Anthropic (empresa da IA) só para montar o plano.
+          Seus dados ficam salvos neste aparelho. Quando você pede a dieta ou conversa com o coach,
+          seu perfil e suas metas vão para o servidor do ApexFit e para a Anthropic (empresa da IA)
+          só para responder.
         </Texto>
         <Botao titulo="Apagar meus dados" variante="perigo" onPress={apagarDados} />
       </Cartao>

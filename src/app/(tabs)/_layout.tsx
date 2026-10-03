@@ -51,6 +51,15 @@ export default function LayoutAbas() {
         }}
       />
       <Tabs.Screen
+        name="coach"
+        options={{
+          title: 'Coach',
+          tabBarIcon: ({ focused }) => (
+            <IconeAba nome={focused ? 'chatbubbles' : 'chatbubbles-outline'} focado={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="perfil"
         options={{
           title: 'Perfil',

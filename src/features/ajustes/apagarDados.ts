@@ -1,3 +1,4 @@
+import { useCoachStore } from '@/features/coach/store';
 import { useDietaStore } from '@/features/dieta/store';
 import { useHidratacaoStore } from '@/features/hidratacao/store';
 import { usePerfilStore } from '@/features/perfil/store';
@@ -12,6 +13,7 @@ import { useAjustesStore } from './store';
 export function apagarTodosOsDados() {
   useHidratacaoStore.getState().apagarTudo();
   useDietaStore.getState().apagarTudo();
+  useCoachStore.getState().limpar();
   useAjustesStore.getState().restaurarPadrao();
   usePerfilStore.getState().apagarPerfil();
 }

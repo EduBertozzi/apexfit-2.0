@@ -40,6 +40,11 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
           </Texto>
         )}
         <Botao titulo="Ver minha dieta" onPress={() => router.push('/dieta')} />
+        <Botao
+          titulo="Ajustar com o coach"
+          variante="secundario"
+          onPress={() => router.push('/coach')}
+        />
       </Cartao>
     );
   }

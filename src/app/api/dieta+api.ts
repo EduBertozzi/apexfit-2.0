@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 import { pedidoDietaSchema } from '@/features/dieta/contrato';
-import { ErroDieta, gerarDieta } from '@/features/dieta/servidor/gerarDieta';
+import { gerarDieta } from '@/features/dieta/servidor/gerarDieta';
+import { ErroServidor } from '@/shared/servidor/claude';
 
 /** POST /api/dieta: recebe o perfil, devolve { plano }. Só repassa; a lógica fica na feature. */
 export async function POST(request: Request) {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
 
     return Response.json({ plano });
   } catch (erro) {
-    if (erro instanceof ErroDieta) {
+    if (erro instanceof ErroServidor) {
       return Response.json({ erro: erro.message }, { status: erro.status });
     }
 
