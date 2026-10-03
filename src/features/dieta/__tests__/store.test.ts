@@ -94,3 +94,32 @@ describe('useDietaStore.gerar', () => {
     expect(useDietaStore.getState().erro).toContain('formato inesperado');
   });
 });
+
+describe('useDietaStore.gerar sem IA', () => {
+  it('monta o plano offline por regras quando o servidor responde SEM_IA', async () => {
+    responder(503, { erro: 'Nenhuma IA', codigo: 'SEM_IA' });
+
+    await useDietaStore.getState().gerar(PERFIL);
+
+    const estado = useDietaStore.getState();
+    expect(estado.plano?.refeicoes.length).toBeGreaterThanOrEqual(4);
+    expect(estado.origem).toBe('demo');
+    expect(estado.erro).toBeNull();
+  });
+
+  it('também monta offline quando não há conexão', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new TypeError('Network request failed'));
+
+    await useDietaStore.getState().gerar(PERFIL);
+
+    expect(useDietaStore.getState().origem).toBe('demo');
+  });
+
+  it('marca a origem como IA quando o servidor responde', async () => {
+    responder(200, { plano: PLANO });
+
+    await useDietaStore.getState().gerar(PERFIL);
+
+    expect(useDietaStore.getState().origem).toBe('ia');
+  });
+});

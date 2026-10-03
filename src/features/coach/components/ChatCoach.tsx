@@ -19,7 +19,7 @@ import { useCores } from '@/shared/theme/useCores';
 import { Botao, Marcado, Texto } from '@/shared/ui';
 
 import { LIMITES_COACH } from '../contrato';
-import { contextoAtual } from '../contextoAtual';
+import { dadosAtuais } from '../contextoAtual';
 import { useCoachStore, type MensagemChat } from '../store';
 
 const SUGESTOES = [
@@ -46,7 +46,7 @@ function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boo
     >
       {!doUsuario ? (
         <Texto variante="rotulo" secundario>
-          Coach
+          {mensagem.demo ? 'Coach · modo demonstração' : 'Coach'}
         </Texto>
       ) : null}
       <Texto
@@ -85,14 +85,14 @@ export function ChatCoach() {
   const rolagem = useRef<ScrollView>(null);
 
   function mandar(conteudo: string) {
-    const contexto = contextoAtual();
+    const dados = dadosAtuais();
 
-    if (!contexto || conteudo.trim() === '' || respondendo) {
+    if (!dados || conteudo.trim() === '' || respondendo) {
       return;
     }
 
     setTexto('');
-    enviar(conteudo, contexto);
+    enviar(conteudo, dados);
   }
 
   async function apagarConversa() {

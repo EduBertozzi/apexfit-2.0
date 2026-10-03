@@ -14,6 +14,7 @@ export default function Dieta() {
   const c = useCores();
   const perfil = usePerfilStore((state) => state.perfil);
   const plano = useDietaStore((state) => state.plano);
+  const origem = useDietaStore((state) => state.origem);
   const gerando = useDietaStore((state) => state.gerando);
   const erro = useDietaStore((state) => state.erro);
   const gerar = useDietaStore((state) => state.gerar);
@@ -29,7 +30,7 @@ export default function Dieta() {
           <ActivityIndicator size="large" color={c.texto} />
           <Texto variante="subtitulo">Montando seu plano</Texto>
           <Texto secundario style={estilos.centro}>
-            A IA está calculando as refeições com as suas metas. Leva uns 30 segundos.
+            A IA está montando as refeições com as suas metas. Pode levar até 1 minuto.
           </Texto>
         </View>
       ) : null}
@@ -56,6 +57,12 @@ export default function Dieta() {
           variante="destaque"
           onPress={() => router.push('/coach')}
         />
+      ) : null}
+
+      {plano && origem === 'demo' ? (
+        <Texto variante="legenda" secundario>
+          Modo demonstração: sem IA disponível, o próprio app montou este plano com as suas metas.
+        </Texto>
       ) : null}
 
       {plano ? <PlanoDietaDetalhe plano={plano} /> : null}

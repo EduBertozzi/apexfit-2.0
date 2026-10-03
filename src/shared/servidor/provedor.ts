@@ -1,3 +1,5 @@
+import { CODIGO_SEM_IA } from '@/shared/lib/semIa';
+
 import { ErroServidor } from './claude';
 import { ollamaDisponivel } from './ollama';
 
@@ -8,9 +10,6 @@ import { ollamaDisponivel } from './ollama';
  * 3. nenhuma: a rota responde SEM_IA e o app usa o modo demonstração offline.
  */
 export type Provedor = 'claude' | 'local' | 'nenhum';
-
-/** Código que o app entende como "use o modo demonstração". */
-export const CODIGO_SEM_IA = 'SEM_IA';
 
 export async function escolherProvedor(): Promise<Provedor> {
   if (process.env.ANTHROPIC_API_KEY) {

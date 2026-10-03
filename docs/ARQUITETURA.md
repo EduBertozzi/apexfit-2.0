@@ -120,6 +120,16 @@ Qualquer chave colocada no código do app pode ser extraída do APK em minutos. 
   `npx eas-cli env:create --name ANTHROPIC_API_KEY --value <chave> --environment production --visibility secret`
   e depois `npm run deploy` de novo.
 
+### IA sem custo: local primeiro, demonstração de reserva
+
+O app foi pensado para apresentar sem gastar nada. O servidor escolhe a IA na hora (`src/shared/servidor/provedor.ts`):
+
+1. **Claude**: só se existir `ANTHROPIC_API_KEY`. Sem chave, nunca é chamado e nunca cobra.
+2. **IA local (Ollama)**: grátis, roda no Mac que está com o `npx expo start`. Instalação: `brew install ollama`, `brew services start ollama`, `ollama pull qwen2.5:7b`. Modelos pequenos erram ao escrever o plano inteiro numa ferramenta, então o servidor reconhece o pedido de dieta (`coach/intencao.ts`) e gera o plano com o formato JSON travado pelo schema.
+3. **Nenhuma**: a rota responde `SEM_IA` e o app usa o **modo demonstração offline**: dieta por regras (`dieta/regras.ts`, tabela de alimentos e cardápios) e coach por intenções (`coach/demo.ts`), sempre com os dados reais do usuário. Também entra quando não há internet. As telas mostram "modo demonstração".
+
+O servidor publicado (EAS Hosting) não tem Ollama: lá, sem chave, vale o modo demonstração.
+
 ### Design system "Volt"
 
 Tudo visual sai de `src/shared/theme/tokens.ts`. Regras que valem para qualquer tela nova:

@@ -1,17 +1,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { useDietaStore } from '@/features/dieta/store';
+import type { PlanoDieta } from '@/features/dieta/contrato';
+import { montarDietaPorRegras } from '@/features/dieta/regras';
+import { useDietaStore, type OrigemPlano } from '@/features/dieta/store';
 import { armazenamento } from '@/shared/lib/armazenamento';
+import { SemIa } from '@/shared/lib/semIa';
 
 import { conversarComCoach } from './api';
+import { montarContextoCoach } from './contexto';
 import { LIMITES_COACH, type MensagemCoach } from './contrato';
+import { responderModoDemo, type DadosDemo } from './demo';
 
 export type MensagemChat = MensagemCoach & {
   id: string;
   /** O coach mexeu na dieta nesta resposta. */
   dietaAtualizada?: boolean;
+  /** Resposta do modo demonstração (sem IA). */
+  demo?: boolean;
 };
+
+/** Intervalo entre as palavras na resposta do modo demonstração (efeito "digitando"). */
+export const RITMO_DEMO_MS = 18;
 
 /** Quantas mensagens ficam salvas no aparelho. */
 export const MENSAGENS_GUARDADAS = 80;
@@ -20,7 +30,7 @@ type CoachState = {
   mensagens: MensagemChat[];
   respondendo: boolean;
   erro: string | null;
-  enviar: (texto: string, contexto: string) => Promise<void>;
+  enviar: (texto: string, dados: DadosDemo) => Promise<void>;
   limpar: () => void;
 };
 
@@ -44,12 +54,47 @@ export const useCoachStore = create<CoachState>()(
         }));
       }
 
+      function salvarDieta(plano: PlanoDieta, origem: OrigemPlano) {
+        useDietaStore.setState({
+          plano,
+          origem,
+          geradoEm: new Date().toISOString(),
+          erro: null,
+        });
+        atualizarResposta((m) => ({ ...m, dietaAtualizada: true }));
+      }
+
+      /** Sem IA: responde offline com o motor de demonstração, palavra por palavra. */
+      async function responderSemIa(pergunta: string, dados: DadosDemo) {
+        const semente = Date.now();
+        const resposta = responderModoDemo(pergunta, dados, semente);
+
+        atualizarResposta((m) => ({ ...m, demo: true }));
+
+        if (resposta.acao?.tipo === 'dieta') {
+          const plano = montarDietaPorRegras(dados.perfil, {
+            semente,
+            trocarRefeicao: resposta.acao.trocarRefeicao,
+            planoAtual: resposta.acao.novo ? undefined : (dados.plano ?? undefined),
+          });
+
+          if (plano) {
+            salvarDieta(plano, 'demo');
+          }
+        }
+
+        for (const palavra of resposta.texto.split(/(?<= )/)) {
+          atualizarResposta((m) => ({ ...m, texto: m.texto + palavra }));
+          await new Promise((resolver) => setTimeout(resolver, RITMO_DEMO_MS));
+        }
+      }
+
       return {
         mensagens: [],
         respondendo: false,
         erro: null,
 
-        enviar: async (texto, contexto) => {
+        enviar: async (texto, dados) => {
           const limpo = texto.trim().slice(0, LIMITES_COACH.texto);
 
           if (limpo === '' || get().respondendo) {
@@ -70,22 +115,24 @@ export const useCoachStore = create<CoachState>()(
           }));
 
           try {
-            await conversarComCoach({ mensagens: historico, contexto }, (evento) => {
-              if (evento.tipo === 'texto') {
-                atualizarResposta((m) => ({ ...m, texto: m.texto + evento.texto }));
-              } else if (evento.tipo === 'dieta') {
-                useDietaStore.setState({
-                  plano: evento.plano,
-                  geradoEm: new Date().toISOString(),
-                  erro: null,
-                });
-                atualizarResposta((m) => ({ ...m, dietaAtualizada: true }));
-              } else if (evento.tipo === 'erro') {
-                set({ erro: evento.mensagem });
-              }
-            });
+            await conversarComCoach(
+              { mensagens: historico, contexto: montarContextoCoach(dados) },
+              (evento) => {
+                if (evento.tipo === 'texto') {
+                  atualizarResposta((m) => ({ ...m, texto: m.texto + evento.texto }));
+                } else if (evento.tipo === 'dieta') {
+                  salvarDieta(evento.plano, 'ia');
+                } else if (evento.tipo === 'erro') {
+                  set({ erro: evento.mensagem });
+                }
+              },
+            );
           } catch (erro) {
-            set({ erro: erro instanceof Error ? erro.message : 'Erro inesperado.' });
+            if (erro instanceof SemIa) {
+              await responderSemIa(limpo, dados);
+            } else {
+              set({ erro: erro instanceof Error ? erro.message : 'Erro inesperado.' });
+            }
           } finally {
             // Resposta vazia (deu erro antes de chegar texto) some da conversa
             set((state) => ({

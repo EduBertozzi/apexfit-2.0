@@ -26,30 +26,33 @@ import { useTreinosStore } from '@/features/treinos/store';
 import { chaveDoDia, dataPorExtenso } from '@/shared/lib/data';
 
 import { montarContextoCoach } from './contexto';
+import type { DadosDemo } from './demo';
 
 /**
- * Junta o estado atual de todas as features num texto para o coach.
- * Lido na hora de enviar, então sempre vai o dado mais novo.
- * Feature nova com informação útil para o coach: adicione um bloco em `extras`.
+ * Junta o estado atual de todas as features. Lido na hora de enviar, então
+ * sempre vai o dado mais novo. Feature nova útil para o coach: entra aqui e em `extras`.
  */
-export function contextoAtual(agora: Date = new Date()): string | null {
+export function dadosAtuais(agora: Date = new Date()): DadosDemo | null {
   const perfil = usePerfilStore.getState().perfil;
 
   if (!perfil) {
     return null;
   }
 
+  const hoje = chaveDoDia(agora);
   const registros = useHidratacaoStore.getState().registros;
   const metaMl = metaAguaEfetiva(
     calcularMetaAguaMl(perfil.pesoKg),
     useAjustesStore.getState().metaAguaManualMl,
   );
+  const { treinos, sessoes } = useTreinosStore.getState();
+  const pesos = usePesoStore.getState().registros;
 
-  return montarContextoCoach({
+  return {
     perfil,
     necessidades: calcularNecessidades(perfil),
     agua: {
-      hojeMl: totalDoDia(registros[chaveDoDia(agora)]),
+      hojeMl: totalDoDia(registros[hoje]),
       metaMl,
       diasBatidosNaSemana: historicoDeDias(registros, agora, metaMl).filter((dia) => dia.bateu)
         .length,
@@ -57,8 +60,24 @@ export function contextoAtual(agora: Date = new Date()): string | null {
     },
     plano: useDietaStore.getState().plano,
     hoje: dataPorExtenso(agora),
-    extras: [blocoPeso(chaveDoDia(agora)), blocoTreinos(chaveDoDia(agora))],
-  });
+    extras: [blocoPeso(hoje), blocoTreinos(hoje)],
+    treinos: {
+      proximo: proximoTreino(treinos, sessoes)?.nome,
+      naSemana: treinosNaSemana(sessoes, hoje),
+      sequenciaSemanas: sequenciaDeTreinos(sessoes, hoje),
+    },
+    peso: {
+      variacao30Dias: variacao(pesos, hoje, 30),
+      ultimoKg: registrosRecentes(pesos, 1)[0]?.kg,
+    },
+  };
+}
+
+/** O mesmo, em texto, para a IA. */
+export function contextoAtual(agora: Date = new Date()): string | null {
+  const dados = dadosAtuais(agora);
+
+  return dados ? montarContextoCoach(dados) : null;
 }
 
 function blocoPeso(hoje: string): string {

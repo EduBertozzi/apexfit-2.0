@@ -1,4 +1,5 @@
 import type { Perfil } from '@/features/perfil/types';
+import { CODIGO_SEM_IA, SemIa } from '@/shared/lib/semIa';
 
 import { pedidoDietaSchema, respostaDietaSchema, type PlanoDieta } from './contrato';
 
@@ -22,13 +23,18 @@ export async function pedirDieta(perfil: Perfil): Promise<PlanoDieta> {
       body: JSON.stringify(pedido.data),
     });
   } catch {
-    throw new Error('Sem conexão com o servidor. Confira sua internet e tente de novo.');
+    // Sem conexão com o servidor: o app monta o plano offline
+    throw new SemIa('Sem conexão com o servidor.');
   }
 
   const corpo: unknown = await resposta.json().catch(() => null);
 
   if (!resposta.ok) {
-    const erro = (corpo as { erro?: unknown } | null)?.erro;
+    const { erro, codigo } = (corpo ?? {}) as { erro?: unknown; codigo?: unknown };
+
+    if (codigo === CODIGO_SEM_IA) {
+      throw new SemIa();
+    }
 
     throw new Error(typeof erro === 'string' ? erro : 'Não deu para gerar a dieta agora.');
   }

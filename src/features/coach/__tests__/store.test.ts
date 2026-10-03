@@ -1,8 +1,31 @@
 import { useDietaStore } from '@/features/dieta/store';
+import { calcularNecessidades } from '@/features/nutricao/calculos';
+import type { Perfil } from '@/features/perfil/types';
+
+import { montarContextoCoach } from '../contexto';
+import type { DadosDemo } from '../demo';
 
 import type { EventoCoach } from '../contrato';
 import { escreverEvento } from '../eventos';
 import { useCoachStore } from '../store';
+
+const PERFIL: Perfil = {
+  nome: 'Eduardo',
+  idade: 21,
+  alturaCm: 188,
+  pesoKg: 75,
+  sexo: 'masculino',
+  nivelAtividade: 'moderado',
+  objetivo: 'manter',
+};
+
+const DADOS: DadosDemo = {
+  perfil: PERFIL,
+  necessidades: calcularNecessidades(PERFIL),
+  agua: { hojeMl: 1750, metaMl: 2650, diasBatidosNaSemana: 3, sequencia: 2 },
+  plano: null,
+  hoje: 'Sábado, 3 de outubro',
+};
 
 const PLANO = {
   resumo: 'Plano novo.',
@@ -51,7 +74,7 @@ describe('useCoachStore.enviar', () => {
       { tipo: 'fim' },
     ]);
 
-    await useCoachStore.getState().enviar('Oi coach', 'contexto');
+    await useCoachStore.getState().enviar('Oi coach', DADOS);
 
     const { mensagens, respondendo } = useCoachStore.getState();
     expect(respondendo).toBe(false);
@@ -67,7 +90,7 @@ describe('useCoachStore.enviar', () => {
     });
     responderComStream([{ tipo: 'fim' }]);
 
-    await useCoachStore.getState().enviar('  Monta minha dieta  ', 'CTX');
+    await useCoachStore.getState().enviar('  Monta minha dieta  ', DADOS);
 
     const [url, opcoes] = (global.fetch as jest.Mock).mock.calls[0];
     expect(url).toBe('/api/coach');
@@ -76,7 +99,7 @@ describe('useCoachStore.enviar', () => {
         { papel: 'coach', texto: 'Fala!' },
         { papel: 'usuario', texto: 'Monta minha dieta' },
       ],
-      contexto: 'CTX',
+      contexto: montarContextoCoach(DADOS),
     });
   });
 
@@ -87,7 +110,7 @@ describe('useCoachStore.enviar', () => {
       { tipo: 'fim' },
     ]);
 
-    await useCoachStore.getState().enviar('Troca o almoço', 'ctx');
+    await useCoachStore.getState().enviar('Troca o almoço', DADOS);
 
     expect(useDietaStore.getState().plano).toEqual(PLANO);
     expect(useDietaStore.getState().geradoEm).not.toBeNull();
@@ -101,7 +124,7 @@ describe('useCoachStore.enviar', () => {
       json: () => Promise.resolve({ erro: 'Servidor sem ANTHROPIC_API_KEY configurada.' }),
     });
 
-    await useCoachStore.getState().enviar('Oi', 'ctx');
+    await useCoachStore.getState().enviar('Oi', DADOS);
 
     const { mensagens, erro } = useCoachStore.getState();
     expect(erro).toBe('Servidor sem ANTHROPIC_API_KEY configurada.');
@@ -112,11 +135,53 @@ describe('useCoachStore.enviar', () => {
   it('ignora mensagem vazia e não envia duas ao mesmo tempo', async () => {
     responderComStream([{ tipo: 'fim' }]);
 
-    await useCoachStore.getState().enviar('   ', 'ctx');
+    await useCoachStore.getState().enviar('   ', DADOS);
     expect(global.fetch).not.toHaveBeenCalled();
 
     useCoachStore.setState({ respondendo: true });
-    await useCoachStore.getState().enviar('Oi', 'ctx');
+    await useCoachStore.getState().enviar('Oi', DADOS);
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('useCoachStore.enviar sem IA (modo demonstração)', () => {
+  function semIa() {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: () => Promise.resolve({ erro: 'Nenhuma IA', codigo: 'SEM_IA' }),
+    });
+  }
+
+  it('responde offline com dados reais e marca a mensagem como demonstração', async () => {
+    semIa();
+
+    await useCoachStore.getState().enviar('Como estou na água hoje?', DADOS);
+
+    const resposta = useCoachStore.getState().mensagens.at(-1);
+    expect(resposta?.papel).toBe('coach');
+    expect(resposta?.demo).toBe(true);
+    expect(resposta?.texto).toContain('1.750');
+    expect(useCoachStore.getState().erro).toBeNull();
+  });
+
+  it('monta a dieta offline quando pedem, salva com origem demo', async () => {
+    semIa();
+
+    await useCoachStore.getState().enviar('Monta minha dieta', DADOS);
+
+    const dieta = useDietaStore.getState();
+    expect(dieta.plano).not.toBeNull();
+    expect(dieta.origem).toBe('demo');
+    expect(useCoachStore.getState().mensagens.at(-1)?.dietaAtualizada).toBe(true);
+  });
+
+  it('sem conexão com o servidor também cai no modo demonstração', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new TypeError('Network request failed'));
+
+    await useCoachStore.getState().enviar('Oi coach', DADOS);
+
+    expect(useCoachStore.getState().mensagens.at(-1)?.demo).toBe(true);
+    expect(useCoachStore.getState().erro).toBeNull();
   });
 });

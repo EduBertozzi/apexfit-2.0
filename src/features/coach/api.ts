@@ -1,3 +1,5 @@
+import { CODIGO_SEM_IA, SemIa } from '@/shared/lib/semIa';
+
 import type { EventoCoach, PedidoCoach } from './contrato';
 import { lerEventos } from './eventos';
 
@@ -18,11 +20,19 @@ export async function conversarComCoach(
       body: JSON.stringify(pedido),
     });
   } catch {
-    throw new Error('Sem conexão com o servidor. Confira sua internet e tente de novo.');
+    // Sem conexão com o servidor: o app responde no modo demonstração
+    throw new SemIa('Sem conexão com o servidor.');
   }
 
   if (!resposta.ok) {
-    const corpo = (await resposta.json().catch(() => null)) as { erro?: unknown } | null;
+    const corpo = (await resposta.json().catch(() => null)) as {
+      erro?: unknown;
+      codigo?: unknown;
+    } | null;
+
+    if (corpo?.codigo === CODIGO_SEM_IA) {
+      throw new SemIa();
+    }
 
     throw new Error(
       typeof corpo?.erro === 'string' ? corpo.erro : 'O coach não respondeu. Tente de novo.',
