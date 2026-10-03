@@ -1,6 +1,7 @@
 import { useDietaStore } from '@/features/dieta/store';
 import { useHidratacaoStore } from '@/features/hidratacao/store';
 import { usePerfilStore } from '@/features/perfil/store';
+import { usePesoStore } from '@/features/peso/store';
 
 import { useAjustesStore } from './store';
 
@@ -12,6 +13,7 @@ import { useAjustesStore } from './store';
 export function apagarTodosOsDados() {
   useHidratacaoStore.getState().apagarTudo();
   useDietaStore.getState().apagarTudo();
+  usePesoStore.getState().apagarTudo();
   useAjustesStore.getState().restaurarPadrao();
   usePerfilStore.getState().apagarPerfil();
 }
