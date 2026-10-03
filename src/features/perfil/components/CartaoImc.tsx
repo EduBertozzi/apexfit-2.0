@@ -17,7 +17,12 @@ export function CartaoImc({ perfil, style }: Props) {
 
   return (
     <Cartao titulo="IMC" style={style}>
-      <Texto variante="destaque">{formatarNumero(imc, 1)}</Texto>
+      <Texto
+        variante="destaque"
+        accessibilityLabel={`Índice de massa corporal: ${formatarNumero(imc, 1)}`}
+      >
+        {formatarNumero(imc, 1)}
+      </Texto>
       {faixa ? (
         <Texto variante="rotulo">{NOME_FAIXA_IMC[faixa]}</Texto>
       ) : (

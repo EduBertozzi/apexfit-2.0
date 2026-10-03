@@ -9,7 +9,11 @@ import type { PlanoDieta } from '../contrato';
 
 function Numero({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
-    <View style={estilos.numero}>
+    <View
+      style={estilos.numero}
+      accessible
+      accessibilityLabel={`${rotulo}: ${valor.replace(' g', ' gramas')}`}
+    >
       <Texto variante="rotulo" style={{ opacity: 0.7 }}>
         {rotulo}
       </Texto>
@@ -33,7 +37,7 @@ export function PlanoDietaDetalhe({ plano }: { plano: PlanoDieta }) {
         </Texto>
         <View style={estilos.numeros}>
           <Numero rotulo="Proteína" valor={`${plano.macros.proteinaG} g`} />
-          <Numero rotulo="Carbo" valor={`${plano.macros.carboidratoG} g`} />
+          <Numero rotulo="Carboidrato" valor={`${plano.macros.carboidratoG} g`} />
           <Numero rotulo="Gordura" valor={`${plano.macros.gorduraG} g`} />
         </View>
         <Texto style={[corHeroi, estilos.resumo]}>{plano.resumo}</Texto>

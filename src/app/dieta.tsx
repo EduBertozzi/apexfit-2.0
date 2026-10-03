@@ -1,11 +1,13 @@
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { PlanoDietaDetalhe } from '@/features/dieta/components/PlanoDietaDetalhe';
+import { planoDesatualizado } from '@/features/dieta/logica';
 import { useDietaStore } from '@/features/dieta/store';
+import { calcularNecessidades } from '@/features/nutricao/calculos';
 import { usePerfilStore } from '@/features/perfil/store';
 import { espaco } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
-import { Botao, Tela, Texto } from '@/shared/ui';
+import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
 
 export default function Dieta() {
   const c = useCores();
@@ -35,6 +37,16 @@ export default function Dieta() {
         <Texto style={{ color: c.erro }} accessibilityLiveRegion="polite">
           {erro}
         </Texto>
+      ) : null}
+
+      {plano &&
+      planoDesatualizado(plano.caloriasDia, calcularNecessidades(perfil)?.metaCalorias ?? null) ? (
+        <Cartao titulo="Plano desatualizado" variante="tracejado">
+          <Texto>
+            Seu perfil mudou depois que este plano foi feito. Gere um novo para bater com a sua meta
+            atual.
+          </Texto>
+        </Cartao>
       ) : null}
 
       {plano ? <PlanoDietaDetalhe plano={plano} /> : null}

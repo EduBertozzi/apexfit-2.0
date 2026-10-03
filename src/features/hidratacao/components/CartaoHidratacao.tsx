@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet, View } from 'react-native';
 
 import { useAjustesStore } from '@/features/ajustes/store';
 import { formatarNumero } from '@/shared/lib/numero';
@@ -45,6 +45,11 @@ export function CartaoHidratacao({ metaMl }: Props) {
 
     setComemorando(bateu);
 
+    if (bateu) {
+      // A live region só funciona no Android; no iPhone o anúncio é explícito
+      AccessibilityInfo.announceForAccessibility('Meta de água batida! Boa!');
+    }
+
     if (vibracaoLigada) {
       vibrar(bateu ? 'sucesso' : 'leve');
     }
@@ -82,17 +87,23 @@ export function CartaoHidratacao({ metaMl }: Props) {
         </Texto>
       </View>
 
-      <Texto
-        variante="legenda"
-        style={{ color: c.textoHeroiSecundario }}
-        accessibilityLiveRegion="polite"
-      >
-        {comemorando
-          ? 'Meta de água batida! Boa!'
-          : faltamMl > 0
+      {comemorando ? (
+        <View style={[estilos.comemoracao, { backgroundColor: c.destaque }]}>
+          <Texto variante="subtitulo" style={{ color: c.textoSobreDestaque }}>
+            Meta batida! Boa!
+          </Texto>
+        </View>
+      ) : (
+        <Texto
+          variante="legenda"
+          style={{ color: c.textoHeroiSecundario }}
+          accessibilityLiveRegion="polite"
+        >
+          {faltamMl > 0
             ? `Faltam ${formatarNumero(faltamMl)} ml para a meta`
             : 'Meta do dia concluída'}
-      </Texto>
+        </Texto>
+      )}
 
       <View style={estilos.botoes}>
         {PORCOES_ML.map((ml) => (
@@ -130,6 +141,11 @@ const estilos = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'space-between',
     marginTop: espaco.xs,
+  },
+  comemoracao: {
+    paddingHorizontal: espaco.sm,
+    paddingVertical: espaco.xs,
+    alignSelf: 'flex-start',
   },
   botoes: {
     flexDirection: 'row',

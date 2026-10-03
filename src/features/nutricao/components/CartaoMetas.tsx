@@ -11,7 +11,7 @@ import { calcularNecessidades } from '../calculos';
 
 function Macro({ rotulo, gramas }: { rotulo: string; gramas: number }) {
   return (
-    <View style={estilos.macro}>
+    <View style={estilos.macro} accessible accessibilityLabel={`${rotulo}: ${gramas} gramas`}>
       <Texto variante="rotulo" secundario>
         {rotulo}
       </Texto>
@@ -53,7 +53,7 @@ export function CartaoMetas({ perfil }: { perfil: Perfil }) {
 
       <View style={[estilos.macros, { borderTopColor: c.superficieSecundaria }]}>
         <Macro rotulo="Proteína" gramas={macros.proteinaG} />
-        <Macro rotulo="Carbo" gramas={macros.carboidratoG} />
+        <Macro rotulo="Carboidrato" gramas={macros.carboidratoG} />
         <Macro rotulo="Gordura" gramas={macros.gorduraG} />
       </View>
     </Cartao>

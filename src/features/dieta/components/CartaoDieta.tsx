@@ -6,6 +6,7 @@ import { formatarNumero } from '@/shared/lib/numero';
 import { useCores } from '@/shared/theme/useCores';
 import { Botao, Cartao, Texto } from '@/shared/ui';
 
+import { planoDesatualizado } from '../logica';
 import { useDietaStore } from '../store';
 
 export function CartaoDieta({ perfil }: { perfil: Perfil }) {
@@ -15,7 +16,8 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
   const erro = useDietaStore((state) => state.erro);
   const gerar = useDietaStore((state) => state.gerar);
 
-  const liberada = calcularNecessidades(perfil) !== null;
+  const necessidades = calcularNecessidades(perfil);
+  const liberada = necessidades !== null;
 
   function montar() {
     gerar(perfil);
@@ -28,9 +30,15 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
         <Texto variante="subtitulo">
           {plano.refeicoes.length} refeições, {formatarNumero(plano.caloriasDia)} kcal
         </Texto>
-        <Texto secundario numberOfLines={2}>
-          {plano.resumo}
-        </Texto>
+        {planoDesatualizado(plano.caloriasDia, necessidades?.metaCalorias ?? null) ? (
+          <Texto variante="legenda" style={{ color: c.erro }}>
+            Seu perfil mudou e este plano não bate mais com sua meta. Gere um novo.
+          </Texto>
+        ) : (
+          <Texto secundario numberOfLines={2}>
+            {plano.resumo}
+          </Texto>
+        )}
         <Botao titulo="Ver minha dieta" onPress={() => router.push('/dieta')} />
       </Cartao>
     );

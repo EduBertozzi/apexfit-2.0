@@ -10,11 +10,23 @@ type Props = TextProps & {
   secundario?: boolean;
 };
 
+/**
+ * Quanto cada variante pode crescer com a "fonte grande" do sistema.
+ * Texto corrido cresce à vontade; títulos enormes têm teto para não estourar a tela.
+ */
+const AMPLIACAO_MAXIMA: Partial<Record<Variante, number>> = {
+  gigante: 1.25,
+  destaque: 1.4,
+  titulo: 1.5,
+  subtitulo: 1.8,
+};
+
 export function Texto({ variante = 'corpo', secundario = false, style, ...props }: Props) {
   const c = useCores();
 
   return (
     <Text
+      maxFontSizeMultiplier={AMPLIACAO_MAXIMA[variante]}
       style={[estilos[variante], { color: secundario ? c.textoSecundario : c.texto }, style]}
       {...props}
     />
