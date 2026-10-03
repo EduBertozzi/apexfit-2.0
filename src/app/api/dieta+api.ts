@@ -1,8 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 import { pedidoDietaSchema } from '@/features/dieta/contrato';
+import { calcularNecessidades } from '@/features/nutricao/calculos';
+import { montarPromptDieta } from '@/features/dieta/prompt';
 import { gerarDieta } from '@/features/dieta/servidor/gerarDieta';
+import { gerarPlanoLocal } from '@/features/dieta/servidor/gerarDietaLocal';
 import { ErroServidor } from '@/shared/servidor/claude';
+import { erroSemIa, escolherProvedor } from '@/shared/servidor/provedor';
 
 /** POST /api/dieta: recebe o perfil, devolve { plano }. Só repassa; a lógica fica na feature. */
 export async function POST(request: Request) {
@@ -13,12 +17,24 @@ export async function POST(request: Request) {
   }
 
   try {
-    const plano = await gerarDieta(pedido.data);
+    const provedor = await escolherProvedor();
 
-    return Response.json({ plano });
+    if (provedor === 'nenhum') {
+      throw erroSemIa();
+    }
+
+    const plano =
+      provedor === 'claude'
+        ? await gerarDieta(pedido.data)
+        : await gerarPlanoLocal(
+            montarPromptDieta(pedido.data.perfil),
+            calcularNecessidades(pedido.data.perfil)?.metaCalorias,
+          );
+
+    return Response.json({ plano, provedor });
   } catch (erro) {
     if (erro instanceof ErroServidor) {
-      return Response.json({ erro: erro.message }, { status: erro.status });
+      return erro.paraResposta();
     }
 
     if (erro instanceof Anthropic.RateLimitError) {

@@ -1,6 +1,6 @@
 import type { Perfil } from '@/features/perfil/types';
 
-import { montarPromptDieta, SISTEMA_DIETA } from '../prompt';
+import { distribuirRefeicoes, montarPromptDieta, SISTEMA_DIETA } from '../prompt';
 
 const ADULTO: Perfil = { nome: 'Ana', idade: 25, alturaCm: 165, pesoKg: 58.5 };
 
@@ -52,5 +52,24 @@ describe('SISTEMA_DIETA', () => {
   it('proíbe emoji e travessão no texto gerado', () => {
     expect(SISTEMA_DIETA).toContain('Nunca use emoji');
     expect(SISTEMA_DIETA).toContain('Nunca use travessão');
+  });
+});
+
+describe('distribuirRefeicoes', () => {
+  it('usa 4 refeições até 2600 kcal e 5 acima disso', () => {
+    expect(distribuirRefeicoes(2000)).toHaveLength(4);
+    expect(distribuirRefeicoes(2830)).toHaveLength(5);
+  });
+
+  it('a soma bate com a meta (± arredondamento)', () => {
+    for (const meta of [1500, 2260, 2830, 3400]) {
+      const soma = distribuirRefeicoes(meta).reduce((total, refeicao) => total + refeicao.kcal, 0);
+
+      expect(Math.abs(soma - meta)).toBeLessThanOrEqual(25);
+    }
+  });
+
+  it('entra no prompt quando o perfil está completo', () => {
+    expect(montarPromptDieta(COMPLETO)).toContain('Divisão das refeições');
   });
 });

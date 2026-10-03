@@ -3,7 +3,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { pedidoCoachSchema } from '@/features/coach/contrato';
 import { escreverEvento } from '@/features/coach/eventos';
 import { conversar } from '@/features/coach/servidor/conversar';
-import { ErroServidor, obterCliente } from '@/shared/servidor/claude';
+import { conversarLocal } from '@/features/coach/servidor/conversarLocal';
+import { erroSemIa, escolherProvedor } from '@/shared/servidor/provedor';
 
 /** POST /api/coach: conversa com o coach. Responde em streaming, uma linha JSON por evento. */
 export async function POST(request: Request) {
@@ -13,16 +14,14 @@ export async function POST(request: Request) {
     return Response.json({ erro: 'Mensagem inválida.' }, { status: 400 });
   }
 
-  // Confere a chave antes de abrir o stream, para o app receber o erro certo
-  try {
-    obterCliente();
-  } catch (erro) {
-    if (erro instanceof ErroServidor) {
-      return Response.json({ erro: erro.message }, { status: erro.status });
-    }
+  // Decide a IA antes de abrir o stream, para o app receber o erro certo
+  const provedor = await escolherProvedor();
 
-    throw erro;
+  if (provedor === 'nenhum') {
+    return erroSemIa().paraResposta();
   }
+
+  const conversa = provedor === 'claude' ? conversar : conversarLocal;
 
   const codificador = new TextEncoder();
 
@@ -31,7 +30,7 @@ export async function POST(request: Request) {
       const enviar = (texto: string) => controle.enqueue(codificador.encode(texto));
 
       try {
-        for await (const evento of conversar(pedido.data)) {
+        for await (const evento of conversa(pedido.data)) {
           enviar(escreverEvento(evento));
         }
       } catch (erro) {

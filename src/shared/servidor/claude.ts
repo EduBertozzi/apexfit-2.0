@@ -19,8 +19,14 @@ export class ErroServidor extends Error {
     message: string,
     /** Status HTTP que a rota deve devolver. */
     readonly status: number,
+    /** Código para o app decidir o que fazer (ex: "SEM_IA" → modo demonstração). */
+    readonly codigo?: string,
   ) {
     super(message);
+  }
+
+  paraResposta(): Response {
+    return Response.json({ erro: this.message, codigo: this.codigo }, { status: this.status });
   }
 }
 

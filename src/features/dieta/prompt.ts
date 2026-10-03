@@ -21,8 +21,36 @@ export const SISTEMA_DIETA = [
   'Escreva em português do Brasil, frases curtas e diretas, tratando o usuário por "você".',
   'Nunca use emoji. Nunca use travessão; use vírgula, ponto ou dois-pontos.',
   'Não recomende suplementos, remédios ou jejum prolongado.',
+  'O resumo explica a estratégia do plano usando as metas (não repita o aviso no resumo).',
   'O aviso final deve lembrar que o plano é uma sugestão e que um nutricionista ou médico deve ser consultado.',
 ].join('\n');
+
+/** Como dividir as calorias do dia entre as refeições. Mais calorias, mais refeições. */
+export function distribuirRefeicoes(
+  metaCalorias: number,
+): { nome: string; horario: string; kcal: number }[] {
+  const divisao =
+    metaCalorias > 2600
+      ? [
+          ['Café da manhã', '07:00', 0.2],
+          ['Almoço', '12:00', 0.3],
+          ['Lanche da tarde', '16:00', 0.15],
+          ['Jantar', '20:00', 0.25],
+          ['Ceia', '22:00', 0.1],
+        ]
+      : [
+          ['Café da manhã', '07:00', 0.25],
+          ['Almoço', '12:00', 0.35],
+          ['Lanche da tarde', '16:00', 0.15],
+          ['Jantar', '20:00', 0.25],
+        ];
+
+  return divisao.map(([nome, horario, fracao]) => ({
+    nome: nome as string,
+    horario: horario as string,
+    kcal: Math.round((metaCalorias * (fracao as number)) / 10) * 10,
+  }));
+}
 
 /** Dados do usuário + metas calculadas. Vai como mensagem do usuário. */
 export function montarPromptDieta(perfil: Perfil): string {
@@ -62,6 +90,11 @@ export function montarPromptDieta(perfil: Perfil): string {
       `Proteína: ${macros.proteinaG} g`,
       `Carboidrato: ${macros.carboidratoG} g`,
       `Gordura: ${macros.gorduraG} g`,
+      '',
+      'Divisão das refeições (siga estes horários e calorias):',
+      ...distribuirRefeicoes(metaCalorias).map(
+        (refeicao) => `${refeicao.horario} ${refeicao.nome}: ${formatarNumero(refeicao.kcal)} kcal`,
+      ),
     );
   }
 
