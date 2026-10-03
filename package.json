@@ -64,7 +64,7 @@
     "test:watch": "jest --watch",
     "format": "prettier --write .",
     "check": "npm run typecheck && npm run lint && npm test",
-    "deploy": "expo export --platform web && eas deploy --prod --environment production"
+    "deploy": "expo export --platform web && npx eas-cli@latest deploy --prod --environment production --non-interactive"
   },
   "private": true,
   "jest": {
