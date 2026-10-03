@@ -1,14 +1,14 @@
 import { FormularioPerfil } from '@/features/perfil/components/FormularioPerfil';
 import { usePerfilStore } from '@/features/perfil/store';
-import { Tela, Texto } from '@/shared/ui';
+import { Marcado, Tela, Texto } from '@/shared/ui';
 
 export default function Onboarding() {
   const salvarPerfil = usePerfilStore((state) => state.salvarPerfil);
 
   return (
     <Tela>
-      <Texto variante="destaque" accessibilityRole="header">
-        ApexFit
+      <Texto variante="gigante" accessibilityRole="header">
+        Apex<Marcado>Fit</Marcado>
       </Texto>
       <Texto secundario>Vamos montar seu perfil. Leva menos de um minuto.</Texto>
 

@@ -1,16 +1,17 @@
 import { StyleSheet, View } from 'react-native';
 
-import { raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
 
 type Props = {
   /** De 0 a 1 */
   valor: number;
   cor?: string;
+  corTrilho?: string;
   rotuloAcessivel: string;
 };
 
-export function BarraProgresso({ valor, cor, rotuloAcessivel }: Props) {
+/** Barra reta e inclinada, no estilo "pista de corrida". */
+export function BarraProgresso({ valor, cor, corTrilho, rotuloAcessivel }: Props) {
   const c = useCores();
   const porcentagem = Math.round(Math.min(Math.max(valor, 0), 1) * 100);
 
@@ -19,12 +20,12 @@ export function BarraProgresso({ valor, cor, rotuloAcessivel }: Props) {
       accessibilityRole="progressbar"
       accessibilityLabel={rotuloAcessivel}
       accessibilityValue={{ min: 0, max: 100, now: porcentagem }}
-      style={[estilos.trilho, { backgroundColor: c.superficieSecundaria }]}
+      style={[estilos.trilho, { backgroundColor: corTrilho ?? c.superficieSecundaria }]}
     >
       <View
         style={[
           estilos.preenchimento,
-          { width: `${porcentagem}%`, backgroundColor: cor ?? c.primaria },
+          { width: `${porcentagem}%`, backgroundColor: cor ?? c.destaque },
         ]}
       />
     </View>
@@ -33,12 +34,11 @@ export function BarraProgresso({ valor, cor, rotuloAcessivel }: Props) {
 
 const estilos = StyleSheet.create({
   trilho: {
-    height: 12,
-    borderRadius: raio.total,
+    height: 20,
     overflow: 'hidden',
+    transform: [{ skewX: '-18deg' }],
   },
   preenchimento: {
     height: '100%',
-    borderRadius: raio.total,
   },
 });

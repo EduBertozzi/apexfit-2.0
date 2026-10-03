@@ -12,6 +12,9 @@ const VALIDO: FormularioPerfilValores = {
   pesoKg: '70,5',
   percentualGordura: '',
   restricoes: '',
+  sexo: 'masculino',
+  nivelAtividade: 'moderado',
+  objetivo: 'ganhar',
 };
 
 // Atalho: valida e devolve a mensagem de erro de um campo (ou undefined)
@@ -36,6 +39,9 @@ describe('perfilSchema', () => {
       pesoKg: 70.5,
       percentualGordura: undefined,
       restricoes: undefined,
+      sexo: 'masculino',
+      nivelAtividade: 'moderado',
+      objetivo: 'ganhar',
     });
   });
 
@@ -46,7 +52,15 @@ describe('perfilSchema', () => {
 
     const camposComErro = resultado.error?.issues.map((issue) => issue.path[0]);
 
-    expect(camposComErro).toEqual(['nome', 'idade', 'alturaCm', 'pesoKg']);
+    expect(camposComErro).toEqual([
+      'nome',
+      'idade',
+      'sexo',
+      'alturaCm',
+      'pesoKg',
+      'nivelAtividade',
+      'objetivo',
+    ]);
   });
 
   describe('nome', () => {

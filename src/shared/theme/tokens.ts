@@ -1,55 +1,73 @@
 /**
  * Design tokens: TODAS as cores e medidas do app vêm daqui.
- * Nenhum componente deve ter "#2E7D32" escrito direto. Quando a identidade
- * visual for definida (fase de UI/UX), só este arquivo muda.
+ * Nenhum componente deve ter "#39FF88" escrito direto.
+ *
+ * Identidade "Volt" (direção Alta performance): preto e osso, um verde menta
+ * elétrico de destaque e tipografia condensada em itálico.
+ *
+ * Regra do destaque: o menta é claro demais para virar texto em fundo claro.
+ * Ele só aparece como FUNDO atrás de texto preto (`textoSobreDestaque`)
+ * ou como cor sobre fundo escuro (cartão herói, modo escuro).
  */
 
 const paleta = {
-  verde50: '#ECF7F1',
-  verde200: '#A8DCC0',
-  verde500: '#2E9D68',
-  verde700: '#1C6E48',
-  verde900: '#0F3D2E',
-  cinza50: '#F6F7F8',
-  cinza100: '#ECEEF0',
-  cinza300: '#C9CED3',
-  cinza500: '#7A828A',
-  cinza700: '#3E454C',
-  cinza800: '#24292E',
-  cinza900: '#15191C',
+  menta: '#39FF88',
+  preto: '#0B0B0B',
+  grafite900: '#161616',
+  grafite800: '#1C1C1C',
+  grafite750: '#1E1E1E',
+  grafite700: '#2A2A2A',
+  grafite600: '#3A3A3A',
+  grafite500: '#4A4A4A',
+  cinza400: '#A3A39C',
+  cinza600: '#5E5E58',
+  osso200: '#E4E4DE',
+  osso100: '#F1F1EC',
   branco: '#FFFFFF',
-  vermelho500: '#D64545',
-  vermelho300: '#F08A8A',
-  azul500: '#2F7FD8',
-  azul300: '#7DB7F5',
+  vermelho600: '#C62828',
+  vermelho300: '#FF6B6B',
 };
 
 export const cores = {
   claro: {
-    fundo: paleta.cinza50,
+    fundo: paleta.osso100,
     superficie: paleta.branco,
-    superficieSecundaria: paleta.cinza100,
-    borda: paleta.cinza300,
-    texto: paleta.cinza900,
-    textoSecundario: paleta.cinza500,
-    primaria: paleta.verde700,
-    textoSobrePrimaria: paleta.branco,
-    primariaSuave: paleta.verde50,
-    erro: paleta.vermelho500,
-    agua: paleta.azul500,
+    superficieSecundaria: paleta.osso200,
+    borda: paleta.preto,
+    texto: paleta.preto,
+    textoSecundario: paleta.cinza600,
+    primaria: paleta.preto,
+    textoSobrePrimaria: paleta.menta,
+    primariaSuave: paleta.osso200,
+    destaque: paleta.menta,
+    textoSobreDestaque: paleta.preto,
+    erro: paleta.vermelho600,
+    agua: paleta.menta,
+    heroi: paleta.preto,
+    textoHeroi: paleta.branco,
+    textoHeroiSecundario: paleta.cinza400,
+    trilhoHeroi: paleta.grafite700,
+    bordaHeroi: paleta.grafite500,
   },
   escuro: {
-    fundo: paleta.cinza900,
-    superficie: paleta.cinza800,
-    superficieSecundaria: paleta.cinza700,
-    borda: paleta.cinza700,
-    texto: paleta.cinza50,
-    textoSecundario: paleta.cinza300,
-    primaria: paleta.verde200,
-    textoSobrePrimaria: paleta.verde900,
-    primariaSuave: paleta.verde900,
+    fundo: paleta.preto,
+    superficie: paleta.grafite900,
+    superficieSecundaria: paleta.grafite750,
+    borda: paleta.grafite600,
+    texto: paleta.osso100,
+    textoSecundario: paleta.cinza400,
+    primaria: paleta.menta,
+    textoSobrePrimaria: paleta.preto,
+    primariaSuave: paleta.grafite750,
+    destaque: paleta.menta,
+    textoSobreDestaque: paleta.preto,
     erro: paleta.vermelho300,
-    agua: paleta.azul300,
+    agua: paleta.menta,
+    heroi: paleta.grafite800,
+    textoHeroi: paleta.branco,
+    textoHeroiSecundario: paleta.cinza400,
+    trilhoHeroi: paleta.grafite600,
+    bordaHeroi: paleta.grafite500,
   },
 } as const;
 
@@ -63,17 +81,38 @@ export const espaco = {
   xl: 32,
 } as const;
 
+/** Visual reto: cantos quase sem arredondar. */
 export const raio = {
-  sm: 8,
-  md: 12,
-  lg: 20,
+  sm: 2,
+  md: 4,
+  lg: 4,
   total: 999,
+} as const;
+
+export const borda = {
+  fina: 1,
+  grossa: 2,
+} as const;
+
+/**
+ * Famílias carregadas no _layout (useFonts). Cada peso é uma família separada,
+ * então NUNCA use fontWeight junto: no Android ele troca a fonte pela do sistema.
+ */
+export const familia = {
+  display: 'BarlowCondensed_900Black_Italic',
+  displayLeve: 'BarlowCondensed_800ExtraBold_Italic',
+  rotulo: 'BarlowCondensed_700Bold',
+  corpo: 'Barlow_400Regular',
+  corpoMedio: 'Barlow_500Medium',
+  corpoForte: 'Barlow_700Bold',
 } as const;
 
 export const fonte = {
   legenda: 13,
   corpo: 16,
-  subtitulo: 18,
-  titulo: 24,
-  destaque: 32,
+  rotulo: 14,
+  subtitulo: 22,
+  titulo: 32,
+  destaque: 48,
+  gigante: 56,
 } as const;

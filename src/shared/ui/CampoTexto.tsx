@@ -1,7 +1,7 @@
 import { forwardRef, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
-import { espaco, fonte, raio } from '../theme/tokens';
+import { borda, espaco, familia, fonte, raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
 import { Texto } from './Texto';
 
@@ -25,14 +25,14 @@ export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
   const c = useCores();
   const [focado, setFocado] = useState(false);
 
-  const corBorda = erro ? c.erro : focado ? c.primaria : c.borda;
+  const corBorda = erro ? c.erro : focado ? c.primaria : c.textoSecundario;
 
   return (
     <View style={estilos.container}>
-      <Texto variante="legenda" style={estilos.rotulo}>
+      <Texto variante="rotulo">
         {rotulo}
         {opcional ? (
-          <Texto variante="legenda" secundario>
+          <Texto variante="rotulo" secundario>
             {'  (opcional)'}
           </Texto>
         ) : null}
@@ -87,19 +87,16 @@ const estilos = StyleSheet.create({
   container: {
     gap: espaco.xs,
   },
-  rotulo: {
-    fontWeight: '600',
-  },
   caixa: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 48,
-    borderWidth: 1,
-    borderRadius: raio.md,
+    borderWidth: borda.grossa,
+    borderRadius: raio.sm,
     paddingHorizontal: espaco.md,
   },
   caixaFocada: {
-    borderWidth: 2,
+    borderWidth: 3,
     paddingHorizontal: espaco.md - 1,
   },
   caixaMultilinha: {
@@ -108,6 +105,7 @@ const estilos = StyleSheet.create({
   },
   input: {
     flex: 1,
+    fontFamily: familia.corpo,
     fontSize: fonte.corpo,
     paddingVertical: espaco.sm,
     // No navegador, tira o contorno padrão: o foco já aparece na borda da caixa

@@ -2,7 +2,17 @@ import { z } from 'zod';
 
 import { paraDecimal, paraInteiro } from '@/shared/lib/numero';
 
-import type { Perfil } from './types';
+import type { NivelAtividade, Objetivo, Perfil, Sexo } from './types';
+
+export const SEXOS = ['masculino', 'feminino'] as const satisfies readonly Sexo[];
+export const NIVEIS_ATIVIDADE = [
+  'sedentario',
+  'leve',
+  'moderado',
+  'alto',
+  'atleta',
+] as const satisfies readonly NivelAtividade[];
+export const OBJETIVOS = ['perder', 'manter', 'ganhar'] as const satisfies readonly Objetivo[];
 
 // Limites aceitos. Ficam exportados para os testes e as telas usarem os mesmos números.
 export const LIMITES = {
@@ -74,6 +84,18 @@ function campoNumericoOpcional(opcoes: OpcoesNumero) {
   });
 }
 
+/** Campo de múltipla escolha: o formulário guarda '' até o usuário tocar numa opção. */
+function campoEscolha<T extends string>(valores: readonly T[], mensagem: string) {
+  return z.string().transform((texto, ctx) => {
+    if (!(valores as readonly string[]).includes(texto)) {
+      ctx.addIssue({ code: 'custom', message: mensagem });
+      return z.NEVER;
+    }
+
+    return texto as T;
+  });
+}
+
 /**
  * Regras do formulário de perfil.
  * Entrada: textos digitados. Saída: um `Perfil` com números de verdade.
@@ -92,6 +114,8 @@ export const perfilSchema = z.object({
     inteiro: true,
     exemplo: '17',
   }),
+
+  sexo: campoEscolha(SEXOS, 'Escolha uma opção'),
 
   alturaCm: campoNumerico({
     rotulo: 'sua altura',
@@ -119,6 +143,10 @@ export const perfilSchema = z.object({
     .trim()
     .max(LIMITES.restricoes.max, `Use no máximo ${LIMITES.restricoes.max} caracteres`)
     .transform((texto) => (texto === '' ? undefined : texto)),
+
+  nivelAtividade: campoEscolha(NIVEIS_ATIVIDADE, 'Escolha seu nível de atividade'),
+
+  objetivo: campoEscolha(OBJETIVOS, 'Escolha seu objetivo'),
 }) satisfies z.ZodType<Perfil, FormularioPerfilValores>;
 
 /** O que o formulário guarda enquanto o usuário digita (tudo texto). */
@@ -129,6 +157,9 @@ export type FormularioPerfilValores = {
   pesoKg: string;
   percentualGordura: string;
   restricoes: string;
+  sexo: string;
+  nivelAtividade: string;
+  objetivo: string;
 };
 
 export const FORMULARIO_VAZIO: FormularioPerfilValores = {
@@ -138,6 +169,9 @@ export const FORMULARIO_VAZIO: FormularioPerfilValores = {
   pesoKg: '',
   percentualGordura: '',
   restricoes: '',
+  sexo: '',
+  nivelAtividade: '',
+  objetivo: '',
 };
 
 /** Caminho inverso: transforma um perfil salvo em textos para preencher o formulário de edição. */
@@ -152,5 +186,8 @@ export function perfilParaFormulario(perfil: Perfil): FormularioPerfilValores {
     pesoKg: texto(perfil.pesoKg),
     percentualGordura: texto(perfil.percentualGordura),
     restricoes: perfil.restricoes ?? '',
+    sexo: perfil.sexo ?? '',
+    nivelAtividade: perfil.nivelAtividade ?? '',
+    objetivo: perfil.objetivo ?? '',
   };
 }

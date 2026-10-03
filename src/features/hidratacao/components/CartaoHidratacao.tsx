@@ -51,23 +51,39 @@ export function CartaoHidratacao({ metaMl }: Props) {
   }
 
   return (
-    <Cartao titulo="Hidratação">
-      <View style={estilos.linhaTotal}>
-        <Texto variante="destaque" testID="agua-total">
-          {formatarNumero(totalMl)}
+    <Cartao variante="heroi">
+      <View style={estilos.linhaTopo}>
+        <Texto variante="rotulo" style={{ color: c.textoHeroi }} accessibilityRole="header">
+          Hidratação
         </Texto>
-        <Texto secundario>/ {formatarNumero(metaMl)} ml</Texto>
+        <Texto variante="destaque" style={{ color: c.destaque }}>
+          {Math.round(fracao * 100)}%
+        </Texto>
       </View>
 
       <BarraProgresso
         valor={fracao}
         cor={c.agua}
+        corTrilho={c.trilhoHeroi}
         rotuloAcessivel={`Água de hoje: ${totalMl} de ${metaMl} mililitros`}
       />
 
-      <Texto variante="legenda" secundario accessibilityLiveRegion="polite">
+      <View style={estilos.linhaTotal}>
+        <Texto variante="subtitulo" style={{ color: c.textoHeroi }} testID="agua-total">
+          {formatarNumero(totalMl)} ml
+        </Texto>
+        <Texto variante="rotulo" style={{ color: c.textoHeroiSecundario }}>
+          Meta {formatarNumero(metaMl)}
+        </Texto>
+      </View>
+
+      <Texto
+        variante="legenda"
+        style={{ color: c.textoHeroiSecundario }}
+        accessibilityLiveRegion="polite"
+      >
         {comemorando
-          ? '🎉 Meta de água batida! Boa!'
+          ? 'Meta de água batida! Boa!'
           : faltamMl > 0
             ? `Faltam ${formatarNumero(faltamMl)} ml para a meta`
             : 'Meta do dia concluída'}
@@ -77,30 +93,38 @@ export function CartaoHidratacao({ metaMl }: Props) {
         {PORCOES_ML.map((ml) => (
           <View key={ml} style={estilos.botao}>
             <Botao
-              titulo={`+${ml} ml`}
+              titulo={`+${ml}`}
               descricaoAcessivel={`Adicionar ${ml} mililitros`}
-              variante="secundario"
+              variante="destaque"
               onPress={() => beber(ml)}
             />
           </View>
         ))}
+        <View style={estilos.botaoIcone}>
+          <Botao
+            titulo="Desfazer último"
+            icone="arrow-undo"
+            variante="heroi"
+            onPress={desfazerUltimo}
+            desabilitado={!podeDesfazer}
+          />
+        </View>
       </View>
-
-      <Botao
-        titulo="Desfazer último"
-        variante="texto"
-        onPress={desfazerUltimo}
-        desabilitado={!podeDesfazer}
-      />
     </Cartao>
   );
 }
 
 const estilos = StyleSheet.create({
+  linhaTopo: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
   linhaTotal: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: espaco.sm,
+    justifyContent: 'space-between',
+    marginTop: espaco.xs,
   },
   botoes: {
     flexDirection: 'row',
@@ -109,5 +133,8 @@ const estilos = StyleSheet.create({
   },
   botao: {
     flex: 1,
+  },
+  botaoIcone: {
+    width: 56,
   },
 });
