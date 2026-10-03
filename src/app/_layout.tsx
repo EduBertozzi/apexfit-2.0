@@ -12,12 +12,16 @@ import { useEffect } from 'react';
 import { Appearance, Platform } from 'react-native';
 
 import { useAjustesStore } from '@/features/ajustes/store';
+import { configurarExibicaoComAppAberto } from '@/features/lembretes/notificacoes';
 import { usePerfilStore } from '@/features/perfil/store';
 import { useDadosCarregados } from '@/hooks/useDadosCarregados';
 import { familia } from '@/shared/theme/tokens';
 import { useCores, useEsquema } from '@/shared/theme/useCores';
 
 SplashScreen.preventAutoHideAsync();
+
+// Lembrete de água que chega com o app aberto também aparece na tela
+configurarExibicaoComAppAberto();
 
 // Os nomes das chaves viram o fontFamily (ver `familia` em theme/tokens.ts)
 const FONTES = {
