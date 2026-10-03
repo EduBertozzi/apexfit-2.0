@@ -1,6 +1,7 @@
 import { useCoachStore } from '@/features/coach/store';
 import { useDietaStore } from '@/features/dieta/store';
 import { useHidratacaoStore } from '@/features/hidratacao/store';
+import { useLembretesStore } from '@/features/lembretes/store';
 import { usePerfilStore } from '@/features/perfil/store';
 
 import { useAjustesStore } from './store';
@@ -15,5 +16,7 @@ export function apagarTodosOsDados() {
   useDietaStore.getState().apagarTudo();
   useCoachStore.getState().limpar();
   useAjustesStore.getState().restaurarPadrao();
+  // Volta ao padrão na hora; o cancelamento das notificações agendadas termina em segundo plano
+  void useLembretesStore.getState().apagarTudo();
   usePerfilStore.getState().apagarPerfil();
 }

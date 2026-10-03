@@ -4,6 +4,7 @@ import { AjustesAgua } from '@/features/ajustes/components/AjustesAgua';
 import { apagarTodosOsDados } from '@/features/ajustes/apagarDados';
 import { NOME_TEMA, type PreferenciaTema } from '@/features/ajustes/logica';
 import { useAjustesStore } from '@/features/ajustes/store';
+import { AjustesLembretes } from '@/features/lembretes/components/AjustesLembretes';
 import { usePerfilStore } from '@/features/perfil/store';
 import { confirmar } from '@/shared/lib/confirmar';
 import { Botao, Cartao, Opcoes, Tela, Texto } from '@/shared/ui';
@@ -23,7 +24,7 @@ export default function Ajustes() {
   async function apagarDados() {
     const confirmado = await confirmar(
       'Apagar meus dados?',
-      'Seu perfil, o histórico de água, a dieta e os ajustes serão apagados deste aparelho. Não dá para desfazer.',
+      'Seu perfil, o histórico de água, a dieta, os ajustes e os lembretes serão apagados deste aparelho. Não dá para desfazer.',
       'Apagar',
     );
 
@@ -52,6 +53,8 @@ export default function Ajustes() {
       </Cartao>
 
       <AjustesAgua pesoKg={perfil.pesoKg} />
+
+      <AjustesLembretes />
 
       <Cartao titulo="Privacidade">
         <Texto variante="legenda" secundario>
