@@ -51,6 +51,15 @@ export default function LayoutAbas() {
         }}
       />
       <Tabs.Screen
+        name="treinos"
+        options={{
+          title: 'Treinos',
+          tabBarIcon: ({ focused }) => (
+            <IconeAba nome={focused ? 'barbell' : 'barbell-outline'} focado={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="perfil"
         options={{
           title: 'Perfil',

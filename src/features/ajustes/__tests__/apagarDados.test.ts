@@ -1,18 +1,20 @@
 import { useDietaStore } from '@/features/dieta/store';
 import { useHidratacaoStore } from '@/features/hidratacao/store';
 import { usePerfilStore } from '@/features/perfil/store';
+import { useTreinosStore } from '@/features/treinos/store';
 
 import { apagarTodosOsDados } from '../apagarDados';
 import { useAjustesStore } from '../store';
 
 describe('apagarTodosOsDados', () => {
-  it('limpa perfil, água, dieta e ajustes', () => {
+  it('limpa perfil, água, dieta, treinos e ajustes', () => {
     usePerfilStore
       .getState()
       .salvarPerfil({ nome: 'Eduardo', idade: 21, alturaCm: 188, pesoKg: 75 });
     useHidratacaoStore.getState().adicionar(250);
     useDietaStore.setState({ plano: null, geradoEm: '2026-10-03T10:00:00.000Z' });
     useAjustesStore.getState().definirTema('escuro');
+    useTreinosStore.getState().comecarTreino(useTreinosStore.getState().novoTreino());
 
     apagarTodosOsDados();
 
@@ -20,5 +22,7 @@ describe('apagarTodosOsDados', () => {
     expect(useHidratacaoStore.getState().registros).toEqual({});
     expect(useDietaStore.getState().geradoEm).toBeNull();
     expect(useAjustesStore.getState().tema).toBe('sistema');
+    expect(useTreinosStore.getState().treinos).toEqual([]);
+    expect(useTreinosStore.getState().sessoes).toEqual([]);
   });
 });

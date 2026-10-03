@@ -9,9 +9,10 @@ import { CartaoMetas } from '@/features/nutricao/components/CartaoMetas';
 import { calcularMetaAguaMl, primeiroNome } from '@/features/perfil/calculos';
 import { CartaoImc } from '@/features/perfil/components/CartaoImc';
 import { usePerfilStore } from '@/features/perfil/store';
+import { CartaoTreinoHoje } from '@/features/treinos/components/CartaoTreinoHoje';
 import { dataPorExtenso } from '@/shared/lib/data';
 import { espaco } from '@/shared/theme/tokens';
-import { Cartao, Marcado, Tela, Texto } from '@/shared/ui';
+import { Marcado, Tela, Texto } from '@/shared/ui';
 
 export default function Hoje() {
   const perfil = usePerfilStore((state) => state.perfil);
@@ -44,12 +45,7 @@ export default function Hoje() {
       <View style={estilos.linha}>
         <CartaoImc perfil={perfil} style={estilos.metade} />
 
-        <Cartao titulo="Treino de hoje" variante="tracejado" style={estilos.metade}>
-          <Texto variante="subtitulo">Em breve</Texto>
-          <Texto variante="legenda" secundario>
-            Monte seus treinos e marque o que já fez.
-          </Texto>
-        </Cartao>
+        <CartaoTreinoHoje style={estilos.metade} />
       </View>
 
       <CartaoSemana metaMl={metaAguaMl} />

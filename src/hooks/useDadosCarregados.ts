@@ -4,9 +4,16 @@ import { useAjustesStore } from '@/features/ajustes/store';
 import { useDietaStore } from '@/features/dieta/store';
 import { useHidratacaoStore } from '@/features/hidratacao/store';
 import { usePerfilStore } from '@/features/perfil/store';
+import { useTreinosStore } from '@/features/treinos/store';
 
 // Todas as stores que salvam no aparelho entram nesta lista
-const STORES_PERSISTIDAS = [usePerfilStore, useHidratacaoStore, useDietaStore, useAjustesStore];
+const STORES_PERSISTIDAS = [
+  usePerfilStore,
+  useHidratacaoStore,
+  useDietaStore,
+  useAjustesStore,
+  useTreinosStore,
+];
 
 function todasCarregadas() {
   return STORES_PERSISTIDAS.every((store) => store.persist.hasHydrated());
