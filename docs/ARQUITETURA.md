@@ -2,16 +2,18 @@
 
 ## Stack
 
-| Peça         | Escolha                                          | Por quê                                                            |
-| ------------ | ------------------------------------------------ | ------------------------------------------------------------------ |
-| Framework    | **Expo (SDK 57) + React Native**                 | Um código só para Android e iPhone; testa no celular com o Expo Go |
-| Linguagem    | **TypeScript (strict)**                          | O editor avisa o erro antes do app quebrar                         |
-| Navegação    | **Expo Router**                                  | Cada arquivo em `src/app/` vira uma tela                           |
-| Estado       | **Zustand**                                      | Simples: uma "store" é só um objeto com dados e funções            |
-| Persistência | **AsyncStorage** (via `persist` do Zustand)      | Guarda os dados no aparelho, sem servidor                          |
-| Formulários  | **React Hook Form + Zod**                        | Zod define as regras uma vez; o formulário só exibe os erros       |
-| Testes       | **Jest + React Native Testing Library**          | Regras de negócio e componentes testados sem precisar de celular   |
-| Qualidade    | **ESLint, Prettier, `tsc`** e **GitHub Actions** | Todo PR é checado automaticamente                                  |
+| Peça         | Escolha                                                    | Por quê                                                            |
+| ------------ | ---------------------------------------------------------- | ------------------------------------------------------------------ |
+| Framework    | **Expo (SDK 57) + React Native**                           | Um código só para Android e iPhone; testa no celular com o Expo Go |
+| Linguagem    | **TypeScript (strict)**                                    | O editor avisa o erro antes do app quebrar                         |
+| Navegação    | **Expo Router**                                            | Cada arquivo em `src/app/` vira uma tela                           |
+| Estado       | **Zustand**                                                | Simples: uma "store" é só um objeto com dados e funções            |
+| Persistência | **AsyncStorage** (via `persist` do Zustand)                | Guarda os dados no aparelho, sem servidor                          |
+| Formulários  | **React Hook Form + Zod**                                  | Zod define as regras uma vez; o formulário só exibe os erros       |
+| Testes       | **Jest + React Native Testing Library**                    | Regras de negócio e componentes testados sem precisar de celular   |
+| Qualidade    | **ESLint, Prettier, `tsc`** e **GitHub Actions**           | Todo PR é checado automaticamente                                  |
+| IA           | **Claude (Anthropic)** numa **rota de API** do Expo Router | A chave fica no servidor; o app só chama `/api/dieta`              |
+| Fontes       | **Barlow Condensed + Barlow** (`@expo-google-fonts`)       | Identidade "Volt"; carregadas no `_layout` antes da splash sair    |
 
 ## Organização por feature
 
@@ -21,16 +23,21 @@ O código é separado **por assunto do app**, não por tipo de arquivo. Quem vai
 src/
 ├── app/                      ← SÓ telas e navegação (Expo Router)
 │   ├── _layout.tsx           ← decide: tem perfil? vai pro app. Não tem? onboarding
-│   ├── onboarding.tsx        ← criação do perfil
+│   ├── onboarding.tsx        ← criação do perfil (uma pergunta por tela)
 │   ├── editar-perfil.tsx     ← modal de edição
+│   ├── dieta.tsx             ← plano alimentar gerado pela IA
+│   ├── api/
+│   │   └── dieta+api.ts      ← ROTA DE SERVIDOR: recebe o perfil, chama o Claude
 │   └── (tabs)/
 │       ├── _layout.tsx       ← barra de abas
 │       ├── index.tsx         ← aba "Hoje"
-│       └── perfil.tsx        ← aba "Perfil"
+│       ├── perfil.tsx        ← aba "Perfil"
+│       └── ajustes.tsx       ← aba "Ajustes" (tema, água, privacidade)
 │
 ├── features/
 │   ├── perfil/
 │   │   ├── schema.ts         ← regras de validação do cadastro (Zod)
+│   │   ├── campos.ts         ← como cada campo aparece + etapas do onboarding
 │   │   ├── calculos.ts       ← IMC, meta de água
 │   │   ├── store.ts          ← onde o perfil fica guardado
 │   │   ├── types.ts
@@ -41,9 +48,20 @@ src/
 │   │   ├── store.ts
 │   │   ├── components/
 │   │   └── __tests__/
-│   └── dieta/
-│       ├── prompt.ts         ← texto que será enviado para a IA (futuro)
-│       └── __tests__/
+│   ├── nutricao/
+│   │   ├── calculos.ts       ← metabolismo basal, gasto diário, meta de calorias, macros
+│   │   └── components/
+│   ├── dieta/
+│   │   ├── contrato.ts       ← schemas Zod do pedido e do plano (app e servidor usam)
+│   │   ├── prompt.ts         ← instruções e dados enviados para a IA
+│   │   ├── servidor/         ← SÓ servidor: chamada ao Claude (nunca importe numa tela)
+│   │   ├── api.ts            ← o app chamando /api/dieta
+│   │   ├── store.ts          ← plano salvo no aparelho
+│   │   └── __tests__/
+│   └── ajustes/
+│       ├── logica.ts         ← tema, meta de água manual
+│       ├── apagarDados.ts    ← "Apagar meus dados": limpa TODAS as stores
+│       └── store.ts
 │
 ├── shared/                   ← o que qualquer feature pode usar
 │   ├── ui/                   ← Botão, Campo de texto, Card, Tela...
@@ -76,15 +94,29 @@ Login de verdade volta junto com o **backend** (ver roadmap), porque aí os dado
 
 ### Chave de IA nunca fica no app
 
-Qualquer chave colocada no código do app pode ser extraída do APK em minutos. A IA vai ser chamada **por um backend** (ex: função serverless), e o app só fala com esse backend.
+Qualquer chave colocada no código do app pode ser extraída do APK em minutos. Por isso a IA é chamada **pela rota de servidor** `src/app/api/dieta+api.ts` (Expo Router API Routes, `web.output: "server"` no `app.json`). O app só faz `fetch('/api/dieta')`.
+
+- A chave vem de `ANTHROPIC_API_KEY` no `.env` (ignorado pelo git; modelo em `.env.example`). **Nunca** use o prefixo `EXPO_PUBLIC_` nela.
+- O servidor **recalcula** as metas a partir do perfil e valida tudo com `dieta/contrato.ts`; não confia no que o app manda.
+- Modelo: `claude-opus-5-5` com structured outputs (o plano sempre volta no formato do schema) e fallback automático se o modelo recusar.
+- Em desenvolvimento, `npx expo start` já serve a rota. Em produção, falta: publicar com **EAS Hosting** (`npx expo export -p web` + `eas deploy`) e configurar o `origin` do plugin `expo-router` para os apps nativos acharem o servidor.
+
+### Design system "Volt"
+
+Tudo visual sai de `src/shared/theme/tokens.ts`. Regras que valem para qualquer tela nova:
+
+- O verde menta (`destaque`) é claro demais para ser texto em fundo claro. Use como **fundo** atrás de texto preto, ou sobre fundo escuro.
+- Fontes: cada peso é uma família (`familia.display`, `familia.corpo`...). **Não use `fontWeight`** com elas: no Android a fonte volta para a do sistema.
+- Textos do app: **sem emoji e sem travessão**. Use vírgula, ponto ou dois-pontos.
+- Tema: `useCores()` já respeita a escolha em Ajustes (automático, claro ou escuro).
 
 ### Dados de saúde
 
 Peso, gordura corporal e restrições são **dados sensíveis pela LGPD**. Por isso:
 
-- ficam só no aparelho (por enquanto);
-- a aba Perfil tem **"Apagar meus dados"**;
-- quando houver backend, precisa de termo de consentimento.
+- ficam no aparelho; só vão para o servidor (e para a Anthropic) quando a pessoa pede a dieta, e a aba Ajustes explica isso;
+- a aba Ajustes tem **"Apagar meus dados"** (`ajustes/apagarDados.ts`); toda store nova com dado do usuário precisa entrar lá;
+- antes de publicar nas lojas, precisa de termo de consentimento para o envio à IA.
 
 ### IMC para menores de 18
 
