@@ -99,7 +99,12 @@ Qualquer chave colocada no código do app pode ser extraída do APK em minutos. 
 - A chave vem de `ANTHROPIC_API_KEY` no `.env` (ignorado pelo git; modelo em `.env.example`). **Nunca** use o prefixo `EXPO_PUBLIC_` nela.
 - O servidor **recalcula** as metas a partir do perfil e valida tudo com `dieta/contrato.ts`; não confia no que o app manda.
 - Modelo: `claude-opus-5-5` com structured outputs (o plano sempre volta no formato do schema) e fallback automático se o modelo recusar.
-- Em desenvolvimento, `npx expo start` já serve a rota. Em produção, falta: publicar com **EAS Hosting** (`npx expo export -p web` + `eas deploy`) e configurar o `origin` do plugin `expo-router` para os apps nativos acharem o servidor.
+- Em desenvolvimento, `npx expo start` já serve as rotas (`/api/dieta` e `/api/coach`).
+- Em produção, o servidor roda no **EAS Hosting**: https://apexfit-app.expo.app (projeto `@edubertozzi/apexfit`). O `origin` do plugin `expo-router` no `app.json` aponta para lá, então os apps nativos de produção chamam esse servidor.
+- Publicar uma versão nova: `npm run deploy` (gera o build web com as rotas e promove para produção).
+- A chave em produção fica nas variáveis de ambiente do EAS, nunca no código:
+  `npx eas-cli env:create --name ANTHROPIC_API_KEY --value <chave> --environment production --visibility secret`
+  e depois `npm run deploy` de novo.
 
 ### Design system "Volt"
 

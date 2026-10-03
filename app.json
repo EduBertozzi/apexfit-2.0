@@ -24,7 +24,12 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "origin": "https://apexfit-app.expo.app"
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -37,6 +42,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1ac12e20-664b-4a3f-97f8-a18618deeff3"
+      }
+    },
+    "owner": "edubertozzi"
   }
 }
