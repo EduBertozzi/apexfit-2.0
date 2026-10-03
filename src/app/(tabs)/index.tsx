@@ -4,6 +4,7 @@ import { metaAguaEfetiva } from '@/features/ajustes/logica';
 import { useAjustesStore } from '@/features/ajustes/store';
 import { CartaoDieta } from '@/features/dieta/components/CartaoDieta';
 import { CartaoHidratacao } from '@/features/hidratacao/components/CartaoHidratacao';
+import { CartaoSemana } from '@/features/hidratacao/components/CartaoSemana';
 import { CartaoMetas } from '@/features/nutricao/components/CartaoMetas';
 import { calcularMetaAguaMl, primeiroNome } from '@/features/perfil/calculos';
 import { CartaoImc } from '@/features/perfil/components/CartaoImc';
@@ -20,6 +21,8 @@ export default function Hoje() {
     return null;
   }
 
+  const metaAguaMl = metaAguaEfetiva(calcularMetaAguaMl(perfil.pesoKg), metaManualMl);
+
   return (
     <Tela>
       <View>
@@ -32,7 +35,7 @@ export default function Hoje() {
         </Texto>
       </View>
 
-      <CartaoHidratacao metaMl={metaAguaEfetiva(calcularMetaAguaMl(perfil.pesoKg), metaManualMl)} />
+      <CartaoHidratacao metaMl={metaAguaMl} />
 
       <CartaoMetas perfil={perfil} />
 
@@ -48,6 +51,8 @@ export default function Hoje() {
           </Texto>
         </Cartao>
       </View>
+
+      <CartaoSemana metaMl={metaAguaMl} />
     </Tela>
   );
 }
