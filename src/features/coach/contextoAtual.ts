@@ -5,6 +5,13 @@ import { historicoDeDias, sequenciaAtual } from '@/features/hidratacao/historico
 import { totalDoDia } from '@/features/hidratacao/logica';
 import { useHidratacaoStore } from '@/features/hidratacao/store';
 import { calcularNecessidades } from '@/features/nutricao/calculos';
+import {
+  registrosRecentes,
+  variacaoPorExtenso,
+  variacao,
+  formatarKg,
+} from '@/features/peso/logica';
+import { usePesoStore } from '@/features/peso/store';
 import { calcularMetaAguaMl } from '@/features/perfil/calculos';
 import { usePerfilStore } from '@/features/perfil/store';
 import { chaveDoDia, dataPorExtenso } from '@/shared/lib/data';
@@ -41,6 +48,24 @@ export function contextoAtual(agora: Date = new Date()): string | null {
     },
     plano: useDietaStore.getState().plano,
     hoje: dataPorExtenso(agora),
-    extras: [],
+    extras: [blocoPeso(chaveDoDia(agora))],
   });
+}
+
+function blocoPeso(hoje: string): string {
+  const registros = usePesoStore.getState().registros;
+
+  if (registros.length === 0) {
+    return '## Peso\nNenhum registro de peso ainda (só o peso do perfil).';
+  }
+
+  const ultimos = registrosRecentes(registros, 5)
+    .map((registro) => `${registro.data}: ${formatarKg(registro.kg)}`)
+    .join('; ');
+
+  return [
+    '## Peso',
+    variacaoPorExtenso(variacao(registros, hoje, 30), 30),
+    `Últimos registros: ${ultimos}`,
+  ].join('\n');
 }
