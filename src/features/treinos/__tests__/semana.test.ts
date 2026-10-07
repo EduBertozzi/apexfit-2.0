@@ -176,7 +176,7 @@ describe('textos', () => {
     const resumo = resumoDaSemana(dias);
 
     expect(resumo).toMatch(
-      /^Sua semana: 1 com treino completo, 1 com treino parcial, 1 sem treino\./,
+      /^Sua semana: 1 com treino completo, 1 com treino parcial, 1 com pouco ou nada feito\./,
     );
     expect(resumo).toContain('domingo 4, treino completo');
     expect(resumo).toContain('quarta 7, hoje');

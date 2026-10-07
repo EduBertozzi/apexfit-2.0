@@ -156,6 +156,35 @@ export function rotuloDoBloco(bloco: BlocoDoTreino, concluidos: readonly string[
   return `${NOME_GRUPO[bloco.grupo]}, ${esquemaAcessivel(bloco.esquema)}, ${lista}${final}`;
 }
 
+/**
+ * Rótulo de cada exercício no card (é uma caixa de marcar):
+ * "agachamento, feito", "agachamento, marcar como feito". Com o treino de hoje
+ * já finalizado não dá mais para marcar: "agachamento, não feito".
+ */
+export function rotuloMarcarExercicio(nome: string, feito: boolean, podeMarcar = true): string {
+  const texto = nomeNoCard(nome);
+
+  if (feito) {
+    return `${texto}, feito`;
+  }
+
+  return podeMarcar ? `${texto}, marcar como feito` : `${texto}, não feito`;
+}
+
+/** Título do card para o leitor de tela: "braço, 3 séries de 12, 1 de 3 feitos". */
+export function rotuloTituloDoBloco(
+  bloco: BlocoDoTreino,
+  concluidos: readonly string[] = [],
+): string {
+  const feitos = bloco.exercicios.filter((exercicio) => concluidos.includes(exercicio.id)).length;
+  const total = bloco.exercicios.length;
+  const progresso = blocoCompleto(bloco, concluidos)
+    ? 'tudo feito'
+    : `${feitos} de ${total} feitos`;
+
+  return `${NOME_GRUPO[bloco.grupo]}, ${esquemaAcessivel(bloco.esquema)}, ${progresso}`;
+}
+
 /** Divide a lista em duas colunas (a da esquerda fica com o item a mais). */
 export function emDuasColunas<T>(itens: readonly T[]): [T[], T[]] {
   const meio = Math.ceil(itens.length / 2);

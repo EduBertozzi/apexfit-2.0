@@ -1,8 +1,12 @@
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
 
-import { espaco, familia, fonte } from '@/shared/theme/tokens';
+import { useVibrar } from '@/shared/lib/useVibrar';
+import { espaco, familia, fonte, raio } from '@/shared/theme/tokens';
 import { useCategorias, useCores } from '@/shared/theme/useCores';
-import { CartaoToque, ESPACO_DA_SETA } from '@/shared/ui/CartaoToque';
+import { ESPACO_DA_SETA, SetaCartao } from '@/shared/ui/SetaCartao';
+import { usePop } from '@/shared/ui/usePop';
 
 import {
   blocoCompleto,
@@ -10,7 +14,8 @@ import {
   limitarLista,
   NOME_GRUPO,
   nomeNoCard,
-  rotuloDoBloco,
+  rotuloMarcarExercicio,
+  rotuloTituloDoBloco,
   textoEsquema,
   type BlocoDoTreino,
 } from '../grupos';
@@ -20,86 +25,144 @@ import { IconeGrupo } from './IconeGrupo';
 /** Linhas de exercício por card: a grade fica alinhada e o resto vira "+N". */
 const MAXIMO_LINHAS = 3;
 const MAXIMO_INTEIRO = 4;
+/** Caixinha de marcar ao lado do nome. */
+const TAMANHO_CAIXA = 22;
 
 type Props = {
   bloco: BlocoDoTreino;
   /** Ids dos exercícios já marcados hoje. */
   concluidos: readonly string[];
-  onPress: () => void;
-  /** Card de largura toda (aquecimento): esquema na mesma linha do título e nomes em duas colunas. */
+  /** Seta do canto (e o "+N"): abre o treino de hoje. */
+  onAbrir: () => void;
+  /** Toque num exercício: marca ou desmarca direto da tela inicial. */
+  onAlternar: (exercicioId: string) => void;
+  /** Treino de hoje já finalizado: os nomes ficam só para ver. */
+  podeMarcar?: boolean;
+  /** Card de largura toda: esquema na mesma linha do título e nomes em duas colunas. */
   inteiro?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
-function NomeExercicio({
+/** Um exercício do card: caixa de marcar de verdade (toque marca e desmarca). */
+function LinhaExercicio({
   exercicio,
   feito,
-  alinhar = 'esquerda',
-  linhas = 1,
+  podeMarcar,
+  onAlternar,
 }: {
   exercicio: Exercicio;
   feito: boolean;
-  alinhar?: 'esquerda' | 'direita';
-  /** Card com poucos exercícios: deixa o nome quebrar em 2 linhas em vez de cortar. */
-  linhas?: number;
+  podeMarcar: boolean;
+  onAlternar: (exercicioId: string) => void;
 }) {
   const c = useCores();
+  const vibrar = useVibrar();
+  // "Pop" só ao marcar; desmarcar é silencioso
+  const pop = usePop(feito, feito);
 
   return (
-    <View style={[estilos.nomeLinha, alinhar === 'direita' && estilos.nomeDireita]}>
+    <Pressable
+      onPress={() => {
+        vibrar('leve');
+        onAlternar(exercicio.id);
+      }}
+      disabled={!podeMarcar}
+      accessibilityRole="checkbox"
+      accessibilityLabel={rotuloMarcarExercicio(exercicio.nome, feito, podeMarcar)}
+      accessibilityState={{ checked: feito, disabled: !podeMarcar }}
+      testID={`marcar-${exercicio.id}`}
+      style={({ pressed }) => [estilos.linha, pressed && estilos.linhaPressionada]}
+    >
+      <Animated.View
+        style={[
+          estilos.caixa,
+          feito
+            ? { backgroundColor: c.destaque, borderColor: c.destaque }
+            : { borderColor: c.textoSecundario },
+          pop,
+        ]}
+      >
+        {feito ? (
+          <MaterialCommunityIcons name="check-bold" size={14} color={c.textoSobreDestaque} />
+        ) : null}
+      </Animated.View>
       <Text
-        numberOfLines={linhas}
+        numberOfLines={2}
         ellipsizeMode="tail"
         maxFontSizeMultiplier={1.4}
         style={[
           estilos.nome,
           { color: feito ? c.textoSecundario : c.texto },
           feito && estilos.riscado,
-          alinhar === 'direita' && estilos.textoDireita,
-          estilos.encolher,
         ]}
       >
         {nomeNoCard(exercicio.nome)}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
-/** "+2 exercícios" quando a lista não cabe no card. */
-function Mais({
-  resto,
-  alinhar = 'esquerda',
-}: {
-  resto: number;
-  alinhar?: 'esquerda' | 'direita';
-}) {
+/** "+2 exercícios" quando a lista não cabe no card: abre o treino com a lista toda. */
+function Mais({ resto, onAbrir }: { resto: number; onAbrir: () => void }) {
   const c = useCores();
 
   if (resto === 0) {
     return null;
   }
 
+  const texto = resto === 1 ? '+1 exercício' : `+${resto} exercícios`;
+
   return (
-    <Text
-      numberOfLines={1}
-      maxFontSizeMultiplier={1.4}
-      style={[
-        estilos.nome,
-        { color: c.textoSecundario },
-        alinhar === 'direita' && estilos.textoDireita,
-      ]}
+    <Pressable
+      onPress={onAbrir}
+      accessibilityRole="button"
+      accessibilityLabel={`mais ${resto === 1 ? '1 exercício' : `${resto} exercícios`}, abrir o treino de hoje`}
+      style={({ pressed }) => [estilos.linha, pressed && estilos.linhaPressionada]}
     >
-      {resto === 1 ? '+1 exercício' : `+${resto} exercícios`}
-    </Text>
+      <Text
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.4}
+        style={[estilos.nome, { color: c.textoSecundario }]}
+      >
+        {texto}
+      </Text>
+    </Pressable>
   );
 }
 
-/** Card de um grupo do treino de hoje: ícone, nome e esquema na cor do grupo, e os exercícios. */
-export function CartaoGrupo({ bloco, concluidos, onPress, inteiro = false, style }: Props) {
+/**
+ * Card de um grupo do treino de hoje: ícone, nome e esquema na cor do grupo, e
+ * cada exercício como caixa de marcar. A seta redonda do canto abre o treino.
+ */
+export function CartaoGrupo({
+  bloco,
+  concluidos,
+  onAbrir,
+  onAlternar,
+  podeMarcar = true,
+  inteiro = false,
+  style,
+}: Props) {
+  const c = useCores();
   const cat = useCategorias();
   const cor = cat.texto[bloco.grupo];
   const feito = (exercicio: Exercicio) => concluidos.includes(exercicio.id);
   const completo = blocoCompleto(bloco, concluidos);
+  const { visiveis, resto } = limitarLista(
+    bloco.exercicios,
+    inteiro ? MAXIMO_INTEIRO : MAXIMO_LINHAS,
+  );
+
+  const linha = (exercicio: Exercicio) => (
+    <LinhaExercicio
+      key={exercicio.id}
+      exercicio={exercicio}
+      feito={feito(exercicio)}
+      podeMarcar={podeMarcar}
+      onAlternar={onAlternar}
+    />
+  );
+
   const esquema = (
     <Text maxFontSizeMultiplier={1.4} style={[estilos.esquema, { color: cor }]}>
       {textoEsquema(bloco.esquema)}
@@ -119,81 +182,76 @@ export function CartaoGrupo({ bloco, concluidos, onPress, inteiro = false, style
     </View>
   );
 
-  if (inteiro) {
-    const { visiveis, resto } = limitarLista(bloco.exercicios, MAXIMO_INTEIRO);
-    const [esquerda, direita] = emDuasColunas(resto > 0 ? [...visiveis, null] : visiveis);
-
-    return (
-      <CartaoToque
-        rotuloAcessivel={rotuloDoBloco(bloco, concluidos)}
-        dica="Abre o treino de hoje"
-        onPress={onPress}
-        concluido={completo}
-        style={style}
-        testID={`grupo-${bloco.grupo}`}
-      >
-        <View style={[estilos.linhaTopo, { marginRight: ESPACO_DA_SETA + espaco.sm }]}>
-          {titulo}
-          {esquema}
-        </View>
-        <View style={estilos.colunas}>
-          <View style={estilos.coluna}>
-            {esquerda.map((exercicio) =>
-              exercicio ? (
-                <NomeExercicio key={exercicio.id} exercicio={exercicio} feito={feito(exercicio)} />
-              ) : (
-                <Mais key="mais" resto={resto} />
-              ),
-            )}
-          </View>
-          <View style={estilos.coluna}>
-            {direita.map((exercicio) =>
-              exercicio ? (
-                <NomeExercicio
-                  key={exercicio.id}
-                  exercicio={exercicio}
-                  feito={feito(exercicio)}
-                  alinhar="direita"
-                />
-              ) : (
-                <Mais key="mais" resto={resto} alinhar="direita" />
-              ),
-            )}
-          </View>
-        </View>
-      </CartaoToque>
-    );
-  }
-
-  const { visiveis, resto } = limitarLista(bloco.exercicios, MAXIMO_LINHAS);
+  const [esquerda, direita] = emDuasColunas<Exercicio | null>(
+    resto > 0 ? [...visiveis, null] : visiveis,
+  );
 
   return (
-    <CartaoToque
-      rotuloAcessivel={rotuloDoBloco(bloco, concluidos)}
-      dica="Abre o treino de hoje"
-      onPress={onPress}
-      concluido={completo}
-      style={style}
+    <View
+      style={[
+        estilos.cartao,
+        { backgroundColor: c.superficie },
+        completo && estilos.concluido,
+        style,
+      ]}
       testID={`grupo-${bloco.grupo}`}
     >
-      <View style={{ marginRight: ESPACO_DA_SETA }}>{titulo}</View>
-      {esquema}
-      <View style={estilos.lista}>
-        {visiveis.map((exercicio) => (
-          <NomeExercicio
-            key={exercicio.id}
-            exercicio={exercicio}
-            feito={feito(exercicio)}
-            linhas={visiveis.length <= 2 ? 2 : 1}
-          />
-        ))}
-        <Mais resto={resto} />
+      {/* O título vira uma frase só para o leitor de tela */}
+      <View
+        accessible
+        accessibilityRole="header"
+        accessibilityLabel={rotuloTituloDoBloco(bloco, concluidos)}
+        style={[
+          inteiro ? estilos.linhaTopo : estilos.cabecalho,
+          { marginRight: ESPACO_DA_SETA + (inteiro ? espaco.sm : 0) },
+        ]}
+      >
+        {titulo}
+        {esquema}
       </View>
-    </CartaoToque>
+
+      {inteiro ? (
+        <View style={estilos.colunas}>
+          {[esquerda, direita].map((coluna, indice) => (
+            <View key={indice} style={estilos.coluna}>
+              {coluna.map((exercicio) =>
+                exercicio ? linha(exercicio) : <Mais key="mais" resto={resto} onAbrir={onAbrir} />,
+              )}
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={estilos.lista}>
+          {visiveis.map(linha)}
+          <Mais resto={resto} onAbrir={onAbrir} />
+        </View>
+      )}
+
+      <SetaCartao
+        onPress={onAbrir}
+        concluido={completo}
+        rotulo={`abrir o treino de hoje, ${NOME_GRUPO[bloco.grupo]}`}
+        testID={`abrir-${bloco.grupo}`}
+      />
+    </View>
   );
 }
 
 const estilos = StyleSheet.create({
+  cartao: {
+    borderRadius: raio.lg,
+    borderCurve: 'continuous',
+    padding: espaco.md,
+    paddingBottom: espaco.sm,
+    gap: espaco.xs,
+    minHeight: 96,
+  },
+  concluido: {
+    opacity: 0.6,
+  },
+  cabecalho: {
+    gap: 2,
+  },
   linhaTopo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -206,7 +264,7 @@ const estilos = StyleSheet.create({
     gap: espaco.xs,
     flexShrink: 1,
   },
-  // Um pouco menor que o subtítulo: "abdominal" precisa caber ao lado do ícone e da seta
+  // Um pouco menor que o subtítulo: "abdômen" precisa caber ao lado do ícone e da seta
   nomeGrupo: {
     fontFamily: familia.displayLeve,
     fontSize: 19,
@@ -219,35 +277,41 @@ const estilos = StyleSheet.create({
     flexShrink: 1,
   },
   lista: {
-    marginTop: espaco.sm,
-    gap: 2,
+    marginTop: espaco.xs,
   },
   colunas: {
     flexDirection: 'row',
     gap: espaco.md,
-    marginTop: espaco.sm,
+    marginTop: espaco.xs,
   },
   coluna: {
     flex: 1,
-    gap: 2,
   },
-  nomeLinha: {
+  // Cada exercício tem 44 px de altura: dá para acertar com o dedo
+  linha: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espaco.xs,
+    gap: espaco.sm,
+    minHeight: 44,
   },
-  nomeDireita: {
-    justifyContent: 'flex-end',
+  linhaPressionada: {
+    opacity: 0.6,
+  },
+  caixa: {
+    width: TAMANHO_CAIXA,
+    height: TAMANHO_CAIXA,
+    borderRadius: TAMANHO_CAIXA / 2,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nome: {
+    flexShrink: 1,
     fontFamily: familia.corpo,
-    fontSize: fonte.corpo + 1,
-    lineHeight: (fonte.corpo + 1) * 1.3,
+    fontSize: fonte.corpo - 1,
+    lineHeight: (fonte.corpo - 1) * 1.25,
   },
   riscado: {
     textDecorationLine: 'line-through',
-  },
-  textoDireita: {
-    textAlign: 'right',
   },
 });

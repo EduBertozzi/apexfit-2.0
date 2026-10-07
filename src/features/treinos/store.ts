@@ -16,6 +16,7 @@ import {
   finalizarSessao,
   iniciarSessao,
   limparSessoesAntigas,
+  marcarExercicioNoDia,
   moverExercicio,
   moverTreino,
   proximoNomeDeTreino,
@@ -50,6 +51,8 @@ type TreinosState = {
   /** Começa ou retoma o treino de hoje. */
   comecarTreino: (treinoId: string, data?: Date) => void;
   alternarExercicio: (exercicioId: string, data?: Date) => void;
+  /** Marca da tela inicial: começa o treino de hoje sozinho se preciso. */
+  marcarExercicioDeHoje: (treinoId: string, exercicioId: string, data?: Date) => void;
   /** Devolve true se finalizou (precisa de pelo menos um exercício marcado). */
   finalizarTreino: (data?: Date) => boolean;
 
@@ -110,6 +113,13 @@ export const useTreinosStore = create<TreinosState>()(
         if (sessao) {
           set({ sessoes: alternarExercicio(get().sessoes, sessao.id, exercicioId) });
         }
+      },
+
+      marcarExercicioDeHoje: (treinoId, exercicioId, data = new Date()) => {
+        const hoje = chaveDoDia(data);
+        const sessoes = marcarExercicioNoDia(get().sessoes, treinoId, exercicioId, hoje);
+
+        set({ sessoes: limparSessoesAntigas(sessoes, hoje) });
       },
 
       finalizarTreino: (data = new Date()) => {

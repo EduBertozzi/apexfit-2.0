@@ -1,9 +1,9 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { espaco, raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
+import { ESPACO_DA_SETA, SetaCartao } from './SetaCartao';
 
 type Props = {
   /** Frase completa lida pelo leitor de tela, ex: "braço, 3 séries de 12, remada alta". */
@@ -20,8 +20,8 @@ type Props = {
   testID?: string;
 };
 
-/** Tamanho da seta: quem monta o card deixa este espaço livre à direita do título. */
-export const ESPACO_DA_SETA = 24;
+/** Quem monta o card deixa este espaço livre à direita do título (embaixo fica a seta). */
+export { ESPACO_DA_SETA };
 
 /**
  * Card "bento" que é um botão de verdade: o card inteiro é a área de toque
@@ -55,15 +55,7 @@ export function CartaoToque({
       ]}
     >
       {children}
-      {seta ? (
-        <View style={estilos.seta} pointerEvents="none">
-          <MaterialCommunityIcons
-            name={concluido ? 'check' : 'arrow-top-right'}
-            size={24}
-            color={c.texto}
-          />
-        </View>
-      ) : null}
+      {seta ? <SetaCartao concluido={concluido} /> : null}
     </Pressable>
   );
 }
@@ -82,10 +74,5 @@ const estilos = StyleSheet.create({
   pressionado: {
     opacity: 0.8,
     transform: [{ scale: 0.98 }],
-  },
-  seta: {
-    position: 'absolute',
-    top: espaco.md - 2,
-    right: espaco.md - 2,
   },
 });

@@ -1,105 +1,92 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { textoDietaInicio } from '@/features/dieta/logica';
+import { useDietaStore } from '@/features/dieta/store';
 import type { Perfil } from '@/features/perfil/types';
-import { formatarNumero } from '@/shared/lib/numero';
-import { espaco, familia, fonte } from '@/shared/theme/tokens';
-import { useCores } from '@/shared/theme/useCores';
+import { espaco, familia, fonte, raio } from '@/shared/theme/tokens';
+import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { CartaoToque, ESPACO_DA_SETA } from '@/shared/ui/CartaoToque';
 
 import { calcularNecessidades } from '../calculos';
 
-/** Calorias do dia na grade da tela inicial. Perfil incompleto: convida a completar. */
-export function CartaoCaloriasInicio({ perfil }: { perfil: Perfil }) {
+/**
+ * Card de dieta da tela inicial (junta o antigo card de calorias): com plano,
+ * "5 refeições · 2.970 kcal"; sem plano, a meta do dia e "montar dieta".
+ * Perfil sem dados para a meta: leva para completar o perfil.
+ */
+export function CartaoDietaInicio({
+  perfil,
+  style,
+}: {
+  perfil: Perfil;
+  style?: StyleProp<ViewStyle>;
+}) {
   const c = useCores();
-  const necessidades = calcularNecessidades(perfil);
-
-  if (!necessidades) {
-    return (
-      <CartaoToque
-        rotuloAcessivel="calorias: complete o perfil para o app calcular sua meta"
-        dica="Abre a edição do perfil"
-        onPress={() => router.push('/editar-perfil')}
-        style={estilos.cartao}
-      >
-        <MaterialCommunityIcons name="fire" size={32} color={c.texto} />
-        <Text style={[estilos.titulo, { color: c.texto, marginRight: ESPACO_DA_SETA }]}>
-          complete o perfil
-        </Text>
-        <Text style={[estilos.legenda, { color: c.textoSecundario }]}>para ver suas calorias</Text>
-      </CartaoToque>
-    );
-  }
-
-  const meta = formatarNumero(necessidades.metaCalorias);
+  const cat = useCategorias();
+  const plano = useDietaStore((state) => state.plano);
+  const meta = calcularNecessidades(perfil)?.metaCalorias ?? null;
+  const texto = textoDietaInicio(plano, meta);
 
   return (
     <CartaoToque
-      rotuloAcessivel={`calorias: meta de ${meta} quilocalorias por dia`}
-      dica="Abre o perfil com as suas metas"
-      onPress={() => router.push('/perfil')}
-      style={estilos.cartao}
+      rotuloAcessivel={texto.acessivel}
+      dica={texto.dicaToque}
+      onPress={() => router.push(texto.destino)}
+      style={[estilos.cartao, style]}
+      testID="cartao-dieta"
     >
-      <MaterialCommunityIcons name="fire" size={32} color={c.texto} />
-      <View style={estilos.base}>
-        <View style={estilos.valores}>
-          <Text maxFontSizeMultiplier={1.3} style={[estilos.numero, { color: c.texto }]}>
-            {meta}
-          </Text>
-          <Text maxFontSizeMultiplier={1.3} style={[estilos.legenda, { color: c.textoSecundario }]}>
-            {' kcal'}
+      {/* Amarelo da dieta, igual ao chip "dieta" da central de IA */}
+      <MaterialCommunityIcons name="silverware-fork-knife" size={36} color={cat.texto.peito} />
+      <View style={estilos.textos}>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={[estilos.titulo, { color: c.texto, marginRight: ESPACO_DA_SETA }]}
+        >
+          dieta
+        </Text>
+        <Text maxFontSizeMultiplier={1.3} style={[estilos.linha, { color: c.textoSecundario }]}>
+          {texto.linha}
+        </Text>
+      </View>
+      {texto.dica ? (
+        <View style={[estilos.dica, { backgroundColor: cat.fundo.peito }]}>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={[estilos.textoDica, { color: c.textoSobreDestaque }]}
+          >
+            {texto.dica}
           </Text>
         </View>
-        <Text style={[estilos.legenda, { color: c.textoSecundario }]}>meta do dia</Text>
-      </View>
-    </CartaoToque>
-  );
-}
-
-/** Atalho para a dieta na tela inicial. */
-export function CartaoDietaInicio() {
-  const c = useCores();
-
-  return (
-    <CartaoToque
-      rotuloAcessivel="dieta: ver seu plano de refeições"
-      dica="Abre a dieta"
-      onPress={() => router.push('/dieta')}
-      style={estilos.cartao}
-    >
-      <MaterialCommunityIcons name="silverware-fork-knife" size={32} color={c.texto} />
-      <View style={estilos.base}>
-        <Text style={[estilos.titulo, { color: c.texto }]}>dieta</Text>
-        <Text style={[estilos.legenda, { color: c.textoSecundario }]}>ver dieta</Text>
-      </View>
+      ) : null}
     </CartaoToque>
   );
 }
 
 const estilos = StyleSheet.create({
   cartao: {
-    flex: 1,
-    justifyContent: 'space-between',
+    gap: espaco.sm,
   },
-  base: {
-    marginTop: espaco.sm,
-  },
-  valores: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    flexWrap: 'wrap',
-  },
-  numero: {
-    fontFamily: familia.display,
-    fontSize: 30,
+  textos: {
+    gap: 2,
   },
   titulo: {
-    fontFamily: familia.displayLeve,
-    fontSize: fonte.subtitulo,
+    fontFamily: familia.display,
+    fontSize: fonte.subtitulo + 3,
   },
-  legenda: {
+  linha: {
     fontFamily: familia.corpo,
     fontSize: fonte.rotulo,
+  },
+  dica: {
+    alignSelf: 'flex-start',
+    borderRadius: raio.total,
+    paddingHorizontal: espaco.sm + 2,
+    paddingVertical: 2,
+  },
+  textoDica: {
+    fontFamily: familia.corpoForte,
+    fontSize: fonte.legenda,
   },
 });

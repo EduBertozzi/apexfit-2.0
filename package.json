@@ -80,6 +80,7 @@
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/.claude/"
-    ]
+    ],
+    "resolver": "react-native-worklets/jest/resolver.js"
   }
 }
