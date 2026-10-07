@@ -4,6 +4,9 @@ import { persist } from 'zustand/middleware';
 import type { PlanoDieta } from '@/features/dieta/contrato';
 import { montarDietaPorRegras } from '@/features/dieta/regras';
 import { useDietaStore, type OrigemPlano } from '@/features/dieta/store';
+import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
+import { paraDadosTreino } from '@/features/treinos/ia';
+import { useTreinosStore } from '@/features/treinos/store';
 import { armazenamento } from '@/shared/lib/armazenamento';
 import { SemIa } from '@/shared/lib/semIa';
 
@@ -16,6 +19,8 @@ export type MensagemChat = MensagemCoach & {
   id: string;
   /** O coach mexeu na dieta nesta resposta. */
   dietaAtualizada?: boolean;
+  /** O coach trocou os treinos nesta resposta. */
+  treinosAtualizados?: boolean;
   /** Resposta do modo demonstração (sem IA). */
   demo?: boolean;
 };
@@ -58,10 +63,20 @@ export const useCoachStore = create<CoachState>()(
         useDietaStore.setState({
           plano,
           origem,
+          provedor: null,
           geradoEm: new Date().toISOString(),
           erro: null,
         });
         atualizarResposta((m) => ({ ...m, dietaAtualizada: true }));
+      }
+
+      function salvarTreinos(resultado: RespostaTreinosIa) {
+        const dados = paraDadosTreino(resultado);
+
+        if (dados.length > 0) {
+          useTreinosStore.getState().substituirTreinos(dados);
+          atualizarResposta((m) => ({ ...m, treinosAtualizados: true }));
+        }
       }
 
       /** Sem IA: responde offline com o motor de demonstração, palavra por palavra. */
@@ -122,6 +137,8 @@ export const useCoachStore = create<CoachState>()(
                   atualizarResposta((m) => ({ ...m, texto: m.texto + evento.texto }));
                 } else if (evento.tipo === 'dieta') {
                   salvarDieta(evento.plano, 'ia');
+                } else if (evento.tipo === 'treinos') {
+                  salvarTreinos(evento.resultado);
                 } else if (evento.tipo === 'erro') {
                   set({ erro: evento.mensagem });
                 }

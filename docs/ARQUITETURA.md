@@ -2,18 +2,18 @@
 
 ## Stack
 
-| Peça         | Escolha                                                    | Por quê                                                            |
-| ------------ | ---------------------------------------------------------- | ------------------------------------------------------------------ |
-| Framework    | **Expo (SDK 57) + React Native**                           | Um código só para Android e iPhone; testa no celular com o Expo Go |
-| Linguagem    | **TypeScript (strict)**                                    | O editor avisa o erro antes do app quebrar                         |
-| Navegação    | **Expo Router**                                            | Cada arquivo em `src/app/` vira uma tela                           |
-| Estado       | **Zustand**                                                | Simples: uma "store" é só um objeto com dados e funções            |
-| Persistência | **AsyncStorage** (via `persist` do Zustand)                | Guarda os dados no aparelho, sem servidor                          |
-| Formulários  | **React Hook Form + Zod**                                  | Zod define as regras uma vez; o formulário só exibe os erros       |
-| Testes       | **Jest + React Native Testing Library**                    | Regras de negócio e componentes testados sem precisar de celular   |
-| Qualidade    | **ESLint, Prettier, `tsc`** e **GitHub Actions**           | Todo PR é checado automaticamente                                  |
-| IA           | **Claude (Anthropic)** numa **rota de API** do Expo Router | A chave fica no servidor; o app só chama `/api/dieta`              |
-| Fontes       | **Lexend** (`@expo-google-fonts`)                          | Identidade "Bento"; carregada no `_layout` antes da splash sair    |
+| Peça         | Escolha                                                         | Por quê                                                            |
+| ------------ | --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Framework    | **Expo (SDK 57) + React Native**                                | Um código só para Android e iPhone; testa no celular com o Expo Go |
+| Linguagem    | **TypeScript (strict)**                                         | O editor avisa o erro antes do app quebrar                         |
+| Navegação    | **Expo Router**                                                 | Cada arquivo em `src/app/` vira uma tela                           |
+| Estado       | **Zustand**                                                     | Simples: uma "store" é só um objeto com dados e funções            |
+| Persistência | **AsyncStorage** (via `persist` do Zustand)                     | Guarda os dados no aparelho, sem servidor                          |
+| Formulários  | **React Hook Form + Zod**                                       | Zod define as regras uma vez; o formulário só exibe os erros       |
+| Testes       | **Jest + React Native Testing Library**                         | Regras de negócio e componentes testados sem precisar de celular   |
+| Qualidade    | **ESLint, Prettier, `tsc`** e **GitHub Actions**                | Todo PR é checado automaticamente                                  |
+| IA           | **Claude, OpenAI ou Ollama** em **rotas de API** do Expo Router | A chave fica no servidor; o app só chama `/api/*`                  |
+| Fontes       | **Lexend** (`@expo-google-fonts`)                               | Identidade "Bento"; carregada no `_layout` antes da splash sair    |
 
 ## Organização por feature
 
@@ -59,18 +59,22 @@ src/
 │   ├── dieta/
 │   │   ├── contrato.ts       ← schemas Zod do pedido e do plano (app e servidor usam)
 │   │   ├── prompt.ts         ← instruções e dados enviados para a IA
-│   │   ├── servidor/         ← SÓ servidor: chamada ao Claude (nunca importe numa tela)
+│   │   ├── servidor/         ← SÓ servidor: chamada à IA (nunca importe numa tela)
 │   │   ├── api.ts            ← o app chamando /api/dieta
 │   │   ├── store.ts          ← plano salvo no aparelho
 │   │   └── __tests__/
 │   ├── coach/
 │   │   ├── contexto.ts       ← resumo do usuário (perfil, metas, água, peso, treinos, dieta) para a IA
 │   │   ├── contextoAtual.ts  ← junta o estado das stores; feature nova entra em `extras`
-│   │   ├── servidor/         ← SÓ servidor: conversa em streaming + ferramenta atualizar_dieta
+│   │   ├── servidor/         ← SÓ servidor: conversa em streaming + ferramentas atualizar_dieta e atualizar_treinos
 │   │   ├── api.ts, store.ts  ← o app lendo o streaming de /api/coach; conversa salva
 │   │   └── components/ChatCoach.tsx
 │   ├── peso/                 ← registros diários, tendência de 7 dias, gráfico SVG
 │   ├── treinos/              ← treinos A/B/C, modelos prontos, sessão do dia, frequência
+│   │   ├── contratoIa.ts, promptIa.ts ← treinos montados pela IA (/api/treino)
+│   │   ├── regrasIa.ts       ← os mesmos treinos sem IA (modo demonstração)
+│   │   └── ia.ts, storeIa.ts ← resposta da IA vira treinos salvos (com o grupo de cada exercício)
+│   ├── ia/                   ← textos da central de IA (aba do cérebro)
 │   ├── lembretes/            ← lembretes de água (notificações locais; só notificacoes.ts toca no Expo)
 │   └── ajustes/
 │       ├── logica.ts         ← tema, meta de água manual
@@ -108,27 +112,35 @@ Login de verdade volta junto com o **backend** (ver roadmap), porque aí os dado
 
 ### Chave de IA nunca fica no app
 
-Qualquer chave colocada no código do app pode ser extraída do APK em minutos. Por isso a IA é chamada **pela rota de servidor** `src/app/api/dieta+api.ts` (Expo Router API Routes, `web.output: "server"` no `app.json`). O app só faz `fetch('/api/dieta')`.
+Qualquer chave colocada no código do app pode ser extraída do APK em minutos. Por isso a IA é chamada **pelas rotas de servidor** `src/app/api/` (`dieta`, `coach` e `treino`; Expo Router API Routes, `web.output: "server"` no `app.json`). O app só faz `fetch('/api/...')`.
 
-- A chave vem de `ANTHROPIC_API_KEY` no `.env` (ignorado pelo git; modelo em `.env.example`). **Nunca** use o prefixo `EXPO_PUBLIC_` nela.
+- As chaves vêm de `ANTHROPIC_API_KEY` ou `OPENAI_API_KEY` no `.env` (ignorado pelo git; modelo em `.env.example`). **Nunca** use o prefixo `EXPO_PUBLIC_` nelas.
 - O servidor **recalcula** as metas a partir do perfil e valida tudo com `dieta/contrato.ts`; não confia no que o app manda.
-- Modelo: `claude-opus-5-5` com structured outputs (o plano sempre volta no formato do schema) e fallback automático se o modelo recusar.
+- Claude: `claude-opus-5-5` com structured outputs (o plano sempre volta no formato do schema) e fallback automático se o modelo recusar.
+- OpenAI: `src/shared/servidor/openai.ts`, `fetch` simples na API de Chat Completions, sempre em streaming (o servidor do Expo derruba conexão parada por ~30 s). Structured outputs em modo estrito (`shared/servidor/esquemaEstrito.ts` converte os schemas zod) e function calling no coach. Modelo padrão `gpt-6-luna`; troque com `OPENAI_MODELO`.
 - Em desenvolvimento, `npx expo start` já serve as rotas (`/api/dieta` e `/api/coach`).
 - Em produção, o servidor roda no **EAS Hosting**: https://apexfit-app.expo.app (projeto `@edubertozzi/apexfit`). O `origin` do plugin `expo-router` no `app.json` aponta para lá, então os apps nativos de produção chamam esse servidor.
 - Publicar uma versão nova: `npm run deploy` (gera o build web com as rotas e promove para produção).
-- A chave em produção fica nas variáveis de ambiente do EAS, nunca no código:
-  `npx eas-cli env:create --name ANTHROPIC_API_KEY --value <chave> --environment production --visibility secret`
-  e depois `npm run deploy` de novo.
+- A chave em produção fica nas variáveis de ambiente do EAS, nunca no código. Para a OpenAI (a que a turma usa):
+  `npx eas-cli env:create --name OPENAI_API_KEY --value <chave> --environment production --visibility secret`
+  e depois `npm run deploy` de novo. Com isso a IA funciona no servidor publicado e a apresentação precisa só do celular Android.
+  (Para o Claude, o mesmo comando com `ANTHROPIC_API_KEY`.)
+- Para testar no computador: copie `.env.example` para `.env`, preencha `OPENAI_API_KEY=` e rode `npx expo start`.
 
-### IA sem custo: local primeiro, demonstração de reserva
+### Qual IA responde: ordem de escolha
 
-O app foi pensado para apresentar sem gastar nada. O servidor escolhe a IA na hora (`src/shared/servidor/provedor.ts`):
+O servidor escolhe a IA na hora (`src/shared/servidor/provedor.ts`), e as rotas devolvem `provedor` (`claude`, `openai` ou `local`) para a tela mostrar quem respondeu:
 
 1. **Claude**: só se existir `ANTHROPIC_API_KEY`. Sem chave, nunca é chamado e nunca cobra.
-2. **IA local (Ollama)**: grátis, roda no Mac que está com o `npx expo start`. Instalação: `brew install ollama`, `brew services start ollama`, `ollama pull qwen2.5:7b`. Modelos pequenos erram ao escrever o plano inteiro numa ferramenta, então o servidor reconhece o pedido de dieta (`coach/intencao.ts`) e gera o plano com o formato JSON travado pelo schema.
-3. **Nenhuma**: a rota responde `SEM_IA` e o app usa o **modo demonstração offline**: dieta por regras (`dieta/regras.ts`, tabela de alimentos e cardápios) e coach por intenções (`coach/demo.ts`), sempre com os dados reais do usuário. Também entra quando não há internet. As telas mostram "modo demonstração".
+2. **OpenAI**: só se existir `OPENAI_API_KEY`. É a opção para o servidor publicado.
+3. **IA local (Ollama)**: grátis, roda no Mac que está com o `npx expo start`. Instalação: `brew install ollama`, `brew services start ollama`, `ollama pull qwen2.5:7b`. Modelos pequenos erram ao escrever o plano inteiro numa ferramenta, então o servidor reconhece o pedido de dieta ou de treino (`coach/intencao.ts`) e gera o resultado com o formato JSON travado pelo schema. A OpenAI usa o mesmo caminho: no coach, as ferramentas `atualizar_dieta` e `atualizar_treinos` recebem só o pedido em uma frase e uma segunda chamada monta o plano ou os treinos (`coach/servidor/acoes.ts`).
+4. **Nenhuma**: a rota responde `SEM_IA` e o app usa o **modo demonstração offline**: dieta por regras (`dieta/regras.ts`, tabela de alimentos e cardápios), treinos por regras (`treinos/regrasIa.ts`, por dias, local e objetivo) e coach por intenções (`coach/demo.ts`), sempre com os dados reais do usuário. Também entra quando não há internet. As telas mostram "modo demonstração".
 
-O servidor publicado (EAS Hosting) não tem Ollama: lá, sem chave, vale o modo demonstração.
+O servidor publicado (EAS Hosting) não tem Ollama: lá vale a OpenAI (com a chave cadastrada no EAS) ou, sem chave, o modo demonstração.
+
+### Treinos montados pela IA
+
+Na aba do cérebro (`src/app/(tabs)/ia.tsx`) a pessoa escolhe dias por semana, academia ou casa e o tempo, e toca em "gerar treino". A rota `/api/treino` devolve uma sessão por dia ("Treino A", "B"...), cada exercício com o seu `grupo` (aquecimento, peito, costas... cardio), e o app troca os treinos salvos (`treinos/storeIa.ts` chama `substituirTreinos`). A tela inicial agrupa os exercícios nos cards por grupo. O histórico de treinos feitos fica. O coach também monta treinos pela ferramenta `atualizar_treinos`.
 
 ### Design system "Bento"
 
@@ -146,7 +158,7 @@ Tudo visual sai de `src/shared/theme/tokens.ts` (cores, `espaco`, `raio`, `famil
 
 Peso, gordura corporal e restrições são **dados sensíveis pela LGPD**. Por isso:
 
-- ficam no aparelho; só vão para o servidor (e para a Anthropic) quando a pessoa pede a dieta, e a aba Ajustes explica isso;
+- ficam no aparelho; só vão para o servidor (e para a IA escolhida: Anthropic ou OpenAI) quando a pessoa pede a dieta, os treinos ou fala com o coach, e a aba Ajustes explica isso;
 - a aba Ajustes tem **"Apagar meus dados"** (`ajustes/apagarDados.ts`); toda store nova com dado do usuário precisa entrar lá;
 - antes de publicar nas lojas, precisa de termo de consentimento para o envio à IA.
 

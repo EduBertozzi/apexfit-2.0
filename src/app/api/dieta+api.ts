@@ -4,11 +4,11 @@ import { pedidoDietaSchema } from '@/features/dieta/contrato';
 import { calcularNecessidades } from '@/features/nutricao/calculos';
 import { montarPromptDieta } from '@/features/dieta/prompt';
 import { gerarDieta } from '@/features/dieta/servidor/gerarDieta';
-import { gerarPlanoLocal } from '@/features/dieta/servidor/gerarDietaLocal';
+import { gerarPlanoComIa } from '@/features/dieta/servidor/gerarDietaLocal';
 import { ErroServidor } from '@/shared/servidor/claude';
 import { erroSemIa, escolherProvedor } from '@/shared/servidor/provedor';
 
-/** POST /api/dieta: recebe o perfil, devolve { plano }. Só repassa; a lógica fica na feature. */
+/** POST /api/dieta: recebe o perfil, devolve { plano, provedor }. Só repassa; a lógica fica na feature. */
 export async function POST(request: Request) {
   const pedido = pedidoDietaSchema.safeParse(await request.json().catch(() => null));
 
@@ -26,7 +26,8 @@ export async function POST(request: Request) {
     const plano =
       provedor === 'claude'
         ? await gerarDieta(pedido.data)
-        : await gerarPlanoLocal(
+        : await gerarPlanoComIa(
+            provedor,
             montarPromptDieta(pedido.data.perfil),
             calcularNecessidades(pedido.data.perfil)?.metaCalorias,
           );

@@ -26,8 +26,9 @@ import {
   treinosNaSemana,
   type Direcao,
 } from './logica';
+import { substituirTreinos } from './ia';
 import type { ModeloTreino } from './modelos';
-import type { DadosExercicio, Sessao, Treino } from './types';
+import type { DadosExercicio, DadosTreino, Sessao, Treino } from './types';
 
 type TreinosState = {
   treinos: Treino[];
@@ -50,6 +51,9 @@ type TreinosState = {
   alternarExercicio: (exercicioId: string, data?: Date) => void;
   /** Devolve true se finalizou (precisa de pelo menos um exercício marcado). */
   finalizarTreino: (data?: Date) => boolean;
+
+  /** Troca todos os treinos (ex: os montados pela IA). O histórico fica. */
+  substituirTreinos: (dados: DadosTreino[]) => void;
 
   apagarTudo: () => void;
 };
@@ -121,6 +125,8 @@ export const useTreinosStore = create<TreinosState>()(
 
         return finalizou && !sessao.finalizada;
       },
+
+      substituirTreinos: (dados) => set(substituirTreinos(get().sessoes, dados)),
 
       apagarTudo: () => set({ treinos: [], sessoes: [] }),
     }),

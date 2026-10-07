@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { planoDietaSchema } from '@/features/dieta/contrato';
+import { respostaTreinosIaSchema } from '@/features/treinos/contratoIa';
 
 /**
  * Contrato entre o app e a rota /api/coach.
@@ -41,6 +42,8 @@ export type PedidoCoach = z.infer<typeof pedidoCoachSchema>;
 export const eventoCoachSchema = z.discriminatedUnion('tipo', [
   z.object({ tipo: z.literal('texto'), texto: z.string() }),
   z.object({ tipo: z.literal('dieta'), plano: planoDietaSchema }),
+  /** O coach montou treinos novos: o app troca os treinos salvos. */
+  z.object({ tipo: z.literal('treinos'), resultado: respostaTreinosIaSchema }),
   z.object({ tipo: z.literal('erro'), mensagem: z.string() }),
   z.object({ tipo: z.literal('fim') }),
 ]);
