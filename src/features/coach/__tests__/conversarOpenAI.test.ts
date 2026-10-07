@@ -183,7 +183,7 @@ describe('prompt do coach com ferramentas por pedido', () => {
 
   it('confirmação dos treinos sem emoji nem travessão', () => {
     expect(confirmarTreinos(TREINOS)).toMatch(
-      /^Pronto! Montei 1 treino:\n- Treino A: Corpo todo \(2 exercícios\)/,
+      /^Pronto! Montei 1 treino:\n- treino A: corpo todo \(2 exercícios\)/,
     );
     expect(confirmarTreinos(TREINOS)).not.toMatch(/[–—]|\p{Extended_Pictographic}/u);
   });

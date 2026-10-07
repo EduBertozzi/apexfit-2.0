@@ -1,5 +1,5 @@
 import type { RespostaTreinosIa } from '../contratoIa';
-import { normalizarRepeticoes, paraDadosTreino, substituirTreinos } from '../ia';
+import { comUnidadeDeTempo, normalizarRepeticoes, paraDadosTreino, substituirTreinos } from '../ia';
 import { useTreinosStore } from '../store';
 import type { Sessao } from '../types';
 
@@ -91,5 +91,18 @@ describe('substituirTreinos', () => {
     expect(estado.treinos.map((treino) => treino.nome)).toEqual(['Treino A']);
     expect(estado.treinos[0].exercicios[1].grupo).toBe('peito');
     expect(estado.sessoes).toHaveLength(1);
+  });
+});
+
+describe('comUnidadeDeTempo', () => {
+  it('põe "min" no cardio e no aquecimento quando a observação fala em minutos', () => {
+    expect(comUnidadeDeTempo('8', 'cardio', '8 minutos em ritmo leve')).toBe('8 min');
+    expect(comUnidadeDeTempo('10', 'aquecimento', 'Faça 10 minutos')).toBe('10 min');
+  });
+
+  it('não mexe em repetições de força nem no que já tem unidade', () => {
+    expect(comUnidadeDeTempo('8', 'peito', '8 minutos de descanso total')).toBe('8');
+    expect(comUnidadeDeTempo('10', 'aquecimento', 'Polichinelos')).toBe('10');
+    expect(comUnidadeDeTempo('8 min', 'cardio', '8 minutos')).toBe('8 min');
   });
 });

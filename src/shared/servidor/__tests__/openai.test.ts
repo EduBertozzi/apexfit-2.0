@@ -3,6 +3,7 @@ import {
   chatOpenAI,
   chatOpenAIStream,
   corpoOpenAI,
+  esforcoDoPedido,
   esforcoOpenAI,
   MODELO_OPENAI_PADRAO,
   OPENAI_URL,
@@ -139,5 +140,35 @@ describe('chatOpenAIStream', () => {
     global.fetch = jest.fn().mockResolvedValue(respostaSse([{ recusa: 'Não posso.' }]));
 
     await expect(chatOpenAI({ messages: [] })).rejects.toMatchObject({ status: 422 });
+  });
+});
+
+describe('esforcoDoPedido', () => {
+  const salvo = process.env.OPENAI_ESFORCO;
+
+  beforeEach(() => {
+    delete process.env.OPENAI_ESFORCO;
+  });
+
+  afterAll(() => {
+    if (salvo === undefined) {
+      delete process.env.OPENAI_ESFORCO;
+    } else {
+      process.env.OPENAI_ESFORCO = salvo;
+    }
+  });
+
+  it('desliga o raciocínio no gpt-5.x só quando há ferramentas (chat do coach)', () => {
+    expect(esforcoDoPedido('gpt-5.6-luna', true)).toBe('none');
+    expect(esforcoDoPedido('gpt-5.6-luna', false)).toBeUndefined();
+  });
+
+  it('modelos antigos não recebem o campo', () => {
+    expect(esforcoDoPedido('gpt-4o-mini', true)).toBeUndefined();
+  });
+
+  it('OPENAI_ESFORCO manda mais que a regra', () => {
+    process.env.OPENAI_ESFORCO = 'low';
+    expect(esforcoDoPedido('gpt-5.6-luna', true)).toBe('low');
   });
 });

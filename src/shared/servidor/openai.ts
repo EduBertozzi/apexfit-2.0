@@ -85,9 +85,22 @@ type PedacoOpenAI = {
   error?: { message?: string };
 };
 
+/**
+ * Modelos de raciocínio (gpt-5.x e gpt-6) só aceitam ferramentas na Chat
+ * Completions com o raciocínio desligado. Só nesse caso desliga: dieta e
+ * treinos (sem ferramentas) continuam com o raciocínio, que melhora o plano.
+ */
+export function esforcoDoPedido(modelo: string, comFerramentas: boolean): string | undefined {
+  if (comFerramentas && /^gpt-(5|6)/.test(modelo) && process.env.OPENAI_ESFORCO === undefined) {
+    return 'none';
+  }
+
+  return esforcoOpenAI(modelo);
+}
+
 export function corpoOpenAI(pedido: PedidoOpenAI): Record<string, unknown> {
   const modelo = modeloOpenAI();
-  const esforco = esforcoOpenAI(modelo);
+  const esforco = esforcoDoPedido(modelo, Boolean(pedido.tools?.length));
 
   return {
     model: modelo,

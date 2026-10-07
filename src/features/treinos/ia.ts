@@ -38,6 +38,19 @@ export function normalizarRepeticoes(texto: string): string {
   return numeros.length > 0 ? String(numeros[0]) : REPETICOES_PADRAO;
 }
 
+/**
+ * A IA às vezes manda só "8" num exercício por tempo e explica "8 minutos" na
+ * observação. No card isso viraria "1x8"; aqui vira "8 min".
+ */
+export function comUnidadeDeTempo(repeticoes: string, grupo: string, observacao: string): string {
+  const porTempo = grupo === 'cardio' || grupo === 'aquecimento';
+  const soNumero = /^\d+$/.test(repeticoes.trim());
+
+  return porTempo && soNumero && /minuto/i.test(observacao)
+    ? `${repeticoes.trim()} min`
+    : repeticoes;
+}
+
 export function paraDadosTreino(resultado: RespostaTreinosIa): DadosTreino[] {
   return resultado.treinos
     .map((treino, indice): DadosTreino => {
@@ -57,7 +70,11 @@ export function paraDadosTreino(resultado: RespostaTreinosIa): DadosTreino[] {
               LIMITES.series.min,
               LIMITES.series.max,
             ),
-            repeticoes: normalizarRepeticoes(exercicio.repeticoes),
+            repeticoes: comUnidadeDeTempo(
+              normalizarRepeticoes(exercicio.repeticoes),
+              exercicio.grupo ?? inferirGrupo(nome),
+              observacao,
+            ),
             ...(observacao === '' ? {} : { observacao }),
           };
         });

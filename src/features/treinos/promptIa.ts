@@ -15,7 +15,7 @@ export const SISTEMA_TREINOS = [
   'Use nomes de exercícios como se fala em academia no Brasil (ex: Supino reto com barra, Puxada frontal, Leg press 45, Cadeira extensora).',
   'Em casa, use só peso do corpo, mochila com peso, garrafas de água, cadeira e sofá. Nada de máquinas nem barras.',
   'Séries e repetições realistas: 2 a 4 séries; força com 6 a 10 repetições, hipertrofia com 8 a 12, resistência e emagrecimento com 12 a 15.',
-  'Em repeticoes, escreva só um número ou uma faixa, como "10" ou "8 a 12". Em aquecimento e cardio, use 1 série e os minutos em repeticoes, e explique a duração na observação.',
+  'Em repeticoes, escreva só um número ou uma faixa, como "10" ou "8 a 12". Em exercícios por tempo (aquecimento ou cardio em aparelho, corrida, corda), use 1 série e escreva os minutos em repeticoes com a unidade, como "8 min".',
   'Respeite o tempo disponível: a quantidade de exercícios precisa caber na sessão.',
   'Respeite todas as restrições de saúde e lesões: troque exercícios que forçam a região e, se for o caso, diga no resumo para procurar um profissional.',
   'Se o usuário for menor de idade: nada de cargas altas, foco em técnica, repetições entre 12 e 15 e acompanhamento de um professor.',

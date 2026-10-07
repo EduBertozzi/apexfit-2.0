@@ -1,6 +1,7 @@
 import type { PlanoDieta } from '@/features/dieta/contrato';
 import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
 import { formatarNumero } from '@/shared/lib/numero';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 /**
  * A mensagem pede para criar ou mudar a dieta?
@@ -85,7 +86,7 @@ export function confirmarTreinos(resultado: RespostaTreinosIa): string {
     .map((treino) => {
       const quantidade = treino.exercicios.length;
 
-      return `- ${treino.nome}: ${treino.foco} (${quantidade} ${quantidade === 1 ? 'exercício' : 'exercícios'})`;
+      return `- ${minusculaInicial(treino.nome)}: ${minusculaInicial(treino.foco)} (${quantidade} ${quantidade === 1 ? 'exercício' : 'exercícios'})`;
     })
     .join('\n');
 
