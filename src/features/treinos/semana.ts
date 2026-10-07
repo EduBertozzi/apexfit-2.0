@@ -1,6 +1,6 @@
 import { chaveDoDia } from '@/shared/lib/data';
 
-import { progressoDaSessao } from './logica';
+import { progressoDaSessao, treinoDoDia } from './logica';
 import type { Sessao, Treino } from './types';
 import { minusculaInicial } from '@/shared/lib/texto';
 
@@ -11,8 +11,9 @@ import { minusculaInicial } from '@/shared/lib/texto';
  * - fraco: não treinou ou fez menos de 50% (vermelho)
  * - hoje: o dia de hoje (branco), qualquer que seja o progresso
  * - futuro: dias que ainda não chegaram (cinza)
+ * - descanso: dia que já passou, sem treino no plano semanal e sem treino feito (neutro)
  */
-export type EstadoDia = 'completo' | 'parcial' | 'fraco' | 'hoje' | 'futuro';
+export type EstadoDia = 'completo' | 'parcial' | 'fraco' | 'hoje' | 'futuro' | 'descanso';
 
 export type SiglaDia = 'dom' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sáb';
 
@@ -147,6 +148,15 @@ export function estadoPelaFracao(fracao: number | null): 'completo' | 'parcial' 
   return fracao >= 1 ? 'completo' : 'parcial';
 }
 
+/** O plano semanal manda descansar neste dia? (sem plano, nunca é descanso) */
+export function ehDescanso(
+  treinos: readonly Treino[],
+  sessoes: readonly Sessao[],
+  chave: string,
+): boolean {
+  return treinoDoDia(treinos, sessoes, chave).descanso;
+}
+
 /** Os 7 dias da semana atual, de domingo a sábado. */
 export function diasDaSemana(
   treinos: readonly Treino[],
@@ -160,8 +170,15 @@ export function diasDaSemana(
     const futuro = chave > hoje;
     const fracao = futuro ? null : fracaoDoDia(treinos, sessoes, chave);
     const detalhe = futuro ? null : detalheDoDia(treinos, sessoes, chave);
+    const descanso = fracao === null && ehDescanso(treinos, sessoes, chave);
     const estado: EstadoDia =
-      chave === hoje ? 'hoje' : futuro ? 'futuro' : estadoPelaFracao(fracao);
+      chave === hoje
+        ? 'hoje'
+        : futuro
+          ? 'futuro'
+          : descanso
+            ? 'descanso'
+            : estadoPelaFracao(fracao);
 
     return { chave, sigla, dia: Number(chave.slice(8)), estado, fracao, detalhe };
   });
@@ -177,13 +194,21 @@ export function sequenciaDeDias(
   hoje: string,
 ): number {
   const contou = (chave: string) => (fracaoDoDia(treinos, sessoes, chave) ?? 0) >= MINIMO_PARCIAL;
+  // Dia de descanso do plano não conta, mas também não quebra a sequência
+  const pulavel = (chave: string) =>
+    fracaoDoDia(treinos, sessoes, chave) === null && ehDescanso(treinos, sessoes, chave);
 
   let total = contou(hoje) ? 1 : 0;
   let dia = somarDias(hoje, -1);
 
   // Limite de segurança: o histórico guarda no máximo um ano
-  for (let n = 0; n < 400 && contou(dia); n++) {
-    total++;
+  for (let n = 0; n < 400; n++) {
+    if (contou(dia)) {
+      total++;
+    } else if (!pulavel(dia)) {
+      break;
+    }
+
     dia = somarDias(dia, -1);
   }
 
@@ -196,6 +221,7 @@ const DESCRICAO_ESTADO: Record<EstadoDia, string> = {
   fraco: 'pouco ou nada feito',
   hoje: 'hoje',
   futuro: 'ainda não chegou',
+  descanso: 'dia de descanso',
 };
 
 /** "quarta" */
@@ -211,6 +237,7 @@ export function resumoDaSemana(dias: readonly DiaDaSemana[]): string {
     `${contar('completo')} com treino completo`,
     `${contar('parcial')} com treino parcial`,
     `${contar('fraco')} com pouco ou nada feito`,
+    ...(contar('descanso') > 0 ? [`${contar('descanso')} de descanso`] : []),
   ];
   const detalhe = dias
     .map(
@@ -251,6 +278,10 @@ export function rotuloDoDia(dia: DiaDaSemana): string {
     return `${inicio}, ainda não chegou`;
   }
 
+  if (dia.estado === 'descanso') {
+    return `${inicio}, dia de descanso`;
+  }
+
   const prefixo = dia.estado === 'hoje' ? `${inicio}, hoje` : inicio;
 
   return dia.detalhe
@@ -269,8 +300,12 @@ export function resumoDoDia(dia: DiaDaSemana): string {
     return `${nome}: ainda não chegou`;
   }
 
+  if (dia.estado === 'descanso') {
+    return `${nome}: descanso`;
+  }
+
   if (!dia.detalhe) {
-    return dia.estado === 'hoje' ? `${nome}: ainda sem treino` : `${nome}: descanso`;
+    return dia.estado === 'hoje' ? `${nome}: ainda sem treino` : `${nome}: sem treino`;
   }
 
   const { treino, feitos, total } = dia.detalhe;

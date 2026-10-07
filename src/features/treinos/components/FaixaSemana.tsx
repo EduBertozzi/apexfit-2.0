@@ -19,12 +19,14 @@ const TAMANHO_CIRCULO = 32;
 
 type CoresDia = { fundo: string; rotulo: string; circulo: string; numero: string };
 
-function Legenda({ resumo }: { resumo: string }) {
+function Legenda({ resumo, comDescanso }: { resumo: string; comDescanso: boolean }) {
   const c = useCores();
   const itens = [
     { cor: semana.completo, texto: 'completo' },
     { cor: semana.parcial, texto: 'metade' },
     { cor: semana.fraco, texto: 'pouco ou nada' },
+    // Só aparece quando a semana tem dia de descanso no plano
+    ...(comDescanso ? [{ cor: c.superficieSecundaria, texto: 'descanso' }] : []),
   ];
 
   return (
@@ -76,6 +78,13 @@ export function FaixaSemana({ dias, resumo }: Props) {
       circulo: c.superficieSecundaria,
       numero: c.textoSecundario,
     },
+    // Descanso do plano: neutro, mas com número legível (o dia já passou)
+    descanso: {
+      fundo: c.superficieSecundaria,
+      rotulo: c.textoSecundario,
+      circulo: c.superficie,
+      numero: c.texto,
+    },
   };
 
   return (
@@ -124,7 +133,7 @@ export function FaixaSemana({ dias, resumo }: Props) {
         })}
       </View>
 
-      <Legenda resumo={resumo} />
+      <Legenda resumo={resumo} comDescanso={dias.some((dia) => dia.estado === 'descanso')} />
 
       {/* Hoje já tem o resumo embaixo do título; aqui só aparece o dia tocado */}
       {diaSelecionado && diaSelecionado.chave !== chaveDeHoje ? (

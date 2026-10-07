@@ -659,7 +659,8 @@ export function marcarExercicioNoDia(
 
 /** Dá para marcar exercícios na tela inicial? Só antes de finalizar o treino de hoje. */
 export function podeMarcarNoInicio(situacao: SituacaoDoDia): boolean {
-  return situacao.tipo === 'sugerido' || situacao.tipo === 'em-andamento';
+  // No dia de descanso a grade não aparece; quem quiser treina pelo botão
+  return (situacao.tipo === 'sugerido' && !situacao.descanso) || situacao.tipo === 'em-andamento';
 }
 
 export type AcaoTreinoHoje = {
@@ -692,6 +693,14 @@ export function acaoTreinoHoje(situacao: SituacaoDoDia): AcaoTreinoHoje | null {
 
   if (situacao.tipo === 'concluido') {
     return concluido;
+  }
+
+  if (situacao.tipo === 'sugerido' && situacao.descanso) {
+    return {
+      tipo: 'comecar',
+      texto: 'treinar mesmo assim',
+      acessivel: `hoje é dia de descanso. treinar mesmo assim: ${minusculaInicial(situacao.treino.nome)}`,
+    };
   }
 
   if (situacao.tipo === 'sugerido') {

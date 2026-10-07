@@ -213,7 +213,7 @@ describe('toque e leitor de tela em cada dia', () => {
 
   it('resumo ao tocar', () => {
     expect(resumoDoDia(segunda)).toBe('segunda: treino A, 2 de 4 exercícios');
-    expect(resumoDoDia(domingo)).toBe('domingo: descanso');
+    expect(resumoDoDia(domingo)).toBe('domingo: sem treino');
     expect(resumoDoDia(quarta)).toBe('hoje: treino A, 1 de 4 exercícios');
     expect(resumoDoDia(quinta)).toBe('quinta: ainda não chegou');
     expect(resumoDoDia(diasDaSemana([], [], HOJE)[3])).toBe('hoje: ainda sem treino');

@@ -2,7 +2,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { espaco } from '@/shared/theme/tokens';
+import { espaco, raio } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
 import { Texto } from '@/shared/ui';
 import { CartaoToque, ESPACO_DA_SETA } from '@/shared/ui/CartaoToque';
@@ -82,6 +82,24 @@ export function GradeTreinoHoje() {
     );
   }
 
+  if (situacao.tipo === 'sugerido' && situacao.descanso) {
+    return (
+      <View style={estilos.grade}>
+        <View
+          accessible
+          accessibilityLabel={`hoje é dia de descanso. próximo treino: ${minusculaInicial(situacao.treino.nome)}`}
+          style={[estilos.descanso, { backgroundColor: c.superficie }]}
+        >
+          <MaterialCommunityIcons name="weather-night" size={28} color={c.agua} />
+          <Texto variante="subtitulo">dia de descanso</Texto>
+          <Texto secundario>
+            recuperar também é treino. próximo: {minusculaInicial(situacao.treino.nome)}
+          </Texto>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={estilos.grade}>
       {!treino ? <ConviteTreino /> : null}
@@ -128,5 +146,11 @@ const estilos = StyleSheet.create({
   },
   cheio: {
     flex: 1,
+  },
+  descanso: {
+    borderRadius: raio.lg,
+    borderCurve: 'continuous',
+    padding: espaco.md,
+    gap: espaco.xs,
   },
 });

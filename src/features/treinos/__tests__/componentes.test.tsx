@@ -182,7 +182,7 @@ describe('<FaixaSemana />', () => {
 
     await usuario.press(screen.getByRole('button', { name: 'segunda, 5, sem treino' }));
 
-    expect(screen.getByText('segunda: descanso')).toBeOnTheScreen();
+    expect(screen.getByText('segunda: sem treino')).toBeOnTheScreen();
   });
 
   it('cards longos cortam a lista e mostram quantos faltam', async () => {
