@@ -13,6 +13,7 @@ import {
   iniciarSessao,
   legendaTreinoDoDia,
   limparSessoesAntigas,
+  marcarCompletaOTreino,
   mover,
   moverExercicio,
   moverTreino,
@@ -354,6 +355,31 @@ describe('progressoDaSessao', () => {
     const aberta = sessao({ treinoId: 'x', data: HOJE });
 
     expect(progressoDaSessao(aberta, treino('x'))).toMatchObject({ fracao: 0, completo: false });
+  });
+});
+
+describe('marcarCompletaOTreino', () => {
+  const aberta = (concluidos: string[]) =>
+    sessao({ treinoId: 'c', data: HOJE, finalizada: false, concluidos });
+
+  it('marcar o último que faltava fecha o treino', () => {
+    expect(marcarCompletaOTreino(aberta(['c1', 'c2']), C, 'c3')).toBe(true);
+  });
+
+  it('marcar um que não é o último não fecha', () => {
+    expect(marcarCompletaOTreino(aberta(['c1']), C, 'c2')).toBe(false);
+  });
+
+  it('desmarcar nunca fecha, mesmo com tudo marcado', () => {
+    expect(marcarCompletaOTreino(aberta(['c1', 'c2', 'c3']), C, 'c3')).toBe(false);
+  });
+
+  it('exercício que não está no treino não fecha', () => {
+    expect(marcarCompletaOTreino(aberta(['c1', 'c2']), C, 'apagado')).toBe(false);
+  });
+
+  it('treino de um exercício fecha na primeira marcação', () => {
+    expect(marcarCompletaOTreino(sessao({ treinoId: 'b', data: HOJE }), B, 'b1')).toBe(true);
   });
 });
 

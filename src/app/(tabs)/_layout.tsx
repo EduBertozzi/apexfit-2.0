@@ -17,7 +17,10 @@ export default function LayoutAbas() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="index" options={{ title: 'início' }} />
-      <Tabs.Screen name="ia" options={{ title: 'dieta, treinos com IA e coach' }} />
+      <Tabs.Screen
+        name="ia"
+        options={{ title: 'IA', tabBarAccessibilityLabel: 'IA: dieta, treinos e coach' }}
+      />
       <Tabs.Screen name="ajustes" options={{ title: 'ajustes' }} />
     </Tabs>
   );

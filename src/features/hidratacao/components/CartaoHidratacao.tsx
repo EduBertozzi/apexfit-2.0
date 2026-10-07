@@ -1,13 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { AccessibilityInfo, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
-import { useAjustesStore } from '@/features/ajustes/store';
 import { formatarNumero } from '@/shared/lib/numero';
+import { useVibrar } from '@/shared/lib/vibracao';
 import { espaco, raio } from '@/shared/theme/tokens';
 import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { BarraProgresso, Cartao, Texto } from '@/shared/ui';
+import { useEntrada } from '@/shared/ui/animacao';
 
 import { bateuMetaAgora, PORCOES_ML, progresso } from '../logica';
 import { useAguaDoDia, useHidratacaoStore } from '../store';
@@ -18,17 +19,19 @@ type Props = {
 
 const TAMANHO_BOTAO = 52;
 
-function vibrar(tipo: 'leve' | 'sucesso') {
-  // Vibração não existe no navegador
-  if (Platform.OS === 'web') {
-    return;
-  }
+/** Faixa "meta batida": entra crescendo com uma mola. */
+function FaixaMetaBatida({ cor }: { cor: string }) {
+  const c = useCores();
+  const entrada = useEntrada();
 
-  if (tipo === 'sucesso') {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  } else {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  return (
+    <Animated.View style={[estilos.comemoracao, { backgroundColor: cor }, entrada]}>
+      <Ionicons name="checkmark-circle" size={18} color={c.textoSobreDestaque} />
+      <Texto variante="rotulo" style={{ color: c.textoSobreDestaque }}>
+        meta batida, boa!
+      </Texto>
+    </Animated.View>
+  );
 }
 
 /** Água de hoje: total, barra de progresso, copos rápidos e desfazer. */
@@ -38,7 +41,7 @@ export function CartaoHidratacao({ metaMl }: Props) {
   const { totalMl, podeDesfazer } = useAguaDoDia();
   const adicionar = useHidratacaoStore((state) => state.adicionar);
   const desfazer = useHidratacaoStore((state) => state.desfazer);
-  const vibracaoLigada = useAjustesStore((state) => state.vibracao);
+  const vibrar = useVibrar();
   const [comemorando, setComemorando] = useState(false);
 
   const fracao = progresso(totalMl, metaMl);
@@ -58,9 +61,7 @@ export function CartaoHidratacao({ metaMl }: Props) {
       AccessibilityInfo.announceForAccessibility('Meta de água batida! Boa!');
     }
 
-    if (vibracaoLigada) {
-      vibrar(bateu ? 'sucesso' : 'leve');
-    }
+    vibrar(bateu ? 'sucesso' : 'leve');
   }
 
   function desfazerUltimo() {
@@ -95,16 +96,12 @@ export function CartaoHidratacao({ metaMl }: Props) {
         valor={fracao}
         cor={corAgua}
         altura={14}
+        mola={comemorando}
         rotuloAcessivel={`Água de hoje: ${totalMl} de ${metaMl} mililitros`}
       />
 
       {comemorando ? (
-        <View style={[estilos.comemoracao, { backgroundColor: corAgua }]}>
-          <Ionicons name="checkmark-circle" size={18} color={c.textoSobreDestaque} />
-          <Texto variante="rotulo" style={{ color: c.textoSobreDestaque }}>
-            meta batida, boa!
-          </Texto>
-        </View>
+        <FaixaMetaBatida cor={corAgua} />
       ) : (
         <Texto variante="legenda" secundario accessibilityLiveRegion="polite">
           {faltamMl > 0

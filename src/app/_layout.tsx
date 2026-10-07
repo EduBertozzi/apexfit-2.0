@@ -5,7 +5,7 @@ import {
   Lexend_700Bold,
 } from '@expo-google-fonts/lexend';
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -15,8 +15,9 @@ import { useAjustesStore } from '@/features/ajustes/store';
 import { configurarExibicaoComAppAberto } from '@/features/lembretes/notificacoes';
 import { usePerfilStore } from '@/features/perfil/store';
 import { useDadosCarregados } from '@/hooks/useDadosCarregados';
-import { familia } from '@/shared/theme/tokens';
+import { familia, fonte } from '@/shared/theme/tokens';
 import { useCores, useEsquema } from '@/shared/theme/useCores';
+import { BotaoVoltar } from '@/shared/ui/BotaoVoltar';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -84,11 +85,22 @@ export default function RootLayout() {
     <ThemeProvider value={temaNavegacao}>
       <StatusBar style={esquema === 'escuro' ? 'light' : 'dark'} />
       <Stack
-        screenOptions={{
+        // Cabeçalho "transparente": mesma cor do fundo da tela, sem sombra nem linha
+        screenOptions={({ navigation }) => ({
           headerShown: false,
-          headerTitleStyle: { fontFamily: familia.displayLeve, fontSize: 19 },
+          // Voltar redondo no lugar da seta nativa (some quando não há para onde voltar)
+          headerLeft: () =>
+            navigation.canGoBack() ? <BotaoVoltar onPress={() => router.back()} /> : null,
+          headerStyle: { backgroundColor: c.fundo },
           headerShadowVisible: false,
-        }}
+          headerTintColor: c.texto,
+          headerTitleStyle: {
+            fontFamily: familia.displayLeve,
+            fontSize: fonte.cabecalho,
+            color: c.texto,
+          },
+          contentStyle: { backgroundColor: c.fundo },
+        })}
       >
         {/* Sem perfil: só o onboarding existe */}
         <Stack.Protected guard={!temPerfil}>

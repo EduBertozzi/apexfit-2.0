@@ -1,6 +1,13 @@
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
-import { raio } from '../theme/tokens';
+import { movimento, raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
 
 type Props = {
@@ -11,12 +18,30 @@ type Props = {
   rotuloAcessivel: string;
   /** Espessura da barra. Padrão 12. */
   altura?: number;
+  /** Quando ligado, a próxima mudança de valor enche a barra com uma mola (ex.: meta batida). */
+  mola?: boolean;
 };
 
 /** Barra de progresso em pílula: trilho arredondado e preenchimento com as pontas redondas. */
-export function BarraProgresso({ valor, cor, corTrilho, rotuloAcessivel, altura = 12 }: Props) {
+export function BarraProgresso({
+  valor,
+  cor,
+  corTrilho,
+  rotuloAcessivel,
+  altura = 12,
+  mola = false,
+}: Props) {
   const c = useCores();
+  const reduzir = useReducedMotion();
   const porcentagem = Math.round(Math.min(Math.max(valor, 0), 1) * 100);
+  const largura = useSharedValue(porcentagem);
+
+  useEffect(() => {
+    largura.set(mola && !reduzir ? withSpring(porcentagem, movimento.mola) : porcentagem);
+  }, [porcentagem, mola, reduzir, largura]);
+
+  // A mola pode passar um pouco de 100%: o trilho corta o excesso
+  const estiloLargura = useAnimatedStyle(() => ({ width: `${Math.max(largura.get(), 0)}%` }));
 
   return (
     <View
@@ -29,15 +54,15 @@ export function BarraProgresso({ valor, cor, corTrilho, rotuloAcessivel, altura 
       ]}
     >
       {porcentagem > 0 ? (
-        <View
+        <Animated.View
           style={[
             estilos.preenchimento,
             {
               // Nunca menor que a própria altura, para a ponta continuar redonda
-              width: `${porcentagem}%`,
               minWidth: altura,
               backgroundColor: cor ?? c.destaque,
             },
+            estiloLargura,
           ]}
         />
       ) : null}
