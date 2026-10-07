@@ -1,5 +1,5 @@
 import type { Perfil } from '@/features/perfil/types';
-import { CODIGO_SEM_IA, SemIa } from '@/shared/lib/semIa';
+import { CODIGO_SEM_IA, SemIa, type ProvedorIa } from '@/shared/lib/semIa';
 
 import { pedidoDietaSchema, respostaDietaSchema, type PlanoDieta } from './contrato';
 
@@ -8,6 +8,13 @@ import { pedidoDietaSchema, respostaDietaSchema, type PlanoDieta } from './contr
  * Em desenvolvimento, o Expo resolve "/api/..." para o servidor do `expo start`.
  */
 export async function pedirDieta(perfil: Perfil): Promise<PlanoDieta> {
+  return (await pedirDietaComProvedor(perfil)).plano;
+}
+
+/** Igual a `pedirDieta`, mas diz também qual IA montou o plano. */
+export async function pedirDietaComProvedor(
+  perfil: Perfil,
+): Promise<{ plano: PlanoDieta; provedor?: ProvedorIa }> {
   const pedido = pedidoDietaSchema.safeParse({ perfil });
 
   if (!pedido.success) {
@@ -45,5 +52,5 @@ export async function pedirDieta(perfil: Perfil): Promise<PlanoDieta> {
     throw new Error('O servidor devolveu um plano em formato inesperado.');
   }
 
-  return validado.data.plano;
+  return validado.data;
 }

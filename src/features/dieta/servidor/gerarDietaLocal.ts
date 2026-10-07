@@ -1,14 +1,14 @@
-import { z } from 'zod';
-
 import { ErroServidor } from '@/shared/servidor/claude';
-import { chatOllama, type MensagemOllama } from '@/shared/servidor/ollama';
+import { lerJson } from '@/shared/servidor/esquemaEstrito';
+import { responderJson, type MensagemJson, type ProvedorJson } from '@/shared/servidor/json';
 
 import { planoDietaSchema, type PlanoDieta } from '../contrato';
 import { SISTEMA_DIETA } from '../prompt';
 
-/** Roda SÓ no servidor. Gera o plano com a IA local (Ollama), com o formato JSON travado. */
-
-const FORMATO_PLANO = z.toJSONSchema(planoDietaSchema) as Record<string, unknown>;
+/**
+ * Roda SÓ no servidor. Gera o plano com a IA de HTTP simples (OpenAI ou
+ * Ollama), com o formato JSON travado pelo schema, e confere a meta de calorias.
+ */
 
 const TENTATIVAS = 2;
 
@@ -29,11 +29,12 @@ export function corrigirTotais(plano: PlanoDieta): PlanoDieta {
  * `instrucoes`: os dados do usuário e o que ele pediu, em texto.
  * `metaCalorias`: se informada, o servidor confere o total e pede correção quando foge muito.
  */
-export async function gerarPlanoLocal(
+export async function gerarPlanoComIa(
+  provedor: ProvedorJson,
   instrucoes: string,
   metaCalorias?: number,
 ): Promise<PlanoDieta> {
-  const conversa: MensagemOllama[] = [
+  const conversa: MensagemJson[] = [
     {
       role: 'system',
       content: `${SISTEMA_DIETA}\nResponda apenas com o JSON do plano, sem nenhum texto fora dele.`,
@@ -43,19 +44,13 @@ export async function gerarPlanoLocal(
   let melhor: PlanoDieta | null = null;
 
   for (let tentativa = 1; tentativa <= TENTATIVAS; tentativa++) {
-    const resposta = await chatOllama({
-      messages: conversa,
-      format: FORMATO_PLANO,
-      temperatura: 0.3,
+    const texto = await responderJson(provedor, {
+      mensagens: conversa,
+      nome: 'plano_dieta',
+      schema: planoDietaSchema,
     });
-    let plano: PlanoDieta | null = null;
-
-    try {
-      const lido = planoDietaSchema.safeParse(JSON.parse(resposta.content));
-      plano = lido.success && lido.data.refeicoes.length > 0 ? corrigirTotais(lido.data) : null;
-    } catch {
-      plano = null;
-    }
+    const lido = lerJson(texto, planoDietaSchema);
+    const plano = lido && lido.refeicoes.length > 0 ? corrigirTotais(lido) : null;
 
     if (!plano) {
       continue;
@@ -69,7 +64,7 @@ export async function gerarPlanoLocal(
 
     // Fora da meta: mostra a conta para o modelo e pede para ajustar as porções
     conversa.push(
-      { role: 'assistant', content: resposta.content },
+      { role: 'assistant', content: texto },
       {
         role: 'user',
         content:
@@ -83,5 +78,10 @@ export async function gerarPlanoLocal(
     return melhor;
   }
 
-  throw new ErroServidor('A IA local devolveu um plano incompleto. Tente de novo.', 502);
+  throw new ErroServidor('A IA devolveu um plano incompleto. Tente de novo.', 502);
+}
+
+/** Atalho para a IA local (Ollama). */
+export function gerarPlanoLocal(instrucoes: string, metaCalorias?: number): Promise<PlanoDieta> {
+  return gerarPlanoComIa('local', instrucoes, metaCalorias);
 }

@@ -4,6 +4,8 @@ import { pedidoCoachSchema } from '@/features/coach/contrato';
 import { escreverEvento } from '@/features/coach/eventos';
 import { conversar } from '@/features/coach/servidor/conversar';
 import { conversarLocal } from '@/features/coach/servidor/conversarLocal';
+import { conversarOpenAI } from '@/features/coach/servidor/conversarOpenAI';
+import { ErroServidor } from '@/shared/servidor/claude';
 import { erroSemIa, escolherProvedor } from '@/shared/servidor/provedor';
 
 /** POST /api/coach: conversa com o coach. Responde em streaming, uma linha JSON por evento. */
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
     return erroSemIa().paraResposta();
   }
 
-  const conversa = provedor === 'claude' ? conversar : conversarLocal;
+  const conversa = { claude: conversar, openai: conversarOpenAI, local: conversarLocal }[provedor];
 
   const codificador = new TextEncoder();
 
@@ -37,7 +39,9 @@ export async function POST(request: Request) {
         const mensagem =
           erro instanceof Anthropic.RateLimitError
             ? 'Muita gente falando com o coach agora. Tente em um minuto.'
-            : 'O coach caiu no meio da resposta. Tente de novo.';
+            : erro instanceof ErroServidor
+              ? erro.message
+              : 'O coach caiu no meio da resposta. Tente de novo.';
 
         console.error('[api/coach]', erro);
         enviar(escreverEvento({ tipo: 'erro', mensagem }));

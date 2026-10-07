@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { NIVEIS_ATIVIDADE, OBJETIVOS, SEXOS } from '@/features/perfil/schema';
+import { PROVEDORES_IA } from '@/shared/lib/semIa';
 
 /**
  * Contrato entre o app e a rota /api/dieta. Os dois lados validam com estes
@@ -55,4 +56,8 @@ export const planoDietaSchema = z.object({
 
 export type PlanoDieta = z.infer<typeof planoDietaSchema>;
 
-export const respostaDietaSchema = z.object({ plano: planoDietaSchema });
+export const respostaDietaSchema = z.object({
+  plano: planoDietaSchema,
+  /** Qual IA montou o plano. Opcional: servidores antigos não mandam. */
+  provedor: z.enum(PROVEDORES_IA).optional(),
+});

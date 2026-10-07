@@ -33,3 +33,16 @@ export const ORIENTACAO_FERRAMENTA_DIETA =
   'Cria ou substitui o plano alimentar de um dia salvo no app do usuário. ' +
   'Mande o plano completo (todas as refeições), respeitando as metas e restrições do usuário. ' +
   'Use só quando a pessoa pedir para criar ou mudar a dieta.';
+
+/**
+ * Versão para as IAs em que a ferramenta recebe só o PEDIDO (OpenAI e local):
+ * o servidor monta o plano ou os treinos numa segunda chamada, com o formato
+ * JSON travado. Aqui o coach também pode montar treinos.
+ */
+export const SISTEMA_COACH_PEDIDOS = SISTEMA_COACH.replace(
+  '- Sempre mande o plano COMPLETO na ferramenta, não só a parte que mudou. Mantenha o que a pessoa não pediu para mudar.',
+  '- Na ferramenta, descreva em uma frase o que a pessoa quer criar ou mudar. O app monta o plano completo.',
+).replace(
+  '- Você vê os treinos montados e a frequência. Pode sugerir exercícios, séries, progressão de carga e ajustes, mas a pessoa muda os treinos na aba Treinos.',
+  '- Você vê os treinos montados e a frequência. Pode criar ou refazer os treinos com a ferramenta atualizar_treinos: use quando a pessoa pedir treino novo, outra divisão, outro número de dias, treino em casa ou trocar exercícios. Na ferramenta, descreva o pedido em uma frase; o app monta os treinos e mostra na tela inicial.\n- Para dúvidas sobre exercícios, séries e progressão de carga, responda sem mudar os treinos.',
+);

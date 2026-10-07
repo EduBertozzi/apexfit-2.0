@@ -1,4 +1,5 @@
 import type { PlanoDieta } from '@/features/dieta/contrato';
+import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
 import { formatarNumero } from '@/shared/lib/numero';
 
 /**
@@ -33,6 +34,25 @@ export function pedeMudancaDeDieta(mensagem: string): boolean {
   );
 }
 
+const ASSUNTO_TREINO = /\b(treinos?|ficha|divisao|exercicios?|musculacao|academia|treino [a-f])\b/;
+
+/**
+ * A mensagem pede para criar ou mudar os treinos? ("monta meu treino",
+ * "refaz minha ficha para 4 dias"). Pergunta sobre treino não conta.
+ */
+export function pedeMudancaDeTreino(mensagem: string): boolean {
+  const texto = normalizar(mensagem).trim();
+
+  if (!ASSUNTO_TREINO.test(texto) || !ACAO.test(texto) || ASSUNTO_DIETA.test(texto)) {
+    return false;
+  }
+
+  return (
+    !SO_PERGUNTA.test(texto) ||
+    /\b(pode|podes|consegue) (montar|criar|fazer|trocar|mudar|refazer)\b/.test(texto)
+  );
+}
+
 /** Lê a meta de calorias do texto de contexto ("Meta de calorias: 2.830 kcal"). */
 export function metaDoContexto(contexto: string): number | undefined {
   const achado = /Meta de calorias: ([\d.]+) kcal/.exec(contexto);
@@ -56,5 +76,21 @@ export function confirmarPlano(plano: PlanoDieta): string {
   return (
     `Pronto! Salvei um plano de ${formatarNumero(plano.caloriasDia)} kcal em ${plano.refeicoes.length} refeições:\n` +
     `${refeicoes}\n\nToque em "Dieta atualizada" para ver as quantidades. Quer trocar alguma refeição?`
+  );
+}
+
+/** Texto do coach depois de salvar treinos novos. */
+export function confirmarTreinos(resultado: RespostaTreinosIa): string {
+  const lista = resultado.treinos
+    .map((treino) => {
+      const quantidade = treino.exercicios.length;
+
+      return `- ${treino.nome}: ${treino.foco} (${quantidade} ${quantidade === 1 ? 'exercício' : 'exercícios'})`;
+    })
+    .join('\n');
+
+  return (
+    `Pronto! Montei ${resultado.treinos.length} ${resultado.treinos.length === 1 ? 'treino' : 'treinos'}:\n` +
+    `${lista}\n\nJá estão na tela inicial, separados por grupo muscular. Quer trocar algum exercício?`
   );
 }

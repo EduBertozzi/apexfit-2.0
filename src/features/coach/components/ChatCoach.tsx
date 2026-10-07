@@ -68,6 +68,18 @@ function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boo
           </Texto>
         </Pressable>
       ) : null}
+      {mensagem.treinosAtualizados ? (
+        <Pressable
+          onPress={() => router.push('/')}
+          accessibilityRole="button"
+          accessibilityLabel="Treinos atualizados. Ver na tela inicial"
+          style={[estilos.chipDieta, { backgroundColor: c.destaque }]}
+        >
+          <Texto variante="rotulo" style={{ color: c.textoSobreDestaque }}>
+            Treinos atualizados: ver
+          </Texto>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

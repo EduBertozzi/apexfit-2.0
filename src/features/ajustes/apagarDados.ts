@@ -5,6 +5,7 @@ import { useLembretesStore } from '@/features/lembretes/store';
 import { usePerfilStore } from '@/features/perfil/store';
 import { usePesoStore } from '@/features/peso/store';
 import { useTreinosStore } from '@/features/treinos/store';
+import { useTreinosIaStore } from '@/features/treinos/storeIa';
 
 import { useAjustesStore } from './store';
 
@@ -19,6 +20,7 @@ export function apagarTodosOsDados() {
   useCoachStore.getState().limpar();
   usePesoStore.getState().apagarTudo();
   useTreinosStore.getState().apagarTudo();
+  useTreinosIaStore.getState().apagarTudo();
   useAjustesStore.getState().restaurarPadrao();
   // Volta ao padrão na hora; o cancelamento das notificações agendadas termina em segundo plano
   void useLembretesStore.getState().apagarTudo();
