@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { chaveDoDia } from '@/shared/lib/data';
 import { espaco, familia, fonte, raio } from '@/shared/theme/tokens';
 import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { Cartao, Texto } from '@/shared/ui';
@@ -18,7 +19,7 @@ export function ListaTreinos() {
   const sessoes = useTreinosStore((state) => state.sessoes);
   const mover = useTreinosStore((state) => state.moverTreino);
 
-  const proximo = proximoTreino(treinos, sessoes);
+  const proximo = proximoTreino(treinos, sessoes, chaveDoDia(new Date()));
 
   function abrir(id: string) {
     router.push({ pathname: '/treino/[id]', params: { id } });

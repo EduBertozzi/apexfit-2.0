@@ -6,10 +6,12 @@ import { chaveDoDia } from '@/shared/lib/data';
 
 import {
   adicionarExercicio,
+  adicionarExercicios,
   adicionarTreino,
   alternarExercicio,
   aplicarModelo,
   criarTreino,
+  definirDias,
   descartarSessoesAbertas,
   editarExercicio,
   editarTreino,
@@ -28,6 +30,7 @@ import {
   type Direcao,
 } from './logica';
 import { substituirTreinos } from './ia';
+import { moverExercicioNoGrupo, reordenarExercicioNoGrupo } from './montagem';
 import type { ModeloTreino } from './modelos';
 import { diasDaSemana, nomeDoDia, resumoDaSemana, sequenciaDeDias } from './semana';
 import type { DadosExercicio, DadosTreino, Sessao, Treino } from './types';
@@ -42,11 +45,18 @@ type TreinosState = {
   editarTreino: (id: string, dados: { nome: string; foco?: string }) => void;
   removerTreino: (id: string) => void;
   moverTreino: (id: string, direcao: Direcao) => void;
+  /** Plano semanal: dias em que o treino acontece (0 = domingo). Vazio volta para o rodízio. */
+  definirDias: (id: string, dias: number[]) => void;
 
   adicionarExercicio: (treinoId: string, dados: DadosExercicio) => void;
+  adicionarExercicios: (treinoId: string, dados: DadosExercicio[]) => void;
   editarExercicio: (treinoId: string, exercicioId: string, dados: DadosExercicio) => void;
   removerExercicio: (treinoId: string, exercicioId: string) => void;
   moverExercicio: (treinoId: string, exercicioId: string, direcao: Direcao) => void;
+  /** Sobe ou desce entre os exercícios do mesmo grupo (como a tela mostra). */
+  moverNoGrupo: (treinoId: string, exercicioId: string, direcao: Direcao) => void;
+  /** Arrastar: leva o exercício para a posição `destino` dentro do grupo dele. */
+  reordenarNoGrupo: (treinoId: string, exercicioId: string, destino: number) => void;
 
   /** Começa ou retoma o treino de hoje. */
   comecarTreino: (treinoId: string, data?: Date) => void;
@@ -88,8 +98,13 @@ export const useTreinosStore = create<TreinosState>()(
 
       moverTreino: (id, direcao) => set({ treinos: moverTreino(get().treinos, id, direcao) }),
 
+      definirDias: (id, dias) => set({ treinos: definirDias(get().treinos, id, dias) }),
+
       adicionarExercicio: (treinoId, dados) =>
         set({ treinos: adicionarExercicio(get().treinos, treinoId, dados) }),
+
+      adicionarExercicios: (treinoId, dados) =>
+        set({ treinos: adicionarExercicios(get().treinos, treinoId, dados) }),
 
       editarExercicio: (treinoId, exercicioId, dados) =>
         set({ treinos: editarExercicio(get().treinos, treinoId, exercicioId, dados) }),
@@ -99,6 +114,12 @@ export const useTreinosStore = create<TreinosState>()(
 
       moverExercicio: (treinoId, exercicioId, direcao) =>
         set({ treinos: moverExercicio(get().treinos, treinoId, exercicioId, direcao) }),
+
+      moverNoGrupo: (treinoId, exercicioId, direcao) =>
+        set({ treinos: moverExercicioNoGrupo(get().treinos, treinoId, exercicioId, direcao) }),
+
+      reordenarNoGrupo: (treinoId, exercicioId, destino) =>
+        set({ treinos: reordenarExercicioNoGrupo(get().treinos, treinoId, exercicioId, destino) }),
 
       comecarTreino: (treinoId, data = new Date()) => {
         const hoje = chaveDoDia(data);

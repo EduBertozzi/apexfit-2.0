@@ -17,8 +17,10 @@ type Props = Omit<TextInputProps, 'style'> & {
 /**
  * Campo preenchido e arredondado, com rótulo SEMPRE visível em cima
  * (na v1 o texto sumia ao digitar porque era só placeholder).
- * Sem borda no repouso; no foco ganha um anel (menta no escuro, texto no claro)
- * e, com erro, anel vermelho e a mensagem logo embaixo.
+ * O fundo é `superficieSecundaria` com um contorno discreto, para o campo
+ * aparecer tanto sobre o card quanto sobre o fundo da tela. No foco ganha um
+ * anel (menta no escuro, texto no claro) e, com erro, anel vermelho e a
+ * mensagem logo embaixo.
  */
 export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
   { rotulo, erro, dica, sufixo, opcional = false, onFocus, onBlur, multiline, ...props },
@@ -28,7 +30,7 @@ export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
   const escuro = useEsquema() === 'escuro';
   const [focado, setFocado] = useState(false);
 
-  const corAnel = erro ? c.erro : focado ? (escuro ? c.destaque : c.texto) : 'transparent';
+  const corAnel = erro ? c.erro : focado ? (escuro ? c.destaque : c.texto) : c.bordaCampo;
 
   return (
     <View style={estilos.container}>
@@ -44,7 +46,7 @@ export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
       <View
         style={[
           estilos.caixa,
-          { borderColor: corAnel, backgroundColor: c.superficie },
+          { borderColor: corAnel, backgroundColor: c.superficieSecundaria },
           multiline && estilos.caixaMultilinha,
         ]}
       >
@@ -102,7 +104,7 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 56,
-    // Borda sempre presente (transparente no repouso) para o campo não "pular" no foco
+    // Borda sempre com a mesma largura (discreta no repouso) para o campo não "pular" no foco
     borderWidth: borda.grossa,
     borderRadius: raio.md,
     borderCurve: 'continuous',
