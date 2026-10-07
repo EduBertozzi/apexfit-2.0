@@ -68,49 +68,81 @@ describe('<FormularioExercicio /> grupo', () => {
 });
 
 describe('<CartaoGrupo />', () => {
-  it('é um botão com a frase completa e mostra o esquema', async () => {
-    const onPress = jest.fn();
+  const [bloco] = agruparPorGrupo([
+    { id: 'r', nome: 'Remada alta', grupo: 'braco', series: 3, repeticoes: '12' },
+    { id: 'a', nome: 'Agachamento', grupo: 'braco', series: 3, repeticoes: '12' },
+  ]);
+
+  it('o título é uma frase só e a seta redonda abre o treino', async () => {
+    const onAbrir = jest.fn();
     const usuario = userEvent.setup();
-    const [bloco] = agruparPorGrupo([
-      { id: 'r', nome: 'Remada alta', grupo: 'braco', series: 3, repeticoes: '12' },
-    ]);
 
-    await render(<CartaoGrupo bloco={bloco} concluidos={[]} onPress={onPress} />);
+    await render(
+      <CartaoGrupo bloco={bloco} concluidos={[]} onAbrir={onAbrir} onAlternar={jest.fn()} />,
+    );
 
-    const cartao = screen.getByRole('button', { name: 'braço, 3 séries de 12, remada alta' });
-
+    expect(screen.getByLabelText('braço, 3 séries de 12, 0 de 2 feitos')).toBeOnTheScreen();
     expect(screen.getByText('3x12')).toBeOnTheScreen();
 
-    await usuario.press(cartao);
+    await usuario.press(screen.getByRole('button', { name: 'abrir o treino de hoje, braço' }));
 
-    expect(onPress).toHaveBeenCalled();
+    expect(onAbrir).toHaveBeenCalled();
+  });
+
+  it('cada exercício é uma caixa de marcar que marca direto da tela inicial', async () => {
+    const onAlternar = jest.fn();
+    const usuario = userEvent.setup();
+
+    await render(
+      <CartaoGrupo bloco={bloco} concluidos={['r']} onAbrir={jest.fn()} onAlternar={onAlternar} />,
+    );
+
+    const feito = screen.getByRole('checkbox', { name: 'remada alta, feito' });
+    const pendente = screen.getByRole('checkbox', { name: 'agachamento, marcar como feito' });
+
+    expect(feito).toBeChecked();
+    expect(pendente).not.toBeChecked();
+
+    await usuario.press(pendente);
+
+    expect(onAlternar).toHaveBeenCalledWith('a');
+  });
+
+  it('com o treino finalizado, os exercícios ficam só para ver', async () => {
+    const onAlternar = jest.fn();
+
+    await render(
+      <CartaoGrupo
+        bloco={bloco}
+        concluidos={['r']}
+        onAbrir={jest.fn()}
+        onAlternar={onAlternar}
+        podeMarcar={false}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'agachamento, não feito' })).toBeDisabled();
   });
 });
 
 describe('<CartaoGrupo /> feito', () => {
-  it('risca o feito e troca a seta pelo check quando o grupo inteiro está feito', async () => {
-    const [bloco] = agruparPorGrupo([
+  it('risca o feito e apaga o card quando o grupo inteiro está feito', async () => {
+    const [aquecimento] = agruparPorGrupo([
       { id: 'a', nome: 'Polichinelo', grupo: 'aquecimento', series: 2, repeticoes: '10' },
       { id: 'b', nome: 'Swing', grupo: 'aquecimento', series: 2, repeticoes: '10' },
     ]);
+    const props = { bloco: aquecimento, onAbrir: jest.fn(), onAlternar: jest.fn(), inteiro: true };
 
-    const { rerender } = await render(
-      <CartaoGrupo bloco={bloco} concluidos={['a']} onPress={jest.fn()} inteiro />,
-    );
+    const { rerender } = await render(<CartaoGrupo {...props} concluidos={['a']} />);
 
     expect(screen.getByText('polichinelo')).toHaveStyle({ textDecorationLine: 'line-through' });
     expect(screen.getByText('swing')).not.toHaveStyle({ textDecorationLine: 'line-through' });
-    expect(
-      screen.getByRole('button', {
-        name: 'aquecimento, 2 séries de 10, polichinelo feito e swing',
-      }),
-    ).not.toHaveStyle({ opacity: 0.6 });
+    expect(screen.getByTestId('grupo-aquecimento')).not.toHaveStyle({ opacity: 0.6 });
 
-    await rerender(
-      <CartaoGrupo bloco={bloco} concluidos={['a', 'b']} onPress={jest.fn()} inteiro />,
-    );
+    await rerender(<CartaoGrupo {...props} concluidos={['a', 'b']} />);
 
-    expect(screen.getByRole('button', { name: /tudo feito$/ })).toHaveStyle({ opacity: 0.6 });
+    expect(screen.getByLabelText(/tudo feito$/)).toBeOnTheScreen();
+    expect(screen.getByTestId('grupo-aquecimento')).toHaveStyle({ opacity: 0.6 });
   });
 });
 
@@ -126,6 +158,17 @@ describe('<FaixaSemana />', () => {
     expect(screen.getByTestId('dia-2026-10-10')).toBeOnTheScreen();
   });
 
+  it('cabe na largura toda, sem rolagem lateral', async () => {
+    const dias = diasDaSemana([], [], '2026-10-07');
+
+    await render(<FaixaSemana dias={dias} resumo={resumoDaSemana(dias)} />);
+
+    // Todos dividem a largura por igual (flex: 1), sem largura fixa
+    for (const chave of ['2026-10-04', '2026-10-07', '2026-10-10']) {
+      expect(screen.getByTestId(`dia-${chave}`)).toHaveStyle({ flex: 1 });
+    }
+  });
+
   it('tocar num dia mostra o resumo dele', async () => {
     const usuario = userEvent.setup();
     const dias = diasDaSemana([], [], '2026-10-07');
@@ -135,6 +178,7 @@ describe('<FaixaSemana />', () => {
     // Hoje já tem resumo embaixo do título da tela; a faixa só mostra o dia tocado
     expect(screen.queryByText('hoje: ainda sem treino')).toBeNull();
     expect(screen.getByText('completo')).toBeOnTheScreen();
+    expect(screen.getByText('pouco ou nada')).toBeOnTheScreen();
 
     await usuario.press(screen.getByRole('button', { name: 'segunda, 5, sem treino' }));
 
@@ -154,7 +198,9 @@ describe('<FaixaSemana />', () => {
       ),
     );
 
-    await render(<CartaoGrupo bloco={blocos[0]} concluidos={[]} onPress={jest.fn()} />);
+    await render(
+      <CartaoGrupo bloco={blocos[0]} concluidos={[]} onAbrir={jest.fn()} onAlternar={jest.fn()} />,
+    );
 
     expect(screen.getByText('supino reto')).toBeOnTheScreen();
     expect(screen.queryByText('crossover')).toBeNull();

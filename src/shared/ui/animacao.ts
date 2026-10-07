@@ -22,29 +22,33 @@ const ESCALA_POP = 1.25;
 const ESCALA_ENTRADA = 0.6;
 
 /**
- * Pulinho (cresce e volta, 2 x `movimento.rapido`) quando `ativo` passa de falso para verdadeiro.
- * Não anima na primeira renderização nem ao desmarcar.
+ * Um "pop" rápido (cresce e volta com mola) quando `valor` muda depois da
+ * primeira renderização. `ligado = false` pula a vez (ex: só no marcar, não no
+ * desmarcar). Com "reduzir movimento" ligado no celular, não anima nada.
  */
-export function usePop(ativo: boolean) {
+export function usePop(valor: unknown, ligado = true) {
   const reduzir = useReducedMotion();
   const escala = useSharedValue(1);
-  const anterior = useRef(ativo);
+  const anterior = useRef(valor);
 
   useEffect(() => {
-    const ligou = ativo && !anterior.current;
-    anterior.current = ativo;
+    if (Object.is(anterior.current, valor)) {
+      return;
+    }
 
-    if (!ligou || reduzir) {
+    anterior.current = valor;
+
+    if (!ligado || reduzir) {
       return;
     }
 
     escala.set(
       withSequence(
         withTiming(ESCALA_POP, { duration: movimento.rapido }),
-        withTiming(1, { duration: movimento.rapido }),
+        withSpring(1, movimento.mola),
       ),
     );
-  }, [ativo, reduzir, escala]);
+  }, [valor, ligado, reduzir, escala]);
 
   return useAnimatedStyle(() => ({ transform: [{ scale: escala.get() }] }));
 }

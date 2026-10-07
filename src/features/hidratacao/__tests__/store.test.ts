@@ -32,9 +32,13 @@ describe('useHidratacaoStore', () => {
 
     adicionar(250, HOJE);
     adicionar(500, HOJE);
-    desfazer(HOJE);
+    expect(desfazer(HOJE)).toEqual({ removidoMl: 500, depoisMl: 250 });
 
     expect(useHidratacaoStore.getState().registros['2026-10-02']).toEqual([250]);
+  });
+
+  it('desfazer sem nada no dia avisa que não tirou nada', () => {
+    expect(useHidratacaoStore.getState().desfazer(HOJE)).toEqual({ removidoMl: null, depoisMl: 0 });
   });
 
   it('apaga tudo', () => {

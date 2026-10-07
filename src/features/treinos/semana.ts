@@ -192,7 +192,7 @@ export function sequenciaDeDias(
 const DESCRICAO_ESTADO: Record<EstadoDia, string> = {
   completo: 'treino completo',
   parcial: 'treino parcial',
-  fraco: 'sem treino',
+  fraco: 'pouco ou nada feito',
   hoje: 'hoje',
   futuro: 'ainda não chegou',
 };
@@ -209,7 +209,7 @@ export function resumoDaSemana(dias: readonly DiaDaSemana[]): string {
   const partes = [
     `${contar('completo')} com treino completo`,
     `${contar('parcial')} com treino parcial`,
-    `${contar('fraco')} sem treino`,
+    `${contar('fraco')} com pouco ou nada feito`,
   ];
   const detalhe = dias
     .map(

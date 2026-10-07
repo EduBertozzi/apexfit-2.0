@@ -1,6 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { espaco } from '@/shared/theme/tokens';
@@ -8,20 +7,11 @@ import { useCores } from '@/shared/theme/useCores';
 import { Texto } from '@/shared/ui';
 import { CartaoToque, ESPACO_DA_SETA } from '@/shared/ui/CartaoToque';
 
-import { caloriasNaGrade, montarGrade, type ItemGrade } from '../grade';
-import { agruparPorGrupo } from '../grupos';
-import { concluidosDeHoje } from '../logica';
-import { useTreinoDoDia } from '../store';
+import { montarGrade } from '../grade';
+import { agruparPorGrupo, type BlocoDoTreino } from '../grupos';
+import { concluidosDeHoje, podeMarcarNoInicio } from '../logica';
+import { useTreinoDoDia, useTreinosStore } from '../store';
 import { CartaoGrupo } from './CartaoGrupo';
-
-type Props = {
-  /** Card quadrado de água (vem da feature de hidratação). */
-  agua: ReactNode;
-  /** Card de calorias (vem da feature de nutrição). */
-  calorias: ReactNode;
-  /** Card da dieta, sempre embaixo da grade. */
-  dieta: ReactNode;
-};
 
 const abrirSessao = () => router.push('/treino/sessao');
 
@@ -64,31 +54,27 @@ function ConviteTreino() {
 }
 
 /**
- * A grade "bento" do treino de hoje: um card por grupo muscular, aquecimento em
- * cima e a água no cantinho, igual ao desenho de referência.
+ * A grade "bento" do treino de hoje: só os cards de grupo muscular (aquecimento
+ * em cima). Cada exercício se marca ali mesmo; a seta de cada card abre o treino.
  */
-export function GradeTreinoHoje({ agua, calorias, dieta }: Props) {
+export function GradeTreinoHoje() {
   const c = useCores();
   const { situacao } = useTreinoDoDia();
+  const marcar = useTreinosStore((state) => state.marcarExercicioDeHoje);
 
   const treino = situacao.tipo === 'sem-treinos' ? null : situacao.treino;
   const concluidos = concluidosDeHoje(situacao);
+  const podeMarcar = podeMarcarNoInicio(situacao);
   const linhas = montarGrade(agruparPorGrupo(treino?.exercicios ?? []));
 
-  function item(itemGrade: ItemGrade, inteiro = false) {
-    if (itemGrade.tipo === 'agua') {
-      return agua;
-    }
-
-    if (itemGrade.tipo === 'calorias') {
-      return calorias;
-    }
-
+  function cartao(bloco: BlocoDoTreino, inteiro = false) {
     return (
       <CartaoGrupo
-        bloco={itemGrade.bloco}
+        bloco={bloco}
         concluidos={concluidos}
-        onPress={abrirSessao}
+        onAbrir={abrirSessao}
+        onAlternar={(exercicioId) => treino && marcar(treino.id, exercicioId)}
+        podeMarcar={podeMarcar}
         inteiro={inteiro}
         style={estilos.cheio}
       />
@@ -114,26 +100,15 @@ export function GradeTreinoHoje({ agua, calorias, dieta }: Props) {
         </CartaoToque>
       ) : null}
 
-      {linhas.map((linha, indice) =>
+      {linhas.map((linha) =>
         linha.tipo === 'inteira' ? (
-          <View key={indice}>{item(linha.item, true)}</View>
+          <View key={linha.bloco.grupo}>{cartao(linha.bloco, true)}</View>
         ) : (
-          <View key={indice} style={estilos.linha}>
-            <View style={linha.largo ? estilos.largo : estilos.metade}>{item(linha.itens[0])}</View>
-            <View style={linha.largo ? estilos.estreito : estilos.metade}>
-              {item(linha.itens[1])}
-            </View>
+          <View key={linha.blocos[0].grupo} style={estilos.linha}>
+            <View style={estilos.metade}>{cartao(linha.blocos[0])}</View>
+            <View style={estilos.metade}>{cartao(linha.blocos[1])}</View>
           </View>
         ),
-      )}
-
-      {caloriasNaGrade(linhas) ? (
-        dieta
-      ) : (
-        <View style={estilos.linha}>
-          <View style={estilos.metade}>{calorias}</View>
-          <View style={estilos.metade}>{dieta}</View>
-        </View>
       )}
     </View>
   );
@@ -148,12 +123,6 @@ const estilos = StyleSheet.create({
     gap: espaco.grade,
   },
   metade: {
-    flex: 1,
-  },
-  largo: {
-    flex: 1.65,
-  },
-  estreito: {
     flex: 1,
   },
   cheio: {

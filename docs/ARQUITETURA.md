@@ -152,6 +152,8 @@ Tudo visual sai de `src/shared/theme/tokens.ts` (cores, `espaco`, `raio`, `famil
 - **Textos**: títulos e botões em minúsculas ("ver dieta", "salvar peso de hoje"), escritos assim na própria copy (sem `textTransform`, para nomes próprios e siglas como IA continuarem certos). **Sem emoji e sem travessão**: use vírgula, ponto ou dois-pontos.
 - **Nada do Volt**: sem caixa alta, sem barras inclinadas (`skewX`), sem bordas grossas em cards.
 - **Peças prontas** em `src/shared/ui`: `Tela`, `Cartao`, `Secao` (grupo de ajustes), `Botao`, `CampoTexto`, `Opcoes`, `Contador`, `Interruptor`, `BarraProgresso`, `Marcado` (palavra em destaque dentro de um título).
+- **Cards da tela inicial**: `CartaoToque` (card inteiro é o botão) e `SetaCartao` (seta redonda do canto; com `onPress` vira um botão separado de 44 px, como no card de água e nos cards de grupo, onde cada exercício é uma caixa de marcar).
+- **Movimento e vibração**: animações com `react-native-reanimated` (ex: `usePop`, `BarraProgresso animado`) sempre pulam com "reduzir movimento" ligado (`useReducedMotion`). Vibração só pelo `useVibrar()` (`shared/lib`), que respeita Ajustes e não roda na web.
 - **Tema**: `useCores()` já respeita a escolha em Ajustes (automático, claro ou escuro).
 
 ### Dados de saúde

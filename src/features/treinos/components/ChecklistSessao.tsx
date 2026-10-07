@@ -34,7 +34,7 @@ type ItemProps = {
 function ItemChecklist({ exercicio, feito, corGrupo, onAlternar }: ItemProps) {
   const c = useCores();
   // Ao marcar: o círculo dá um pulinho e a linha passa devagar para o fundo de "feito"
-  const pop = usePop(feito);
+  const pop = usePop(feito, feito);
   const transicao = useTransicao(feito);
   const fundo = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(

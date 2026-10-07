@@ -12,11 +12,13 @@ export function deveVibrar(ligada: boolean, plataforma: string): boolean {
 }
 
 function disparar(tipo: TipoVibracao) {
-  if (tipo === 'sucesso') {
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  } else {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  const vibracao =
+    tipo === 'sucesso'
+      ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+  // Aparelho sem motor de vibração: tudo bem, segue sem
+  vibracao?.catch?.(() => undefined);
 }
 
 /** Devolve `vibrar(tipo)`, que já respeita a opção "vibração" dos Ajustes. */

@@ -492,3 +492,86 @@ export function concluidosDeHoje(situacao: SituacaoDoDia): string[] {
     ? situacao.sessao.concluidos
     : [];
 }
+
+// ---------------------------------------------------------------------------
+// Tela inicial: marcar exercício direto no card e o botão principal
+// ---------------------------------------------------------------------------
+
+/**
+ * Marca ou desmarca um exercício do treino de hoje direto da tela inicial.
+ * Se o treino ainda não começou, começa sozinho (igual ao "começar" da sessão).
+ * Treino de hoje já finalizado não muda mais.
+ */
+export function marcarExercicioNoDia(
+  sessoes: readonly Sessao[],
+  treinoId: string,
+  exercicioId: string,
+  hoje: string,
+  gerarId: GeradorId = novoId,
+): Sessao[] {
+  if (sessaoDeHoje(sessoes, hoje)?.finalizada) {
+    return [...sessoes];
+  }
+
+  const { sessoes: comSessao, sessao } = iniciarSessao(sessoes, treinoId, hoje, gerarId);
+
+  return alternarExercicio(comSessao, sessao.id, exercicioId);
+}
+
+/** Dá para marcar exercícios na tela inicial? Só antes de finalizar o treino de hoje. */
+export function podeMarcarNoInicio(situacao: SituacaoDoDia): boolean {
+  return situacao.tipo === 'sugerido' || situacao.tipo === 'em-andamento';
+}
+
+export type AcaoTreinoHoje = {
+  tipo: 'comecar' | 'continuar' | 'concluido';
+  /** "continuar treino · 3 de 11" */
+  texto: string;
+  /** "continuar treino, 3 de 11 exercícios feitos" */
+  acessivel: string;
+};
+
+/**
+ * Botão principal embaixo de "treino de hoje". `null` quando não há o que
+ * fazer (sem treino ou treino vazio): a grade já mostra o convite certo.
+ */
+export function acaoTreinoHoje(situacao: SituacaoDoDia): AcaoTreinoHoje | null {
+  if (situacao.tipo === 'sem-treinos' || situacao.treino.exercicios.length === 0) {
+    return null;
+  }
+
+  const concluido: AcaoTreinoHoje = {
+    tipo: 'concluido',
+    texto: 'treino concluído',
+    acessivel: 'treino concluído, ver o treino de hoje',
+  };
+  const comecar: AcaoTreinoHoje = {
+    tipo: 'comecar',
+    texto: 'começar treino',
+    acessivel: `começar treino, ${resumoTreino(situacao.treino)}`,
+  };
+
+  if (situacao.tipo === 'concluido') {
+    return concluido;
+  }
+
+  if (situacao.tipo === 'sugerido') {
+    return comecar;
+  }
+
+  const { feitos, total, completo } = progressoDaSessao(situacao.sessao, situacao.treino);
+
+  if (completo) {
+    return concluido;
+  }
+
+  if (feitos === 0) {
+    return comecar;
+  }
+
+  return {
+    tipo: 'continuar',
+    texto: `continuar treino · ${feitos} de ${total}`,
+    acessivel: `continuar treino, ${feitos} de ${total} exercícios feitos`,
+  };
+}
