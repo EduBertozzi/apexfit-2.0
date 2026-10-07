@@ -34,6 +34,7 @@ import {
   PASSOS,
   QUANTIDADE_INICIAL,
   regiaoInicial,
+  descricaoBotaoSalvar,
   textoBotaoSalvar,
   validarNomeLivre,
   type Aba,
@@ -336,6 +337,7 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
         <View style={estilos.principal}>
           <Botao
             titulo={textoBotaoSalvar(aba, exercicios.length)}
+            descricaoAcessivel={descricaoBotaoSalvar(aba, exercicios.length)}
             onPress={salvar}
             desabilitado={!podeSalvar}
           />

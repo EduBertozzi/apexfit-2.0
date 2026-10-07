@@ -1,4 +1,5 @@
 import type { GrupoMuscular } from './types';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 /**
  * Catálogo de exercícios para montar o treino sem digitar: nomes como se fala
@@ -86,7 +87,8 @@ type Linha = [nome: string, regiao: string, local: Local, series: number, repeti
 
 function de(grupo: GrupoMuscular, linhas: Linha[]): ExercicioCatalogo[] {
   return linhas.map(([nome, regiao, local, series, repeticoes]) => ({
-    nome,
+    // Minúscula como o resto do app ("supino reto"), siglas preservadas
+    nome: minusculaInicial(nome),
     grupo,
     regiao,
     local,

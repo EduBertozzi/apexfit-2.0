@@ -103,7 +103,7 @@ describe('sugerir', () => {
   it('é determinístico e respeita a quantidade', () => {
     const primeira = sugerir('perna', 'quadriceps', 2);
 
-    expect(primeira.map((item) => item.nome)).toEqual(['Agachamento livre', 'Leg press']);
+    expect(primeira.map((item) => item.nome)).toEqual(['agachamento livre', 'leg press']);
     expect(sugerir('perna', 'quadriceps', 2)).toEqual(primeira);
     expect(sugerir('perna', 'quadriceps', 0)).toEqual([]);
   });
@@ -111,7 +111,7 @@ describe('sugerir', () => {
   it('pula o que já está no treino, sem ligar para acento ou maiúscula', () => {
     const nomes = sugerir('perna', 'quadriceps', 2, ['agachamento LIVRE']).map((item) => item.nome);
 
-    expect(nomes).toEqual(['Leg press', 'Cadeira extensora']);
+    expect(nomes).toEqual(['leg press', 'cadeira extensora']);
   });
 
   it('misto sugere uma de cada região', () => {

@@ -22,7 +22,7 @@ export type Aba = 'musculacao' | 'cardio' | 'plano';
 export const ABAS: { valor: Aba; rotulo: string }[] = [
   { valor: 'musculacao', rotulo: 'musculação' },
   { valor: 'cardio', rotulo: 'cardio' },
-  { valor: 'plano', rotulo: 'plano semanal' },
+  { valor: 'plano', rotulo: 'semana' },
 ];
 
 /** Aceita o que vier da rota; qualquer outra coisa vira musculação. */
@@ -190,6 +190,15 @@ export function textoBotaoSalvar(aba: Aba, quantidade: number): string {
 
   if (quantidade === 0) {
     return 'adicionar';
+  }
+
+  return `adicionar ${quantidade}`;
+}
+
+/** O mesmo botão, por extenso, para o leitor de tela ("adicionar 3 exercícios"). */
+export function descricaoBotaoSalvar(aba: Aba, quantidade: number): string {
+  if (quantidade === 0) {
+    return textoBotaoSalvar(aba, quantidade);
   }
 
   return quantidade === 1 ? 'adicionar 1 exercício' : `adicionar ${quantidade} exercícios`;

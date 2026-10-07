@@ -51,14 +51,14 @@ describe('<FolhaAdicionar />', () => {
     const onSalvar = await abrir();
 
     await usuario.press(screen.getByTestId('regiao-triceps'));
-    await usuario.press(screen.getByRole('checkbox', { name: /^Tríceps corda/ }));
+    await usuario.press(screen.getByRole('checkbox', { name: /^tríceps corda/ }));
     await usuario.press(screen.getByTestId('series-mais'));
     await usuario.press(screen.getByRole('button', { name: 'adicionar 2 exercícios' }));
 
     expect(onSalvar).toHaveBeenCalledWith({
       exercicios: [
-        { nome: 'Tríceps pulley', grupo: 'braco', series: 4, repeticoes: '12' },
-        { nome: 'Tríceps testa', grupo: 'braco', series: 4, repeticoes: '12' },
+        { nome: 'tríceps pulley', grupo: 'braco', series: 4, repeticoes: '12' },
+        { nome: 'tríceps testa', grupo: 'braco', series: 4, repeticoes: '12' },
       ],
       dias: undefined,
     });
@@ -80,12 +80,12 @@ describe('<FolhaAdicionar />', () => {
     const usuario = userEvent.setup();
     const onSalvar = await abrir({ aba: 'cardio' });
 
-    await usuario.press(screen.getByRole('checkbox', { name: /^Esteira/ }));
+    await usuario.press(screen.getByRole('checkbox', { name: /^esteira/ }));
     await usuario.press(screen.getByTestId('minutos-mais'));
     await usuario.press(screen.getByRole('button', { name: 'adicionar 1 exercício' }));
 
     expect(onSalvar).toHaveBeenCalledWith({
-      exercicios: [{ nome: 'Esteira', grupo: 'cardio', series: 1, repeticoes: '15 min' }],
+      exercicios: [{ nome: 'esteira', grupo: 'cardio', series: 1, repeticoes: '15 min' }],
       dias: undefined,
     });
   });

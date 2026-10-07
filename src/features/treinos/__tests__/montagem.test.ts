@@ -19,6 +19,7 @@ import {
   regiaoInicial,
   reordenarExercicioNoGrupo,
   reordenarNoGrupo,
+  descricaoBotaoSalvar,
   textoBotaoSalvar,
   textoDias,
   textoDiasAcessivel,
@@ -141,10 +142,16 @@ describe('montarCardio e texto do botão', () => {
 
   it('botão fala quantos vão entrar', () => {
     expect(textoBotaoSalvar('musculacao', 0)).toBe('adicionar');
-    expect(textoBotaoSalvar('musculacao', 1)).toBe('adicionar 1 exercício');
-    expect(textoBotaoSalvar('cardio', 3)).toBe('adicionar 3 exercícios');
+    expect(textoBotaoSalvar('musculacao', 1)).toBe('adicionar 1');
+    expect(textoBotaoSalvar('cardio', 3)).toBe('adicionar 3');
     expect(textoBotaoSalvar('plano', 0)).toBe('salvar dias');
-    expect(textoBotaoSalvar('plano', 2)).toBe('adicionar 2 exercícios');
+    expect(textoBotaoSalvar('plano', 2)).toBe('adicionar 2');
+  });
+
+  it('o leitor de tela ouve o botão por extenso', () => {
+    expect(descricaoBotaoSalvar('musculacao', 1)).toBe('adicionar 1 exercício');
+    expect(descricaoBotaoSalvar('cardio', 3)).toBe('adicionar 3 exercícios');
+    expect(descricaoBotaoSalvar('plano', 0)).toBe('salvar dias');
   });
 });
 
