@@ -1,5 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { ComponentProps } from 'react';
+import { View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 
 import type { GrupoMuscular } from '../types';
@@ -26,26 +27,23 @@ function IconeAbdomen({ cor, tamanho }: { cor: string; tamanho: number }) {
     { x: 12.5, y, largura: linha === 2 ? 5.5 : 6.5 },
   ]);
 
+  // Os atributos de acessibilidade ficam na View: no navegador o Svg os repassaria ao DOM
   return (
-    <Svg
-      width={tamanho}
-      height={tamanho}
-      viewBox="0 0 24 24"
-      accessibilityElementsHidden
-      importantForAccessibility="no"
-    >
-      {gomos.map((gomo) => (
-        <Rect
-          key={`${gomo.x}-${gomo.y}`}
-          x={gomo.x}
-          y={gomo.y}
-          width={gomo.largura}
-          height={4.5}
-          rx={1.8}
-          fill={cor}
-        />
-      ))}
-    </Svg>
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Svg width={tamanho} height={tamanho} viewBox="0 0 24 24">
+        {gomos.map((gomo) => (
+          <Rect
+            key={`${gomo.x}-${gomo.y}`}
+            x={gomo.x}
+            y={gomo.y}
+            width={gomo.largura}
+            height={4.5}
+            rx={1.8}
+            fill={cor}
+          />
+        ))}
+      </Svg>
+    </View>
   );
 }
 

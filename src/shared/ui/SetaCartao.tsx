@@ -44,8 +44,7 @@ export function SetaCartao({ onPress, rotulo, dica, concluido = false, testID }:
   if (!onPress) {
     return (
       <View
-        style={estilos.alvo}
-        pointerEvents="none"
+        style={[estilos.alvo, { pointerEvents: 'none' }]}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >

@@ -19,7 +19,7 @@ const ID_DEGRADE = 'degradeBarraAbas';
 /** Degradê vertical do fundo da tela (transparente em cima, opaco embaixo), atrás da barra. */
 function Degrade({ cor, altura }: { cor: string; altura: number }) {
   return (
-    <View pointerEvents="none" style={[estilos.degrade, { height: altura }]}>
+    <View style={[estilos.degrade, { height: altura, pointerEvents: 'none' }]}>
       <Svg width="100%" height="100%">
         <Defs>
           <LinearGradient id={ID_DEGRADE} x1="0" y1="0" x2="0" y2="1">
@@ -51,7 +51,7 @@ export function BarraAbas({
   const respiroBaixo = Math.max(bottom, espaco.md);
 
   return (
-    <View pointerEvents="box-none" style={[estilos.envoltorio, { paddingBottom: respiroBaixo }]}>
+    <View style={[estilos.envoltorio, { paddingBottom: respiroBaixo, pointerEvents: 'box-none' }]}>
       <Degrade cor={c.fundo} altura={ALTURA_DEGRADE + respiroBaixo} />
       <View
         style={[
