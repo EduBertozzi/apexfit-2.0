@@ -120,12 +120,30 @@ export const categorias = {
   escuro: { texto: pastel, fundo: pastel },
 } as const;
 
+/**
+ * Faixa da semana na tela inicial: cor de cada dia pelo quanto do treino foi feito.
+ * Pastéis com texto escuro por cima (`texto`) e círculo branco do número (`circulo`),
+ * iguais nos dois temas.
+ */
+export const semana = {
+  /** Fez 100% dos exercícios (verde). */
+  completo: '#A2E0B4',
+  /** Fez de 50% a menos de 100% (amarelo creme). */
+  parcial: '#F5DFA8',
+  /** Não treinou ou fez menos de 50% (vermelho salmão). */
+  fraco: '#E88A8A',
+  texto: paleta.preto,
+  circulo: paleta.branco,
+} as const;
+
 export const espaco = {
   xs: 4,
   sm: 8,
   md: 16,
   lg: 24,
   xl: 32,
+  /** Espaço único entre os cards da grade "bento" (linhas e colunas). */
+  grade: 12,
 } as const;
 
 /** Cantos bem arredondados, como no desenho de referência. */

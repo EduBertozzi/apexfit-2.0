@@ -2,6 +2,7 @@ import { useCoachStore } from '@/features/coach/store';
 import { useDietaStore } from '@/features/dieta/store';
 import { useHidratacaoStore } from '@/features/hidratacao/store';
 import { useLembretesStore } from '@/features/lembretes/store';
+import { apagarTodasAsFotos } from '@/features/perfil/arquivoFoto';
 import { usePerfilStore } from '@/features/perfil/store';
 import { usePesoStore } from '@/features/peso/store';
 import { useTreinosStore } from '@/features/treinos/store';
@@ -24,5 +25,7 @@ export function apagarTodosOsDados() {
   useAjustesStore.getState().restaurarPadrao();
   // Volta ao padrão na hora; o cancelamento das notificações agendadas termina em segundo plano
   void useLembretesStore.getState().apagarTudo();
+  // A foto do perfil é um arquivo à parte, fora das stores
+  apagarTodasAsFotos();
   usePerfilStore.getState().apagarPerfil();
 }

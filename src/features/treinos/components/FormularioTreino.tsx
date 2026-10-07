@@ -44,7 +44,7 @@ export function FormularioTreino({ treino, onSalvar }: Props) {
         render={({ field }) => (
           <CampoTexto
             ref={field.ref}
-            rotulo="Nome do treino"
+            rotulo="nome do treino"
             value={field.value}
             onChangeText={field.onChange}
             onBlur={() => {
@@ -65,7 +65,7 @@ export function FormularioTreino({ treino, onSalvar }: Props) {
         render={({ field }) => (
           <CampoTexto
             ref={field.ref}
-            rotulo="Foco"
+            rotulo="foco"
             value={field.value}
             onChangeText={field.onChange}
             onBlur={() => {
@@ -73,7 +73,7 @@ export function FormularioTreino({ treino, onSalvar }: Props) {
               salvar();
             }}
             erro={errors.foco?.message}
-            placeholder="Ex: Peito e tríceps"
+            placeholder="ex: peito e tríceps"
             opcional
             returnKeyType="done"
             onSubmitEditing={() => salvar()}

@@ -3,10 +3,13 @@ import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
 import { espaco } from '@/shared/theme/tokens';
-import { Botao, CampoTexto } from '@/shared/ui';
+import { Botao, CampoTexto, Opcoes, Texto } from '@/shared/ui';
 
+import { NOME_GRUPO, ORDEM_GRUPOS } from '../grupos';
 import { EXERCICIO_VAZIO, exercicioSchema, type FormularioExercicioValores } from '../schema';
 import type { DadosExercicio } from '../types';
+
+const OPCOES_GRUPO = ORDEM_GRUPOS.map((grupo) => ({ valor: grupo, rotulo: NOME_GRUPO[grupo] }));
 
 type Props = {
   valoresIniciais?: FormularioExercicioValores;
@@ -15,7 +18,7 @@ type Props = {
   onCancelar: () => void;
 };
 
-type NomeCampo = keyof FormularioExercicioValores;
+type NomeCampoTexto = Exclude<keyof FormularioExercicioValores, 'grupo'>;
 
 /** Formulário de um exercício. Toda regra está em `schema.ts`; aqui só exibimos. */
 export function FormularioExercicio({
@@ -38,10 +41,10 @@ export function FormularioExercicio({
   const enviar = handleSubmit(onSalvar);
 
   function campo(
-    nome: NomeCampo,
+    nome: NomeCampoTexto,
     config: {
       rotulo: string;
-      proximo?: NomeCampo;
+      proximo?: NomeCampoTexto;
       placeholder?: string;
       teclado?: 'default' | 'number-pad' | 'decimal-pad';
       sufixo?: string;
@@ -77,23 +80,46 @@ export function FormularioExercicio({
 
   return (
     <View style={estilos.container}>
-      {campo('nome', { rotulo: 'Exercício', placeholder: 'Ex: Supino reto', proximo: 'series' })}
+      {campo('nome', { rotulo: 'exercício', placeholder: 'ex: supino reto', proximo: 'series' })}
+
+      <Controller
+        control={control}
+        name="grupo"
+        render={({ field }) => (
+          <View style={estilos.grupo}>
+            <Opcoes
+              rotulo="grupo"
+              opcoes={OPCOES_GRUPO}
+              valor={field.value}
+              onMudar={field.onChange}
+              erro={errors.grupo?.message}
+              testID="exercicio-grupo"
+            />
+            <Texto variante="legenda" secundario>
+              Define o card e a cor na tela inicial. Se não escolher, o app adivinha pelo nome.
+            </Texto>
+          </View>
+        )}
+      />
 
       <View style={estilos.linha}>
         <View style={estilos.series}>
-          {campo('series', { rotulo: 'Séries', teclado: 'number-pad', proximo: 'repeticoes' })}
+          {campo('series', { rotulo: 'séries', teclado: 'number-pad', proximo: 'repeticoes' })}
         </View>
         <View style={estilos.repeticoes}>
           {campo('repeticoes', {
-            rotulo: 'Repetições',
+            rotulo: 'repetições',
             placeholder: '8 a 12',
             proximo: 'cargaKg',
           })}
         </View>
       </View>
+      <Texto variante="legenda" secundario>
+        No cardio, escreva o tempo: 10 min.
+      </Texto>
 
       {campo('cargaKg', {
-        rotulo: 'Carga',
+        rotulo: 'carga',
         teclado: 'decimal-pad',
         sufixo: 'kg',
         placeholder: '22,5',
@@ -103,14 +129,14 @@ export function FormularioExercicio({
       })}
 
       {campo('observacao', {
-        rotulo: 'Observação',
-        placeholder: 'Ex: descer devagar',
+        rotulo: 'observação',
+        placeholder: 'ex: descer devagar',
         opcional: true,
       })}
 
       <View style={estilos.linha}>
         <View style={estilos.botao}>
-          <Botao titulo="Cancelar" variante="secundario" onPress={onCancelar} />
+          <Botao titulo="cancelar" variante="secundario" onPress={onCancelar} />
         </View>
         <View style={estilos.botao}>
           <Botao titulo={textoBotao} onPress={enviar} />
@@ -123,6 +149,9 @@ export function FormularioExercicio({
 const estilos = StyleSheet.create({
   container: {
     gap: espaco.md,
+  },
+  grupo: {
+    gap: espaco.xs,
   },
   linha: {
     flexDirection: 'row',

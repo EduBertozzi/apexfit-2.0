@@ -5,9 +5,10 @@ import { AccessibilityInfo, Platform, Pressable, StyleSheet, View } from 'react-
 import { useAjustesStore } from '@/features/ajustes/store';
 import { chaveDoDia } from '@/shared/lib/data';
 import { borda, espaco, familia, fonte, raio } from '@/shared/theme/tokens';
-import { useCores } from '@/shared/theme/useCores';
+import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { BarraProgresso, Botao, Cartao, Texto } from '@/shared/ui';
 
+import { agruparPorGrupo, NOME_GRUPO, textoEsquema } from '../grupos';
 import {
   podeFinalizar,
   progressoDaSessao,
@@ -18,6 +19,7 @@ import {
 } from '../logica';
 import { useTreinosStore } from '../store';
 import type { Exercicio, Sessao, Treino } from '../types';
+import { IconeGrupo } from './IconeGrupo';
 
 function vibrar(tipo: 'leve' | 'sucesso') {
   // Vibração não existe no navegador
@@ -35,10 +37,12 @@ function vibrar(tipo: 'leve' | 'sucesso') {
 type ItemProps = {
   exercicio: Exercicio;
   feito: boolean;
+  /** Cor do grupo: a caixinha marcada fica nela. */
+  corGrupo: string;
   onAlternar: () => void;
 };
 
-function ItemChecklist({ exercicio, feito, onAlternar }: ItemProps) {
+function ItemChecklist({ exercicio, feito, corGrupo, onAlternar }: ItemProps) {
   const c = useCores();
 
   return (
@@ -51,20 +55,20 @@ function ItemChecklist({ exercicio, feito, onAlternar }: ItemProps) {
       testID={`exercicio-${exercicio.id}`}
       style={({ pressed }) => [
         estilos.item,
-        {
-          borderColor: c.borda,
-          backgroundColor: feito ? c.superficieSecundaria : c.superficie,
-        },
+        { backgroundColor: feito ? c.superficieSecundaria : c.superficie },
         pressed && { opacity: 0.75 },
       ]}
     >
       <View
         style={[
           estilos.caixa,
-          { borderColor: c.texto, backgroundColor: feito ? c.destaque : 'transparent' },
+          {
+            borderColor: feito ? corGrupo : c.textoSecundario,
+            backgroundColor: feito ? corGrupo : 'transparent',
+          },
         ]}
       >
-        {feito ? <Ionicons name="checkmark" size={22} color={c.textoSobreDestaque} /> : null}
+        {feito ? <Ionicons name="checkmark" size={22} color={c.fundo} /> : null}
       </View>
       <View style={estilos.textos}>
         <Texto
@@ -91,14 +95,16 @@ type Props = {
   sessao: Sessao;
 };
 
-/** O treino rolando: marcar exercícios, ver o progresso e finalizar. */
+/** O treino rolando: marcar exercícios (por grupo, na cor do grupo), ver o progresso e finalizar. */
 export function ChecklistSessao({ treino, sessao }: Props) {
+  const cat = useCategorias();
   const alternar = useTreinosStore((state) => state.alternarExercicio);
   const finalizar = useTreinosStore((state) => state.finalizarTreino);
   const vibracaoLigada = useAjustesStore((state) => state.vibracao);
 
   const progresso = progressoDaSessao(sessao, treino);
   const liberado = podeFinalizar(sessao);
+  const blocos = agruparPorGrupo(treino.exercicios);
 
   function alternarExercicio(exercicioId: string) {
     alternar(exercicioId);
@@ -128,7 +134,7 @@ export function ChecklistSessao({ treino, sessao }: Props) {
   return (
     <View style={estilos.container}>
       <View>
-        <Texto variante="titulo" accessibilityRole="header">
+        <Texto variante="titulo" style={estilos.titulo} accessibilityRole="header">
           {treino.nome}
         </Texto>
         {treino.foco ? <Texto secundario>{treino.foco}</Texto> : null}
@@ -136,7 +142,7 @@ export function ChecklistSessao({ treino, sessao }: Props) {
 
       <Cartao>
         <View style={estilos.linhaProgresso}>
-          <Texto variante="rotulo">Progresso</Texto>
+          <Texto variante="rotulo">progresso</Texto>
           <Texto variante="rotulo" accessibilityLiveRegion="polite">
             {progresso.feitos} de {progresso.total}
           </Texto>
@@ -151,19 +157,39 @@ export function ChecklistSessao({ treino, sessao }: Props) {
         <Texto secundario>Este treino ainda não tem exercícios. Volte e adicione alguns.</Texto>
       ) : null}
 
-      <View style={estilos.lista}>
-        {treino.exercicios.map((exercicio) => (
-          <ItemChecklist
-            key={exercicio.id}
-            exercicio={exercicio}
-            feito={sessao.concluidos.includes(exercicio.id)}
-            onAlternar={() => alternarExercicio(exercicio.id)}
-          />
-        ))}
-      </View>
+      {blocos.map((bloco) => {
+        const cor = cat.texto[bloco.grupo];
+
+        return (
+          <View key={bloco.grupo} style={estilos.lista}>
+            <View style={estilos.cabecalhoGrupo}>
+              <IconeGrupo grupo={bloco.grupo} cor={cor} />
+              <Texto
+                variante="subtitulo"
+                style={[estilos.nomeGrupo, { color: cor }]}
+                accessibilityRole="header"
+              >
+                {NOME_GRUPO[bloco.grupo]}
+              </Texto>
+              <Texto variante="rotulo" style={{ color: cor }}>
+                {textoEsquema(bloco.esquema)}
+              </Texto>
+            </View>
+            {bloco.exercicios.map((exercicio) => (
+              <ItemChecklist
+                key={exercicio.id}
+                exercicio={exercicio}
+                feito={sessao.concluidos.includes(exercicio.id)}
+                corGrupo={cor}
+                onAlternar={() => alternarExercicio(exercicio.id)}
+              />
+            ))}
+          </View>
+        );
+      })}
 
       <Botao
-        titulo={progresso.completo ? 'Finalizar treino' : 'Finalizar assim mesmo'}
+        titulo={progresso.completo ? 'finalizar treino' : 'finalizar assim mesmo'}
         variante={progresso.completo ? 'destaque' : 'primario'}
         onPress={finalizarTreino}
         desabilitado={!liberado}
@@ -181,6 +207,9 @@ const estilos = StyleSheet.create({
   container: {
     gap: espaco.md,
   },
+  titulo: {
+    fontFamily: familia.display,
+  },
   linhaProgresso: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -188,20 +217,30 @@ const estilos = StyleSheet.create({
   lista: {
     gap: espaco.sm,
   },
+  cabecalhoGrupo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.sm,
+    marginTop: espaco.sm,
+  },
+  nomeGrupo: {
+    flex: 1,
+    fontFamily: familia.displayLeve,
+  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: espaco.md,
     minHeight: 64,
     padding: espaco.md,
-    borderWidth: borda.grossa,
-    borderRadius: raio.sm,
+    borderRadius: raio.md,
+    borderCurve: 'continuous',
   },
   caixa: {
     width: 32,
     height: 32,
     borderWidth: borda.grossa,
-    borderRadius: raio.sm,
+    borderRadius: raio.total,
     alignItems: 'center',
     justifyContent: 'center',
   },

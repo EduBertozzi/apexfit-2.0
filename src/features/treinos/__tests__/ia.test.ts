@@ -53,7 +53,7 @@ describe('paraDadosTreino', () => {
           nome: 'Esteira leve',
           grupo: 'aquecimento',
           series: 1,
-          repeticoes: '5',
+          repeticoes: '5 min',
           observacao: '5 minutos',
         },
         { nome: 'Supino reto com barra', grupo: 'peito', series: 9, repeticoes: '8 a 12' },

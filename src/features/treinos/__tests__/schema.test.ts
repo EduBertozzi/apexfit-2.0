@@ -9,6 +9,7 @@ import {
 
 const VALIDO: FormularioExercicioValores = {
   nome: '  Supino reto ',
+  grupo: '',
   series: '3',
   repeticoes: '10',
   cargaKg: '40',
@@ -117,6 +118,24 @@ describe('exercicioSchema', () => {
   });
 });
 
+describe('exercicioSchema: grupo e minutos', () => {
+  it('grupo vazio fica automático; grupo da lista é guardado', () => {
+    expect(exercicioSchema.parse(VALIDO).grupo).toBeUndefined();
+    expect(exercicioSchema.parse({ ...VALIDO, grupo: 'braco' }).grupo).toBe('braco');
+  });
+
+  it('recusa grupo fora da lista', () => {
+    expect(erroDe('grupo', 'pescoco')).toBe('Escolha um grupo da lista');
+  });
+
+  it('aceita minutos para o cardio e padroniza', () => {
+    expect(repeticoes('10 min')).toBe('10 min');
+    expect(repeticoes('10min')).toBe('10 min');
+    expect(repeticoes('15 minutos')).toBe('15 min');
+    expect(erroDe('repeticoes', '0 min')).toBe('Deve estar entre 1 e 180 minutos');
+  });
+});
+
 describe('exercicioParaFormulario', () => {
   it('faz o caminho inverso e volta a validar igual', () => {
     const exercicio = exercicioSchema.parse({ ...VALIDO, cargaKg: '22,5', repeticoes: '8-12' });
@@ -125,7 +144,9 @@ describe('exercicioParaFormulario', () => {
 
     expect(formulario.cargaKg).toBe('22,5');
     expect(formulario.repeticoes).toBe('8 a 12');
-    expect(exercicioSchema.parse(formulario)).toEqual(exercicio);
+    // O grupo adivinhado pelo nome vem preenchido e passa a ser guardado
+    expect(formulario.grupo).toBe('peito');
+    expect(exercicioSchema.parse(formulario)).toEqual({ ...exercicio, grupo: 'peito' });
   });
 
   it('carga ausente vira campo vazio', () => {
@@ -138,6 +159,7 @@ describe('exercicioParaFormulario', () => {
 
     expect(formulario).toEqual({
       nome: 'Flexão',
+      grupo: 'peito',
       series: '3',
       repeticoes: '15',
       cargaKg: '',
