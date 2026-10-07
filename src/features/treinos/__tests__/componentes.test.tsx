@@ -132,7 +132,8 @@ describe('<FaixaSemana />', () => {
 
     await render(<FaixaSemana dias={dias} resumo={resumoDaSemana(dias)} />);
 
-    expect(screen.getByText('hoje: ainda sem treino')).toBeOnTheScreen();
+    // Hoje já tem resumo embaixo do título da tela; a faixa só mostra o dia tocado
+    expect(screen.queryByText('hoje: ainda sem treino')).toBeNull();
     expect(screen.getByText('completo')).toBeOnTheScreen();
 
     await usuario.press(screen.getByRole('button', { name: 'segunda, 5, sem treino' }));

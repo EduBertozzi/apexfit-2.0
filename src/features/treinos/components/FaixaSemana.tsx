@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -85,6 +85,17 @@ function Legenda({ resumo }: { resumo: string }) {
 export function FaixaSemana({ dias, resumo }: Props) {
   const c = useCores();
   const rolagem = useRef<ScrollView>(null);
+  const [larguraVisivel, setLarguraVisivel] = useState(0);
+  const [xDeHoje, setXDeHoje] = useState<number | null>(null);
+
+  // Só dá para centralizar hoje quando as duas medidas existem (vêm em ordens diferentes)
+  useEffect(() => {
+    if (xDeHoje !== null && larguraVisivel > 0) {
+      const x = xDeHoje - (larguraVisivel - LARGURA_PILULA) / 2;
+      rolagem.current?.scrollTo({ x: Math.max(x, 0), animated: false });
+    }
+  }, [xDeHoje, larguraVisivel]);
+  const chaveDeHoje = dias.find((dia) => dia.estado === 'hoje')?.chave;
   const [selecionado, setSelecionado] = useState(
     () => dias.find((dia) => dia.estado === 'hoje')?.chave ?? dias[0]?.chave,
   );
@@ -115,6 +126,7 @@ export function FaixaSemana({ dias, resumo }: Props) {
       <ScrollView
         ref={rolagem}
         horizontal
+        onLayout={(evento) => setLarguraVisivel(evento.nativeEvent.layout.width)}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={estilos.faixa}
       >
@@ -132,11 +144,7 @@ export function FaixaSemana({ dias, resumo }: Props) {
               onPress={() => setSelecionado(dia.chave)}
               onLayout={
                 dia.estado === 'hoje'
-                  ? (evento) => {
-                      // Deixa hoje à vista, com o dia anterior aparecendo do lado
-                      const x = evento.nativeEvent.layout.x - LARGURA_PILULA;
-                      rolagem.current?.scrollTo({ x: Math.max(x, 0), animated: false });
-                    }
+                  ? (evento) => setXDeHoje(evento.nativeEvent.layout.x)
                   : undefined
               }
               style={({ pressed }) => [
@@ -167,7 +175,8 @@ export function FaixaSemana({ dias, resumo }: Props) {
 
       <Legenda resumo={resumo} />
 
-      {diaSelecionado ? (
+      {/* Hoje já tem o resumo embaixo do título; aqui só aparece o dia tocado */}
+      {diaSelecionado && diaSelecionado.chave !== chaveDeHoje ? (
         <Text
           accessibilityLiveRegion="polite"
           style={[estilos.resumoDia, { color: c.texto }]}

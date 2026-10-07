@@ -20,7 +20,7 @@ export const NOME_GRUPO: Record<GrupoMuscular, string> = {
   ombro: 'ombro',
   braco: 'braço',
   perna: 'perna',
-  abdominal: 'abdominal',
+  abdominal: 'abdômen',
   cardio: 'cardio',
   outro: 'outros',
 };

@@ -59,7 +59,7 @@ export function CartaoToque({
         <View style={estilos.seta} pointerEvents="none">
           <MaterialCommunityIcons
             name={concluido ? 'check' : 'arrow-top-right'}
-            size={28}
+            size={24}
             color={c.texto}
           />
         </View>
@@ -72,7 +72,7 @@ const estilos = StyleSheet.create({
   cartao: {
     borderRadius: raio.lg,
     borderCurve: 'continuous',
-    padding: espaco.lg - 4,
+    padding: espaco.md,
     gap: espaco.xs,
     minHeight: 96,
   },
@@ -85,7 +85,7 @@ const estilos = StyleSheet.create({
   },
   seta: {
     position: 'absolute',
-    top: espaco.md,
-    right: espaco.md,
+    top: espaco.md - 2,
+    right: espaco.md - 2,
   },
 });

@@ -50,3 +50,6 @@ coverage/
 
 # worktrees e dados locais do Claude Code
 .claude/worktrees/
+
+# prints e logs do navegador de testes
+.playwright-mcp/

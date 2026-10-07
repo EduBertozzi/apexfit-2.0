@@ -35,17 +35,20 @@ function NomeExercicio({
   exercicio,
   feito,
   alinhar = 'esquerda',
+  linhas = 1,
 }: {
   exercicio: Exercicio;
   feito: boolean;
   alinhar?: 'esquerda' | 'direita';
+  /** Card com poucos exercícios: deixa o nome quebrar em 2 linhas em vez de cortar. */
+  linhas?: number;
 }) {
   const c = useCores();
 
   return (
     <View style={[estilos.nomeLinha, alinhar === 'direita' && estilos.nomeDireita]}>
       <Text
-        numberOfLines={1}
+        numberOfLines={linhas}
         ellipsizeMode="tail"
         maxFontSizeMultiplier={1.4}
         style={[
@@ -105,7 +108,7 @@ export function CartaoGrupo({ bloco, concluidos, onPress, inteiro = false, style
 
   const titulo = (
     <View style={estilos.titulo}>
-      <IconeGrupo grupo={bloco.grupo} cor={cor} />
+      <IconeGrupo grupo={bloco.grupo} cor={cor} tamanho={20} />
       <Text
         maxFontSizeMultiplier={1.4}
         numberOfLines={1}
@@ -177,7 +180,12 @@ export function CartaoGrupo({ bloco, concluidos, onPress, inteiro = false, style
       {esquema}
       <View style={estilos.lista}>
         {visiveis.map((exercicio) => (
-          <NomeExercicio key={exercicio.id} exercicio={exercicio} feito={feito(exercicio)} />
+          <NomeExercicio
+            key={exercicio.id}
+            exercicio={exercicio}
+            feito={feito(exercicio)}
+            linhas={visiveis.length <= 2 ? 2 : 1}
+          />
         ))}
         <Mais resto={resto} />
       </View>
@@ -198,13 +206,14 @@ const estilos = StyleSheet.create({
     gap: espaco.xs + 2,
     flexShrink: 1,
   },
+  // Um pouco menor que o subtítulo: "abdominal" precisa caber ao lado do ícone e da seta
   nomeGrupo: {
     fontFamily: familia.displayLeve,
-    fontSize: fonte.subtitulo,
+    fontSize: 19,
   },
   esquema: {
     fontFamily: familia.displayLeve,
-    fontSize: fonte.subtitulo,
+    fontSize: 19,
   },
   encolher: {
     flexShrink: 1,
