@@ -50,6 +50,10 @@ export const cores = {
     textoHeroiSecundario: paleta.cinza400,
     trilhoHeroi: paleta.grafite600,
     bordaHeroi: paleta.grafite500,
+    // Barra de abas flutuante: vidro fosco (superfície a 85%), fio claro e sombra suave
+    barra: 'rgba(255, 255, 255, 0.85)',
+    bordaBarra: paleta.cinza200,
+    sombraBarra: '0px 6px 24px rgba(0, 0, 0, 0.12)',
   },
   escuro: {
     fundo: paleta.preto,
@@ -70,6 +74,9 @@ export const cores = {
     textoHeroiSecundario: paleta.cinza400,
     trilhoHeroi: paleta.grafite600,
     bordaHeroi: paleta.grafite500,
+    barra: 'rgba(38, 38, 38, 0.85)',
+    bordaBarra: paleta.grafite500,
+    sombraBarra: '0px 8px 28px rgba(0, 0, 0, 0.6)',
   },
 } as const;
 
@@ -173,11 +180,32 @@ export const familia = {
 } as const;
 
 export const fonte = {
+  /** Rótulo embaixo dos ícones da barra de abas. */
+  micro: 12,
   legenda: 13,
   corpo: 17,
   rotulo: 15,
+  /** Título no cabeçalho das telas empilhadas. */
+  cabecalho: 19,
   subtitulo: 21,
   titulo: 32,
   destaque: 36,
   gigante: 40,
+} as const;
+
+/**
+ * Movimento: durações (ms) e molas usadas nas animações (ver shared/ui/animacao.ts).
+ * Tudo curto e sem repetição; com "reduzir movimento" ligado nada anima.
+ */
+export const movimento = {
+  /** Toque: o "pop" do check. */
+  rapido: 120,
+  /** Troca de estado: linha marcada, cor de fundo. */
+  medio: 250,
+  /** Comemoração inteira (anel e pontinhos). Nunca passar de 1,2 s. */
+  comemoracao: 1100,
+  /** Mola firme, quase sem balanço: preencher barras. */
+  mola: { damping: 18, stiffness: 180, mass: 1 },
+  /** Mola com um pouco de balanço: selos e faixas entrando. */
+  molaPop: { damping: 12, stiffness: 220, mass: 0.8 },
 } as const;

@@ -19,6 +19,11 @@ type Props = {
   erro?: string;
   /** "linha" para pílulas curtas lado a lado; "coluna" para cartões com descrição. */
   direcao?: 'linha' | 'coluna';
+  /**
+   * Só em linha: pílulas de largura igual, menores e sem o ícone de check,
+   * para caber tudo numa linha só (a partir de 320 px). A marcada fica só no menta.
+   */
+  compacto?: boolean;
   testID?: string;
 };
 
@@ -27,9 +32,19 @@ type Props = {
  * A marcada ganha fundo menta com texto escuro e um ícone de check,
  * para não depender só da cor.
  */
-export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha', testID }: Props) {
+export function Opcoes({
+  rotulo,
+  opcoes,
+  valor,
+  onMudar,
+  erro,
+  direcao = 'linha',
+  compacto = false,
+  testID,
+}: Props) {
   const c = useCores();
   const emLinha = direcao === 'linha';
+  const pilulaCompacta = emLinha && compacto;
 
   return (
     <View style={estilos.container} testID={testID}>
@@ -40,7 +55,7 @@ export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha'
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={rotulo}
-        style={emLinha ? estilos.linha : estilos.coluna}
+        style={emLinha ? [estilos.linha, pilulaCompacta && estilos.linhaCompacta] : estilos.coluna}
       >
         {opcoes.map((opcao) => {
           const marcada = opcao.valor === valor;
@@ -57,6 +72,7 @@ export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha'
               style={({ pressed }) => [
                 estilos.opcao,
                 emLinha ? estilos.opcaoLinha : estilos.opcaoColuna,
+                pilulaCompacta && estilos.opcaoCompacta,
                 {
                   backgroundColor: marcada ? c.destaque : c.superficieSecundaria,
                   borderColor: erro && !marcada ? c.erro : 'transparent',
@@ -66,8 +82,12 @@ export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha'
             >
               <View style={emLinha ? estilos.conteudoLinha : estilos.conteudoColuna}>
                 <Texto
-                  variante={emLinha ? 'rotulo' : 'corpo'}
+                  variante={pilulaCompacta ? 'legenda' : emLinha ? 'rotulo' : 'corpo'}
                   style={[estilos.textoOpcao, { color: corTexto }]}
+                  // Compacta: uma linha só; se a fonte do sistema estiver enorme, encolhe para caber
+                  numberOfLines={pilulaCompacta ? 1 : undefined}
+                  adjustsFontSizeToFit={pilulaCompacta}
+                  maxFontSizeMultiplier={pilulaCompacta ? 1.3 : undefined}
                 >
                   {opcao.rotulo}
                 </Texto>
@@ -81,7 +101,7 @@ export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha'
                   </Texto>
                 ) : null}
               </View>
-              {marcada ? (
+              {marcada && !pilulaCompacta ? (
                 <Ionicons
                   name="checkmark-circle"
                   size={emLinha ? 18 : 24}
@@ -118,6 +138,10 @@ const estilos = StyleSheet.create({
     flexWrap: 'wrap',
     gap: espaco.sm,
   },
+  linhaCompacta: {
+    flexWrap: 'nowrap',
+    gap: espaco.xs + 2,
+  },
   coluna: {
     gap: espaco.sm,
   },
@@ -134,6 +158,12 @@ const estilos = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: espaco.md + 2,
     borderRadius: raio.total,
+  },
+  opcaoCompacta: {
+    flexGrow: 0,
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: espaco.xs,
   },
   opcaoColuna: {
     minHeight: 64,

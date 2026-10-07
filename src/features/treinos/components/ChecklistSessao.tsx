@@ -1,15 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
-import { AccessibilityInfo, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
-import { useAjustesStore } from '@/features/ajustes/store';
 import { chaveDoDia } from '@/shared/lib/data';
+import { useVibrar } from '@/shared/lib/vibracao';
 import { borda, espaco, familia, fonte, raio } from '@/shared/theme/tokens';
 import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { BarraProgresso, Botao, Cartao, Texto } from '@/shared/ui';
+import { usePop, useTransicao } from '@/shared/ui/animacao';
 
 import { agruparPorGrupo, NOME_GRUPO, textoEsquema } from '../grupos';
 import {
+  marcarCompletaOTreino,
   podeFinalizar,
   progressoDaSessao,
   resumoExercicio,
@@ -21,19 +23,6 @@ import { useTreinosStore } from '../store';
 import type { Exercicio, Sessao, Treino } from '../types';
 import { IconeGrupo } from './IconeGrupo';
 
-function vibrar(tipo: 'leve' | 'sucesso') {
-  // Vibração não existe no navegador
-  if (Platform.OS === 'web') {
-    return;
-  }
-
-  if (tipo === 'sucesso') {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  } else {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
-}
-
 type ItemProps = {
   exercicio: Exercicio;
   feito: boolean;
@@ -44,6 +33,16 @@ type ItemProps = {
 
 function ItemChecklist({ exercicio, feito, corGrupo, onAlternar }: ItemProps) {
   const c = useCores();
+  // Ao marcar: o círculo dá um pulinho e a linha passa devagar para o fundo de "feito"
+  const pop = usePop(feito);
+  const transicao = useTransicao(feito);
+  const fundo = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      transicao.get(),
+      [0, 1],
+      [c.superficie, c.superficieSecundaria],
+    ),
+  }));
 
   return (
     <Pressable
@@ -53,39 +52,38 @@ function ItemChecklist({ exercicio, feito, corGrupo, onAlternar }: ItemProps) {
       accessibilityLabel={`${exercicio.nome}, ${resumoExercicioAcessivel(exercicio)}`}
       accessibilityHint={exercicio.observacao}
       testID={`exercicio-${exercicio.id}`}
-      style={({ pressed }) => [
-        estilos.item,
-        { backgroundColor: feito ? c.superficieSecundaria : c.superficie },
-        pressed && { opacity: 0.75 },
-      ]}
+      style={({ pressed }) => [estilos.toque, pressed && { opacity: 0.75 }]}
     >
-      <View
-        style={[
-          estilos.caixa,
-          {
-            borderColor: feito ? corGrupo : c.textoSecundario,
-            backgroundColor: feito ? corGrupo : 'transparent',
-          },
-        ]}
-      >
-        {feito ? <Ionicons name="checkmark" size={22} color={c.fundo} /> : null}
-      </View>
-      <View style={estilos.textos}>
-        <Texto
-          style={[estilos.nome, feito && { textDecorationLine: 'line-through' }]}
-          secundario={feito}
+      <Animated.View style={[estilos.item, fundo]}>
+        <Animated.View
+          style={[
+            estilos.caixa,
+            {
+              borderColor: feito ? corGrupo : c.textoSecundario,
+              backgroundColor: feito ? corGrupo : 'transparent',
+            },
+            pop,
+          ]}
         >
-          {exercicio.nome}
-        </Texto>
-        <Texto variante="rotulo" secundario>
-          {resumoExercicio(exercicio)}
-        </Texto>
-        {exercicio.observacao ? (
-          <Texto variante="legenda" secundario>
-            {exercicio.observacao}
+          {feito ? <Ionicons name="checkmark" size={22} color={c.fundo} /> : null}
+        </Animated.View>
+        <View style={estilos.textos}>
+          <Texto
+            style={[estilos.nome, feito && { textDecorationLine: 'line-through' }]}
+            secundario={feito}
+          >
+            {exercicio.nome}
           </Texto>
-        ) : null}
-      </View>
+          <Texto variante="rotulo" secundario>
+            {resumoExercicio(exercicio)}
+          </Texto>
+          {exercicio.observacao ? (
+            <Texto variante="legenda" secundario>
+              {exercicio.observacao}
+            </Texto>
+          ) : null}
+        </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -100,18 +98,24 @@ export function ChecklistSessao({ treino, sessao }: Props) {
   const cat = useCategorias();
   const alternar = useTreinosStore((state) => state.alternarExercicio);
   const finalizar = useTreinosStore((state) => state.finalizarTreino);
-  const vibracaoLigada = useAjustesStore((state) => state.vibracao);
+  const vibrar = useVibrar();
 
   const progresso = progressoDaSessao(sessao, treino);
   const liberado = podeFinalizar(sessao);
   const blocos = agruparPorGrupo(treino.exercicios);
 
   function alternarExercicio(exercicioId: string) {
+    // Marcou o último: vibração de sucesso e aviso para quem usa leitor de tela
+    const completou = marcarCompletaOTreino(sessao, treino, exercicioId);
     alternar(exercicioId);
 
-    if (vibracaoLigada) {
-      vibrar('leve');
+    if (completou) {
+      AccessibilityInfo.announceForAccessibility(
+        'Todos os exercícios feitos! Agora é só finalizar o treino.',
+      );
     }
+
+    vibrar(completou ? 'sucesso' : 'leve');
   }
 
   function finalizarTreino() {
@@ -126,9 +130,7 @@ export function ChecklistSessao({ treino, sessao }: Props) {
       `Treino finalizado! ${textoTreinosNaSemana(semana)}.`,
     );
 
-    if (vibracaoLigada) {
-      vibrar('sucesso');
-    }
+    vibrar('sucesso');
   }
 
   return (
@@ -226,6 +228,9 @@ const estilos = StyleSheet.create({
   nomeGrupo: {
     flex: 1,
     fontFamily: familia.displayLeve,
+  },
+  toque: {
+    borderRadius: raio.md,
   },
   item: {
     flexDirection: 'row',

@@ -111,18 +111,21 @@ export default function Ia() {
 
         <Opcoes
           rotulo="dias por semana"
+          compacto
           opcoes={OPCOES_DIAS}
           valor={String(preferencias.diasPorSemana)}
           onMudar={(valor) => mudar({ diasPorSemana: Number(valor) })}
         />
         <Opcoes
           rotulo="onde"
+          compacto
           opcoes={OPCOES_LOCAL}
           valor={preferencias.local}
           onMudar={(valor) => mudar({ local: valor as LocalTreino })}
         />
         <Opcoes
           rotulo="tempo por treino"
+          compacto
           opcoes={OPCOES_MINUTOS}
           valor={String(preferencias.minutos)}
           onMudar={(valor) => mudar({ minutos: Number(valor) as MinutosTreino })}

@@ -305,6 +305,25 @@ export function progressoDaSessao(sessao: Sessao, treino: Treino): Progresso {
   };
 }
 
+/** Marcar este exercício agora fecha o treino? (era o último que faltava; desmarcar nunca fecha) */
+export function marcarCompletaOTreino(
+  sessao: Sessao,
+  treino: Treino,
+  exercicioId: string,
+): boolean {
+  if (sessao.concluidos.includes(exercicioId)) {
+    return false;
+  }
+
+  if (!treino.exercicios.some((exercicio) => exercicio.id === exercicioId)) {
+    return false;
+  }
+
+  const depois = { ...sessao, concluidos: [...sessao.concluidos, exercicioId] };
+
+  return progressoDaSessao(depois, treino).completo;
+}
+
 export type SituacaoDoDia =
   | { tipo: 'sem-treinos' }
   | { tipo: 'sugerido'; treino: Treino }
