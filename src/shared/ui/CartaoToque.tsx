@@ -21,7 +21,7 @@ type Props = {
 };
 
 /** Tamanho da seta: quem monta o card deixa este espaço livre à direita do título. */
-export const ESPACO_DA_SETA = 32;
+export const ESPACO_DA_SETA = 24;
 
 /**
  * Card "bento" que é um botão de verdade: o card inteiro é a área de toque

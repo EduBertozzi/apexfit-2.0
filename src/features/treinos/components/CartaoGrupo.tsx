@@ -203,7 +203,7 @@ const estilos = StyleSheet.create({
   titulo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espaco.xs + 2,
+    gap: espaco.xs,
     flexShrink: 1,
   },
   // Um pouco menor que o subtítulo: "abdominal" precisa caber ao lado do ícone e da seta
