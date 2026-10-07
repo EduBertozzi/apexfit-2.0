@@ -29,6 +29,11 @@ export type Treino = {
   /** Ex: "Peito e tríceps". */
   foco?: string;
   exercicios: Exercicio[];
+  /**
+   * Plano semanal: dias em que este treino acontece (0 = domingo, 6 = sábado).
+   * Sem o campo (ou vazio), o treino entra no rodízio A, B, C.
+   */
+  dias?: number[];
 };
 
 export type Sessao = {

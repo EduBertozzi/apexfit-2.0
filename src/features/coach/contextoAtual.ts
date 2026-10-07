@@ -62,7 +62,7 @@ export function dadosAtuais(agora: Date = new Date()): DadosDemo | null {
     hoje: dataPorExtenso(agora),
     extras: [blocoPeso(hoje), blocoTreinos(hoje)],
     treinos: {
-      proximo: proximoTreino(treinos, sessoes)?.nome,
+      proximo: proximoTreino(treinos, sessoes, hoje)?.nome,
       naSemana: treinosNaSemana(sessoes, hoje),
       sequenciaSemanas: sequenciaDeTreinos(sessoes, hoje),
     },
@@ -105,7 +105,7 @@ function blocoTreinos(hoje: string): string {
     return '## Treinos\nNenhum treino montado ainda. Pode sugerir montar na aba Treinos.';
   }
 
-  const proximo = proximoTreino(treinos, sessoes);
+  const proximo = proximoTreino(treinos, sessoes, hoje);
   const linhas = treinos.map(
     (treino) =>
       `${treino.nome} (${resumoTreino(treino)}): ` +

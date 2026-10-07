@@ -83,6 +83,37 @@ export function editarTreino(
   );
 }
 
+/** Dias do plano semanal sem repetição, em ordem e só de 0 a 6. Vazio vira `undefined`. */
+export function normalizarDias(dias: readonly number[]): number[] | undefined {
+  const validos = [...new Set(dias)]
+    .filter((dia) => Number.isInteger(dia) && dia >= 0 && dia <= 6)
+    .sort((a, b) => a - b);
+
+  return validos.length > 0 ? validos : undefined;
+}
+
+/** Troca os dias da semana em que o treino acontece. */
+export function definirDias(
+  treinos: readonly Treino[],
+  id: string,
+  dias: readonly number[],
+): Treino[] {
+  return treinos.map((treino) => {
+    if (treino.id !== id) {
+      return treino;
+    }
+
+    const novos = normalizarDias(dias);
+    const atualizado: Treino = { ...treino, dias: novos };
+
+    if (!novos) {
+      delete atualizado.dias;
+    }
+
+    return atualizado;
+  });
+}
+
 export function removerTreino(treinos: readonly Treino[], id: string): Treino[] {
   return treinos.filter((treino) => treino.id !== id);
 }
@@ -126,6 +157,19 @@ export function editarExercicio(
       exercicio.id === exercicioId ? { ...dados, id: exercicioId } : exercicio,
     ),
   );
+}
+
+/** Vários de uma vez, na ordem (ex: os escolhidos na folha de adicionar). */
+export function adicionarExercicios(
+  treinos: readonly Treino[],
+  treinoId: string,
+  dados: readonly DadosExercicio[],
+  gerarId: GeradorId = novoId,
+): Treino[] {
+  return alterarExercicios(treinos, treinoId, (exercicios) => [
+    ...exercicios,
+    ...dados.map((item) => criarExercicio(item, gerarId)),
+  ]);
 }
 
 export function removerExercicio(
@@ -186,7 +230,7 @@ function ultimaFinalizada(sessoes: readonly Sessao[]): Sessao | undefined {
  * Rodízio A → B → C → A: o próximo é o que vem depois do último treino finalizado.
  * Sem histórico (ou se o último treino foi apagado), começa do primeiro.
  */
-export function proximoTreino(treinos: readonly Treino[], sessoes: readonly Sessao[]) {
+function proximoNoRodizio(treinos: readonly Treino[], sessoes: readonly Sessao[]): Treino | null {
   if (treinos.length === 0) {
     return null;
   }
@@ -195,6 +239,90 @@ export function proximoTreino(treinos: readonly Treino[], sessoes: readonly Sess
   const indice = ultima ? treinos.findIndex((treino) => treino.id === ultima.treinoId) : -1;
 
   return indice === -1 ? treinos[0] : treinos[(indice + 1) % treinos.length];
+}
+
+/** O treino tem dias marcados no plano semanal? */
+export function temDias(treino: Pick<Treino, 'dias'>): boolean {
+  return (treino.dias?.length ?? 0) > 0;
+}
+
+/** Índice do dia da semana de uma chave AAAA-MM-DD (0 = domingo). */
+export function diaDaSemanaDe(chave: string): number {
+  return paraData(chave).getDay();
+}
+
+function somarDias(chave: string, dias: number): string {
+  const data = paraData(chave);
+
+  return chaveDoDia(new Date(data.getFullYear(), data.getMonth(), data.getDate() + dias));
+}
+
+export type TreinoDoDia = {
+  treino: Treino | null;
+  /** Dia sem treino no plano semanal; `treino` é o próximo que vem. */
+  descanso: boolean;
+};
+
+/**
+ * Qual treino cai no dia, juntando o plano semanal com o rodízio:
+ * - algum treino tem este dia da semana marcado: é ele (o primeiro da lista, se forem vários);
+ * - senão, os treinos sem dias marcados seguem o rodízio A, B, C;
+ * - se todos têm dias e nenhum é deste dia: descanso (e `treino` é o próximo do plano).
+ */
+export function treinoDoDia(
+  treinos: readonly Treino[],
+  sessoes: readonly Sessao[],
+  hoje: string,
+): TreinoDoDia {
+  if (treinos.length === 0) {
+    return { treino: null, descanso: false };
+  }
+
+  if (!treinos.some(temDias)) {
+    return { treino: proximoNoRodizio(treinos, sessoes), descanso: false };
+  }
+
+  const dia = diaDaSemanaDe(hoje);
+  const marcado = treinos.find((treino) => treino.dias?.includes(dia));
+
+  if (marcado) {
+    return { treino: marcado, descanso: false };
+  }
+
+  const semDias = treinos.filter((treino) => !temDias(treino));
+
+  if (semDias.length > 0) {
+    // O rodízio só olha para os treinos dele: um treino de dia marcado não empurra a fila
+    const doRodizio = sessoes.filter((sessao) => semDias.some((t) => t.id === sessao.treinoId));
+
+    return { treino: proximoNoRodizio(semDias, doRodizio), descanso: false };
+  }
+
+  // Descanso: o próximo é o do próximo dia marcado (no máximo uma semana para frente)
+  for (let n = 1; n <= 7; n++) {
+    const proximoDia = (dia + n) % 7;
+    const proximo = treinos.find((treino) => treino.dias?.includes(proximoDia));
+
+    if (proximo) {
+      return { treino: proximo, descanso: true };
+    }
+  }
+
+  return { treino: null, descanso: true };
+}
+
+/**
+ * O próximo treino. Sem `hoje`, é só o rodízio A → B → C → A (depois do último
+ * finalizado). Com `hoje`, respeita o plano semanal (ver `treinoDoDia`).
+ */
+export function proximoTreino(
+  treinos: readonly Treino[],
+  sessoes: readonly Sessao[],
+  hoje?: string,
+): Treino | null {
+  return hoje === undefined
+    ? proximoNoRodizio(treinos, sessoes)
+    : treinoDoDia(treinos, sessoes, hoje).treino;
 }
 
 /** A sessão mais recente do dia (pode estar em andamento ou finalizada). */
@@ -307,7 +435,8 @@ export function progressoDaSessao(sessao: Sessao, treino: Treino): Progresso {
 
 export type SituacaoDoDia =
   | { tipo: 'sem-treinos' }
-  | { tipo: 'sugerido'; treino: Treino }
+  /** `descanso`: hoje não tem treino no plano semanal; `treino` é o próximo. */
+  | { tipo: 'sugerido'; treino: Treino; descanso?: true }
   | { tipo: 'em-andamento'; treino: Treino; sessao: Sessao }
   | { tipo: 'concluido'; treino: Treino; sessao: Sessao; proximo: Treino | null };
 
@@ -330,13 +459,18 @@ export function situacaoDoDia(
           tipo: 'concluido',
           treino: treinoDaSessao,
           sessao,
-          proximo: proximoTreino(treinos, sessoes),
+          proximo: treinoDoDia(treinos, sessoes, somarDias(hoje, 1)).treino,
         }
       : { tipo: 'em-andamento', treino: treinoDaSessao, sessao };
   }
 
   // Aqui `treinos` tem pelo menos um item, então sempre há um próximo
-  return { tipo: 'sugerido', treino: proximoTreino(treinos, sessoes) as Treino };
+  const doDia = treinoDoDia(treinos, sessoes, hoje);
+  const treino = (doDia.treino ?? treinos[0]) as Treino;
+
+  return doDia.descanso
+    ? { tipo: 'sugerido', treino, descanso: true }
+    : { tipo: 'sugerido', treino };
 }
 
 // ---------------------------------------------------------------------------
@@ -452,6 +586,10 @@ export function legendaTreinoDoDia(situacao: SituacaoDoDia): string {
     case 'sem-treinos':
       return 'nenhum treino montado ainda';
     case 'sugerido':
+      if (situacao.descanso) {
+        return `dia de descanso. Próximo: ${situacao.treino.nome}`;
+      }
+
       return situacao.treino.foco
         ? `${situacao.treino.nome}, ${situacao.treino.foco}`
         : situacao.treino.nome;

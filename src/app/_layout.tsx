@@ -15,7 +15,7 @@ import { useAjustesStore } from '@/features/ajustes/store';
 import { configurarExibicaoComAppAberto } from '@/features/lembretes/notificacoes';
 import { usePerfilStore } from '@/features/perfil/store';
 import { useDadosCarregados } from '@/hooks/useDadosCarregados';
-import { familia } from '@/shared/theme/tokens';
+import { familia, raio } from '@/shared/theme/tokens';
 import { useCores, useEsquema } from '@/shared/theme/useCores';
 
 SplashScreen.preventAutoHideAsync();
@@ -126,6 +126,16 @@ export default function RootLayout() {
           <Stack.Screen
             name="treino/[id]"
             options={{ headerShown: true, title: 'editar treino', headerBackTitle: 'treinos' }}
+          />
+          <Stack.Screen
+            name="treino/adicionar"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+              sheetAllowedDetents: [0.75, 1],
+              sheetCornerRadius: raio.lg,
+              contentStyle: { backgroundColor: c.superficie },
+            }}
           />
           <Stack.Screen
             name="treino/sessao"
