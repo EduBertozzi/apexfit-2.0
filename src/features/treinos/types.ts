@@ -1,6 +1,20 @@
+/** Grupo do exercício: define o card e a cor na tela inicial. */
+export type GrupoMuscular =
+  | 'aquecimento'
+  | 'peito'
+  | 'costas'
+  | 'ombro'
+  | 'braco'
+  | 'perna'
+  | 'abdominal'
+  | 'cardio'
+  | 'outro';
+
 export type Exercicio = {
   id: string;
   nome: string;
+  /** Opcional: treinos antigos não têm; nesse caso vale `inferirGrupo(nome)`. */
+  grupo?: GrupoMuscular;
   series: number;
   /** Texto livre já validado: "10" ou "8 a 12". */
   repeticoes: string;

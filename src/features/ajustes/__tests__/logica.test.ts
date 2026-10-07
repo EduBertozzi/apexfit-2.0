@@ -57,7 +57,7 @@ describe('useAjustesStore', () => {
 
     restaurarPadrao();
     expect(useAjustesStore.getState()).toMatchObject({
-      tema: 'sistema',
+      tema: 'escuro',
       vibracao: true,
       metaAguaManualMl: null,
     });

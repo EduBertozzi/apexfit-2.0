@@ -92,18 +92,15 @@ export function Botao({
 
 const estilos = StyleSheet.create({
   base: {
-    minHeight: 50,
-    paddingHorizontal: espaco.md,
-    borderRadius: raio.sm,
+    minHeight: 52,
+    paddingHorizontal: espaco.lg,
+    borderRadius: raio.total,
     alignItems: 'center',
     justifyContent: 'center',
   },
   titulo: {
-    fontFamily: familia.display,
-    fontSize: 20,
-    textTransform: 'uppercase',
-    // Itálico condensado "vaza" para a direita; sem isso a última letra é cortada
-    paddingRight: 2,
+    fontFamily: familia.displayLeve,
+    fontSize: 17,
   },
   tituloSublinhado: {
     textDecorationLine: 'underline',

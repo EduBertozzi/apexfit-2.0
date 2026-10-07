@@ -17,7 +17,8 @@ type AjustesState = {
 };
 
 const PADRAO = {
-  tema: 'sistema' as PreferenciaTema,
+  // O visual foi desenhado no escuro; quem preferir troca em Ajustes
+  tema: 'escuro' as PreferenciaTema,
   vibracao: true,
   metaAguaManualMl: null as number | null,
 };

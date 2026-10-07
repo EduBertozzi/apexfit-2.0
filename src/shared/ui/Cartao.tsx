@@ -6,9 +6,10 @@ import { useCores } from '../theme/useCores';
 import { Texto } from './Texto';
 
 /**
- * - padrao: fundo de superfície com borda
+ * Card "bento": sem borda, cantos bem arredondados.
+ * - padrao: fundo de superfície
  * - tracejado: para o que ainda não existe ("em breve")
- * - heroi: bloco escuro de destaque. Dentro dele, use as cores `textoHeroi*`
+ * - heroi: bloco escuro de destaque (escuro nos dois temas). Dentro dele, use `textoHeroi*`
  */
 type Variante = 'padrao' | 'tracejado' | 'heroi';
 
@@ -23,9 +24,14 @@ export function Cartao({ titulo, children, variante = 'padrao', style }: Props) 
   const c = useCores();
 
   const aparencia = {
-    padrao: { backgroundColor: c.superficie, borderColor: c.borda },
-    tracejado: { backgroundColor: 'transparent', borderColor: c.borda, borderStyle: 'dashed' },
-    heroi: { backgroundColor: c.heroi, borderColor: c.heroi },
+    padrao: { backgroundColor: c.superficie },
+    tracejado: {
+      backgroundColor: 'transparent',
+      borderColor: c.textoSecundario,
+      borderStyle: 'dashed',
+      borderWidth: borda.grossa,
+    },
+    heroi: { backgroundColor: c.heroi },
   }[variante] as ViewStyle;
 
   return (
@@ -47,9 +53,9 @@ export function Cartao({ titulo, children, variante = 'padrao', style }: Props) 
 
 const estilos = StyleSheet.create({
   cartao: {
-    borderRadius: raio.sm,
-    borderWidth: borda.grossa,
-    padding: espaco.md,
+    borderRadius: raio.lg,
+    borderCurve: 'continuous',
+    padding: espaco.lg - 4,
     gap: espaco.sm,
   },
 });

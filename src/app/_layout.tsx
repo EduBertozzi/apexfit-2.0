@@ -1,9 +1,9 @@
-import { Barlow_400Regular, Barlow_500Medium, Barlow_700Bold } from '@expo-google-fonts/barlow';
 import {
-  BarlowCondensed_700Bold,
-  BarlowCondensed_800ExtraBold_Italic,
-  BarlowCondensed_900Black_Italic,
-} from '@expo-google-fonts/barlow-condensed';
+  Lexend_400Regular,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -25,12 +25,10 @@ configurarExibicaoComAppAberto();
 
 // Os nomes das chaves viram o fontFamily (ver `familia` em theme/tokens.ts)
 const FONTES = {
-  Barlow_400Regular,
-  Barlow_500Medium,
-  Barlow_700Bold,
-  BarlowCondensed_700Bold,
-  BarlowCondensed_800ExtraBold_Italic,
-  BarlowCondensed_900Black_Italic,
+  Lexend_400Regular,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_700Bold,
 };
 
 export default function RootLayout() {
@@ -88,7 +86,7 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          headerTitleStyle: { fontFamily: familia.display, fontSize: 22 },
+          headerTitleStyle: { fontFamily: familia.displayLeve, fontSize: 19 },
           headerShadowVisible: false,
         }}
       >
@@ -102,27 +100,36 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
             name="editar-perfil"
-            options={{ presentation: 'modal', headerShown: true, title: 'EDITAR PERFIL' }}
+            options={{ presentation: 'modal', headerShown: true, title: 'editar perfil' }}
           />
           <Stack.Screen
+            name="treinos"
+            options={{ headerShown: true, title: 'treinos', headerBackTitle: 'voltar' }}
+          />
+          <Stack.Screen
+            name="perfil"
+            options={{ headerShown: true, title: 'perfil', headerBackTitle: 'início' }}
+          />
+          <Stack.Screen name="coach" options={{ headerShown: false }} />
+          <Stack.Screen
             name="dieta"
-            options={{ headerShown: true, title: 'SUA DIETA', headerBackTitle: 'Hoje' }}
+            options={{ headerShown: true, title: 'sua dieta', headerBackTitle: 'início' }}
           />
           <Stack.Screen
             name="peso"
-            options={{ headerShown: true, title: 'PESO', headerBackTitle: 'Perfil' }}
+            options={{ headerShown: true, title: 'peso', headerBackTitle: 'perfil' }}
           />
           <Stack.Screen
             name="treino/[id]"
-            options={{ headerShown: true, title: 'EDITAR TREINO', headerBackTitle: 'Treinos' }}
+            options={{ headerShown: true, title: 'editar treino', headerBackTitle: 'treinos' }}
           />
           <Stack.Screen
             name="treino/sessao"
-            options={{ headerShown: true, title: 'TREINO DE HOJE', headerBackTitle: 'Voltar' }}
+            options={{ headerShown: true, title: 'treino de hoje', headerBackTitle: 'voltar' }}
           />
           <Stack.Screen
             name="treino/modelos"
-            options={{ headerShown: true, title: 'MODELOS PRONTOS', headerBackTitle: 'Treinos' }}
+            options={{ headerShown: true, title: 'modelos prontos', headerBackTitle: 'treinos' }}
           />
         </Stack.Protected>
       </Stack>

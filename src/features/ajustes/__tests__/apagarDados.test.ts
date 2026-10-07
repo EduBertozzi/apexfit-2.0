@@ -26,7 +26,7 @@ describe('apagarTodosOsDados', () => {
     useHidratacaoStore.getState().adicionar(250);
     usePesoStore.getState().registrar(74.5);
     useDietaStore.setState({ plano: null, geradoEm: '2026-10-03T10:00:00.000Z' });
-    useAjustesStore.getState().definirTema('escuro');
+    useAjustesStore.getState().definirTema('claro');
     useCoachStore.setState({ mensagens: [{ id: '1', papel: 'usuario', texto: 'Oi' }] });
     await useLembretesStore.getState().ligar();
     jest.mocked(cancelarLembretes).mockClear();
@@ -37,7 +37,7 @@ describe('apagarTodosOsDados', () => {
     expect(usePerfilStore.getState().perfil).toBeNull();
     expect(useHidratacaoStore.getState().registros).toEqual({});
     expect(useDietaStore.getState().geradoEm).toBeNull();
-    expect(useAjustesStore.getState().tema).toBe('sistema');
+    expect(useAjustesStore.getState().tema).toBe('escuro');
     expect(useCoachStore.getState().mensagens).toEqual([]);
     expect(useLembretesStore.getState().ativo).toBe(false);
     await new Promise((resolver) => setTimeout(resolver, 0));

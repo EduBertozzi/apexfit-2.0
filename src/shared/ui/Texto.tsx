@@ -33,36 +33,37 @@ export function Texto({ variante = 'corpo', secundario = false, style, ...props 
   );
 }
 
+// Títulos em minúsculas vêm do próprio texto (copy), não de textTransform:
+// assim nomes próprios e siglas continuam certos.
 const estilos = StyleSheet.create({
   gigante: {
     fontFamily: familia.display,
     fontSize: fonte.gigante,
-    lineHeight: fonte.gigante * 0.95,
-    textTransform: 'uppercase',
+    lineHeight: fonte.gigante * 1.1,
+    letterSpacing: -0.5,
   },
   destaque: {
-    fontFamily: familia.display,
+    fontFamily: familia.displayLeve,
     fontSize: fonte.destaque,
-    lineHeight: fonte.destaque,
+    lineHeight: fonte.destaque * 1.15,
+    letterSpacing: -0.5,
   },
   titulo: {
-    fontFamily: familia.display,
+    fontFamily: familia.displayLeve,
     fontSize: fonte.titulo,
-    lineHeight: fonte.titulo * 1.05,
-    textTransform: 'uppercase',
+    lineHeight: fonte.titulo * 1.15,
+    letterSpacing: -0.3,
   },
   subtitulo: {
-    fontFamily: familia.displayLeve,
+    fontFamily: familia.rotulo,
     fontSize: fonte.subtitulo,
-    lineHeight: fonte.subtitulo * 1.15,
-    textTransform: 'uppercase',
+    lineHeight: fonte.subtitulo * 1.25,
   },
   rotulo: {
     fontFamily: familia.rotulo,
     fontSize: fonte.rotulo,
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
+    lineHeight: fonte.rotulo * 1.3,
   },
-  corpo: { fontFamily: familia.corpo, fontSize: fonte.corpo, lineHeight: 22 },
+  corpo: { fontFamily: familia.corpo, fontSize: fonte.corpo, lineHeight: fonte.corpo * 1.35 },
   legenda: { fontFamily: familia.corpo, fontSize: fonte.legenda, lineHeight: 18 },
 });
