@@ -1,12 +1,14 @@
 import { router } from 'expo-router';
 
 import { ChecklistSessao } from '@/features/treinos/components/ChecklistSessao';
+import { PreviaTreino } from '@/features/treinos/components/PreviaTreino';
 import { TreinoConcluido } from '@/features/treinos/components/TreinoConcluido';
-import { useTreinoDoDia } from '@/features/treinos/store';
+import { useTreinoDoDia, useTreinosStore } from '@/features/treinos/store';
 import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
 
 export default function SessaoDoDia() {
   const { situacao, naSemana } = useTreinoDoDia();
+  const comecarTreino = useTreinosStore((state) => state.comecarTreino);
 
   if (situacao.tipo === 'em-andamento') {
     return (
@@ -30,11 +32,25 @@ export default function SessaoDoDia() {
     );
   }
 
+  if (situacao.tipo === 'sugerido') {
+    const { treino } = situacao;
+
+    return (
+      <Tela bordas={['bottom']}>
+        <PreviaTreino
+          treino={treino}
+          onComecar={() => comecarTreino(treino.id)}
+          onEditar={() => router.push({ pathname: '/treino/[id]', params: { id: treino.id } })}
+        />
+      </Tela>
+    );
+  }
+
   return (
     <Tela bordas={['bottom']}>
-      <Cartao titulo="Nenhum treino rolando" variante="tracejado">
-        <Texto>Escolha um treino na aba Treinos e toque em começar.</Texto>
-        <Botao titulo="Ver treinos" onPress={() => router.replace('/treinos')} />
+      <Cartao titulo="nenhum treino ainda" variante="tracejado">
+        <Texto>Monte uma ficha com um modelo pronto ou peça para a IA montar.</Texto>
+        <Botao titulo="ver treinos" onPress={() => router.replace('/treinos')} />
       </Cartao>
     </Tela>
   );

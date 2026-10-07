@@ -1,64 +1,93 @@
-import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { metaAguaEfetiva } from '@/features/ajustes/logica';
 import { useAjustesStore } from '@/features/ajustes/store';
-import { CartaoDieta } from '@/features/dieta/components/CartaoDieta';
-import { CartaoHidratacao } from '@/features/hidratacao/components/CartaoHidratacao';
-import { CartaoSemana } from '@/features/hidratacao/components/CartaoSemana';
-import { CartaoMetas } from '@/features/nutricao/components/CartaoMetas';
+import { CartaoAguaInicio } from '@/features/hidratacao/components/CartaoAguaInicio';
+import {
+  CartaoCaloriasInicio,
+  CartaoDietaInicio,
+} from '@/features/nutricao/components/CartoesInicio';
 import { calcularMetaAguaMl, primeiroNome } from '@/features/perfil/calculos';
-import { CartaoImc } from '@/features/perfil/components/CartaoImc';
+import { Avatar } from '@/features/perfil/components/Avatar';
 import { usePerfilStore } from '@/features/perfil/store';
-import { CartaoTreinoHoje } from '@/features/treinos/components/CartaoTreinoHoje';
-import { dataPorExtenso } from '@/shared/lib/data';
-import { espaco } from '@/shared/theme/tokens';
-import { Marcado, Tela, Texto } from '@/shared/ui';
+import { CabecalhoTreinoHoje } from '@/features/treinos/components/CabecalhoTreinoHoje';
+import { FaixaSemana } from '@/features/treinos/components/FaixaSemana';
+import { GradeTreinoHoje } from '@/features/treinos/components/GradeTreinoHoje';
+import { legendaTreinoDoDia } from '@/features/treinos/logica';
+import { useSemanaDeTreinos, useTreinoDoDia } from '@/features/treinos/store';
+import { espaco, familia } from '@/shared/theme/tokens';
+import { useCores } from '@/shared/theme/useCores';
+import { Tela } from '@/shared/ui';
 
-export default function Hoje() {
+export default function Inicio() {
+  const c = useCores();
   const perfil = usePerfilStore((state) => state.perfil);
   const metaManualMl = useAjustesStore((state) => state.metaAguaManualMl);
+  const { situacao } = useTreinoDoDia();
+  const semana = useSemanaDeTreinos();
 
   if (!perfil) {
     return null;
   }
 
+  const nome = primeiroNome(perfil.nome);
   const metaAguaMl = metaAguaEfetiva(calcularMetaAguaMl(perfil.pesoKg), metaManualMl);
 
   return (
     <Tela>
-      <View>
-        <Texto variante="rotulo" secundario>
-          {dataPorExtenso(new Date())}
-        </Texto>
-        <Texto variante="gigante" accessibilityRole="header">
-          Bora,{'\n'}
-          <Marcado>{primeiroNome(perfil.nome)}.</Marcado>
-        </Texto>
+      <View style={estilos.cabecalho}>
+        <Pressable
+          onPress={() => router.push('/perfil')}
+          accessibilityRole="button"
+          accessibilityLabel="abrir seu perfil"
+          hitSlop={8}
+          style={({ pressed }) => pressed && { opacity: 0.75 }}
+        >
+          <Avatar nome={perfil.nome} fotoUri={perfil.fotoUri} tamanho={60} />
+        </Pressable>
+        <Text
+          accessibilityRole="header"
+          maxFontSizeMultiplier={1.3}
+          style={[estilos.saudacao, { color: c.texto }]}
+        >
+          bora,{'\n'}
+          <Text style={estilos.nome}>{nome}!</Text>
+        </Text>
       </View>
 
-      <CartaoHidratacao metaMl={metaAguaMl} />
+      <FaixaSemana dias={semana.dias} resumo={semana.resumo} />
 
-      <CartaoMetas perfil={perfil} />
+      <CabecalhoTreinoHoje
+        nomeDoDia={semana.nomeDeHoje}
+        legenda={legendaTreinoDoDia(situacao)}
+        sequencia={semana.sequencia}
+      />
 
-      <CartaoDieta perfil={perfil} />
-
-      <View style={estilos.linha}>
-        <CartaoImc perfil={perfil} style={estilos.metade} />
-
-        <CartaoTreinoHoje style={estilos.metade} />
-      </View>
-
-      <CartaoSemana metaMl={metaAguaMl} />
+      <GradeTreinoHoje
+        agua={<CartaoAguaInicio metaMl={metaAguaMl} />}
+        calorias={<CartaoCaloriasInicio perfil={perfil} />}
+        dieta={<CartaoDietaInicio />}
+      />
     </Tela>
   );
 }
 
 const estilos = StyleSheet.create({
-  linha: {
+  cabecalho: {
     flexDirection: 'row',
-    gap: espaco.sm,
+    alignItems: 'center',
+    gap: espaco.md,
+    marginTop: espaco.sm,
   },
-  metade: {
-    flex: 1,
+  saudacao: {
+    flexShrink: 1,
+    fontFamily: familia.corpo,
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  nome: {
+    fontFamily: familia.display,
+    fontSize: 32,
   },
 });

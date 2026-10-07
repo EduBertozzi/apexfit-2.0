@@ -20,4 +20,9 @@ export type Perfil = {
   sexo?: Sexo;
   nivelAtividade?: NivelAtividade;
   objetivo?: Objetivo;
+  /**
+   * Foto do perfil: arquivo copiado para a pasta de documentos do app
+   * (sobrevive à limpeza de cache). Não é campo do formulário: muda na tela de perfil.
+   */
+  fotoUri?: string;
 };

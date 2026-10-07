@@ -44,7 +44,7 @@ export function ListaModelos({ onUsado }: Props) {
             ))}
           </View>
           <Botao
-            titulo="Usar este modelo"
+            titulo="usar este modelo"
             descricaoAcessivel={`Usar o modelo ${modelo.nome}`}
             onPress={() => usar(modelo)}
           />

@@ -2,21 +2,25 @@ import { useState } from 'react';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 
 import { confirmar } from '@/shared/lib/confirmar';
-import { espaco } from '@/shared/theme/tokens';
+import { espaco, familia } from '@/shared/theme/tokens';
+import { useCategorias } from '@/shared/theme/useCores';
 import { Botao, Cartao, Texto } from '@/shared/ui';
 
+import { grupoDe, NOME_GRUPO } from '../grupos';
 import { resumoExercicio, resumoExercicioAcessivel } from '../logica';
 import { exercicioParaFormulario } from '../schema';
 import { useTreinosStore } from '../store';
 import type { DadosExercicio, Treino } from '../types';
 import { BotoesOrdem } from './BotoesOrdem';
 import { FormularioExercicio } from './FormularioExercicio';
+import { IconeGrupo } from './IconeGrupo';
 
 /** 'novo' = formulário de adicionar aberto; id = editando aquele exercício. */
 type Edicao = 'novo' | string | null;
 
 /** Lista de exercícios do treino com adicionar, editar, remover e reordenar. */
 export function EditorExercicios({ treino }: { treino: Treino }) {
+  const cat = useCategorias();
   const adicionar = useTreinosStore((state) => state.adicionarExercicio);
   const editar = useTreinosStore((state) => state.editarExercicio);
   const remover = useTreinosStore((state) => state.removerExercicio);
@@ -51,7 +55,7 @@ export function EditorExercicios({ treino }: { treino: Treino }) {
   return (
     <View style={estilos.container}>
       <Texto variante="subtitulo" accessibilityRole="header">
-        Exercícios
+        exercícios
       </Texto>
 
       {total === 0 && edicao === null ? (
@@ -60,10 +64,10 @@ export function EditorExercicios({ treino }: { treino: Treino }) {
 
       {treino.exercicios.map((exercicio, indice) =>
         edicao === exercicio.id ? (
-          <Cartao key={exercicio.id} titulo="Editar exercício">
+          <Cartao key={exercicio.id} titulo="editar exercício">
             <FormularioExercicio
               valoresIniciais={exercicioParaFormulario(exercicio)}
-              textoBotao="Salvar"
+              textoBotao="salvar"
               onSalvar={(dados) => salvarEdicao(exercicio.id, dados)}
               onCancelar={() => setEdicao(null)}
             />
@@ -72,8 +76,21 @@ export function EditorExercicios({ treino }: { treino: Treino }) {
           <Cartao key={exercicio.id}>
             <View
               accessible
-              accessibilityLabel={`${exercicio.nome}, ${resumoExercicioAcessivel(exercicio)}`}
+              accessibilityLabel={`${exercicio.nome}, ${NOME_GRUPO[grupoDe(exercicio)]}, ${resumoExercicioAcessivel(exercicio)}`}
             >
+              <View style={estilos.grupo}>
+                <IconeGrupo
+                  grupo={grupoDe(exercicio)}
+                  cor={cat.texto[grupoDe(exercicio)]}
+                  tamanho={18}
+                />
+                <Texto
+                  variante="rotulo"
+                  style={[estilos.nomeGrupo, { color: cat.texto[grupoDe(exercicio)] }]}
+                >
+                  {NOME_GRUPO[grupoDe(exercicio)]}
+                </Texto>
+              </View>
               <Texto variante="subtitulo">{exercicio.nome}</Texto>
               <Texto secundario>{resumoExercicio(exercicio)}</Texto>
               {exercicio.observacao ? (
@@ -96,16 +113,16 @@ export function EditorExercicios({ treino }: { treino: Treino }) {
       )}
 
       {edicao === 'novo' ? (
-        <Cartao titulo="Novo exercício">
+        <Cartao titulo="novo exercício">
           <FormularioExercicio
-            textoBotao="Adicionar"
+            textoBotao="adicionar"
             onSalvar={salvarNovo}
             onCancelar={() => setEdicao(null)}
           />
         </Cartao>
       ) : (
         <Botao
-          titulo="Adicionar exercício"
+          titulo="adicionar exercício"
           variante="secundario"
           onPress={() => setEdicao('novo')}
         />
@@ -117,5 +134,13 @@ export function EditorExercicios({ treino }: { treino: Treino }) {
 const estilos = StyleSheet.create({
   container: {
     gap: espaco.md,
+  },
+  grupo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.xs,
+  },
+  nomeGrupo: {
+    fontFamily: familia.displayLeve,
   },
 });

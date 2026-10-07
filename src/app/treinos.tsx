@@ -5,7 +5,7 @@ import { HeroiTreinoHoje } from '@/features/treinos/components/HeroiTreinoHoje';
 import { ListaModelos } from '@/features/treinos/components/ListaModelos';
 import { ListaTreinos } from '@/features/treinos/components/ListaTreinos';
 import { useTreinosStore } from '@/features/treinos/store';
-import { espaco } from '@/shared/theme/tokens';
+import { espaco, familia } from '@/shared/theme/tokens';
 import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
 
 export default function Treinos() {
@@ -19,8 +19,8 @@ export default function Treinos() {
 
   return (
     <Tela>
-      <Texto variante="titulo" accessibilityRole="header">
-        Treinos
+      <Texto variante="titulo" style={estilos.titulo} accessibilityRole="header">
+        treinos
       </Texto>
 
       {temTreinos ? (
@@ -29,11 +29,11 @@ export default function Treinos() {
           <ListaTreinos />
           <View style={estilos.linha}>
             <View style={estilos.metade}>
-              <Botao titulo="Novo treino" variante="secundario" onPress={criarTreino} />
+              <Botao titulo="novo treino" variante="secundario" onPress={criarTreino} />
             </View>
             <View style={estilos.metade}>
               <Botao
-                titulo="Usar um modelo"
+                titulo="usar um modelo"
                 variante="secundario"
                 onPress={() => router.push('/treino/modelos')}
               />
@@ -42,16 +42,16 @@ export default function Treinos() {
         </>
       ) : (
         <>
-          <Cartao titulo="Nenhum treino ainda" variante="tracejado">
-            <Texto variante="subtitulo">Bora montar sua ficha</Texto>
+          <Cartao titulo="nenhum treino ainda" variante="tracejado">
+            <Texto variante="subtitulo">bora montar sua ficha</Texto>
             <Texto secundario>
               Comece com um modelo pronto e ajuste as cargas, ou crie do zero.
             </Texto>
-            <Botao titulo="Criar do zero" variante="secundario" onPress={criarTreino} />
+            <Botao titulo="criar do zero" variante="secundario" onPress={criarTreino} />
           </Cartao>
 
           <Texto variante="subtitulo" accessibilityRole="header">
-            Modelos prontos
+            modelos prontos
           </Texto>
           <ListaModelos />
         </>
@@ -61,6 +61,9 @@ export default function Treinos() {
 }
 
 const estilos = StyleSheet.create({
+  titulo: {
+    fontFamily: familia.display,
+  },
   linha: {
     flexDirection: 'row',
     gap: espaco.sm,

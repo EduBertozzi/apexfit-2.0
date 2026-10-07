@@ -8,8 +8,10 @@ import {
   editarExercicio,
   editarTreino,
   finalizarSessao,
+  concluidosDeHoje,
   inicioDaSemana,
   iniciarSessao,
+  legendaTreinoDoDia,
   limparSessoesAntigas,
   mover,
   moverExercicio,
@@ -31,6 +33,7 @@ import {
   treinosNaSemana,
 } from '../logica';
 import { MODELOS } from '../modelos';
+import { exercicioParaFormulario, exercicioSchema } from '../schema';
 import type { DadosExercicio, Sessao, Treino } from '../types';
 
 // Ids previsíveis: "id-1", "id-2"...
@@ -449,6 +452,10 @@ describe('textos', () => {
     expect(resumoExercicioAcessivel({ series: 1, repeticoes: '12' })).toBe(
       '1 série de 12 repetições',
     );
+    expect(resumoExercicioAcessivel({ series: 1, repeticoes: '10 min' })).toBe('10 minutos');
+    expect(resumoExercicioAcessivel({ series: 2, repeticoes: '5 min' })).toBe(
+      '2 séries de 5 minutos',
+    );
   });
 
   it('resumo do treino', () => {
@@ -467,8 +474,27 @@ describe('modelos', () => {
 
         for (const exercicio of dados.exercicios ?? []) {
           expect(exercicio.series).toBeGreaterThan(0);
-          expect(exercicio.repeticoes).toMatch(/^\d+( a \d+)?$/);
+          expect(exercicio.repeticoes).toMatch(/^\d+( a \d+| min)?$/);
+          // Grupo explícito: o card da tela inicial não depende de adivinhar pelo nome
+          expect(exercicio.grupo).toBeDefined();
+          // E o formulário de edição aceita o modelo como está
+          expect(
+            exercicioSchema.safeParse({
+              ...exercicioParaFormulario({ ...exercicio, id: 'x' }),
+            }).success,
+          ).toBe(true);
         }
+      }
+    }
+  });
+
+  it('todo treino de modelo começa com aquecimento e termina com cardio', () => {
+    for (const modelo of MODELOS) {
+      for (const dados of modelo.treinos) {
+        const grupos = (dados.exercicios ?? []).map((exercicio) => exercicio.grupo);
+
+        expect(grupos[0]).toBe('aquecimento');
+        expect(grupos[grupos.length - 1]).toBe('cardio');
       }
     }
   });
@@ -477,5 +503,33 @@ describe('modelos', () => {
     const ids = MODELOS.map((m) => m.id);
 
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('legendaTreinoDoDia e concluidosDeHoje', () => {
+  const emAndamento = sessao({ treinoId: 'a', data: HOJE, concluidos: ['a1'], finalizada: false });
+
+  it('descreve cada situação', () => {
+    expect(legendaTreinoDoDia({ tipo: 'sem-treinos' })).toBe('nenhum treino montado ainda');
+    expect(legendaTreinoDoDia({ tipo: 'sugerido', treino: { ...A, foco: 'Peito' } })).toBe(
+      'Treino A, Peito',
+    );
+    expect(legendaTreinoDoDia({ tipo: 'sugerido', treino: A })).toBe('Treino A');
+    expect(legendaTreinoDoDia({ tipo: 'em-andamento', treino: A, sessao: emAndamento })).toBe(
+      'Treino A, 1 de 2 feitos',
+    );
+    expect(
+      legendaTreinoDoDia({ tipo: 'concluido', treino: A, sessao: emAndamento, proximo: B }),
+    ).toBe('Treino A feito. Próximo: Treino B');
+    expect(
+      legendaTreinoDoDia({ tipo: 'concluido', treino: A, sessao: emAndamento, proximo: null }),
+    ).toBe('Treino A feito');
+  });
+
+  it('só há marcados quando existe sessão hoje', () => {
+    expect(concluidosDeHoje({ tipo: 'sugerido', treino: A })).toEqual([]);
+    expect(concluidosDeHoje({ tipo: 'em-andamento', treino: A, sessao: emAndamento })).toEqual([
+      'a1',
+    ]);
   });
 });

@@ -16,9 +16,9 @@ export default function EditarTreino() {
   if (!treino) {
     return (
       <Tela bordas={['bottom']}>
-        <Cartao titulo="Treino não encontrado" variante="tracejado">
+        <Cartao titulo="treino não encontrado" variante="tracejado">
           <Texto>Ele pode ter sido apagado.</Texto>
-          <Botao titulo="Voltar" onPress={() => router.back()} />
+          <Botao titulo="voltar" onPress={() => router.back()} />
         </Cartao>
       </Tela>
     );
@@ -28,7 +28,7 @@ export default function EditarTreino() {
     const confirmado = await confirmar(
       `Apagar ${nome}?`,
       'O treino e os exercícios dele somem. Os treinos já feitos continuam contando na semana.',
-      'Apagar',
+      'apagar',
     );
 
     if (confirmado) {
@@ -53,11 +53,15 @@ export default function EditarTreino() {
       <EditorExercicios treino={treino} />
 
       {treino.exercicios.length > 0 ? (
-        <Botao titulo="Começar este treino" onPress={() => comecar(treino.id)} />
+        <Botao
+          titulo="começar este treino"
+          variante="destaque"
+          onPress={() => comecar(treino.id)}
+        />
       ) : null}
 
       <Botao
-        titulo="Apagar treino"
+        titulo="apagar treino"
         variante="perigo"
         onPress={() => apagar(treino.id, treino.nome)}
       />

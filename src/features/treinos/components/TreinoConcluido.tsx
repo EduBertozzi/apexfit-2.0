@@ -23,7 +23,7 @@ export function TreinoConcluido({ treino, sessao, proximo, naSemana, onVoltar }:
   return (
     <View style={estilos.container} accessibilityLiveRegion="polite">
       <Texto variante="gigante" accessibilityRole="header">
-        Treino{'\n'}
+        treino{'\n'}
         <Marcado>feito.</Marcado>
       </Texto>
 
@@ -53,7 +53,7 @@ export function TreinoConcluido({ treino, sessao, proximo, naSemana, onVoltar }:
         </Texto>
       ) : null}
 
-      <Botao titulo="Voltar" onPress={onVoltar} />
+      <Botao titulo="voltar" onPress={onVoltar} />
     </View>
   );
 }

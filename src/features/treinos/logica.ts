@@ -425,7 +425,13 @@ export function resumoExercicioAcessivel(
   exercicio: Pick<Exercicio, 'series' | 'repeticoes' | 'cargaKg'>,
 ) {
   const series = exercicio.series === 1 ? '1 série' : `${exercicio.series} séries`;
-  const base = `${series} de ${exercicio.repeticoes} repetições`;
+  // Cardio guarda minutos nas repetições: "10 min"
+  const minutos = /^(\d+) min$/.exec(exercicio.repeticoes);
+  const base = minutos
+    ? exercicio.series === 1
+      ? `${minutos[1]} minutos`
+      : `${series} de ${minutos[1]} minutos`
+    : `${series} de ${exercicio.repeticoes} repetições`;
 
   return exercicio.cargaKg === undefined
     ? base
@@ -438,4 +444,32 @@ export function resumoTreino(treino: Treino): string {
   const exercicios = quantidade === 1 ? '1 exercício' : `${quantidade} exercícios`;
 
   return treino.foco ? `${treino.foco}, ${exercicios}` : exercicios;
+}
+
+/** Linha embaixo de "treino de hoje": qual treino e como ele está. */
+export function legendaTreinoDoDia(situacao: SituacaoDoDia): string {
+  switch (situacao.tipo) {
+    case 'sem-treinos':
+      return 'nenhum treino montado ainda';
+    case 'sugerido':
+      return situacao.treino.foco
+        ? `${situacao.treino.nome}, ${situacao.treino.foco}`
+        : situacao.treino.nome;
+    case 'em-andamento': {
+      const { feitos, total } = progressoDaSessao(situacao.sessao, situacao.treino);
+
+      return `${situacao.treino.nome}, ${feitos} de ${total} feitos`;
+    }
+    case 'concluido':
+      return situacao.proximo
+        ? `${situacao.treino.nome} feito. Próximo: ${situacao.proximo.nome}`
+        : `${situacao.treino.nome} feito`;
+  }
+}
+
+/** Exercícios já marcados hoje (para o visual de feito nos cards). */
+export function concluidosDeHoje(situacao: SituacaoDoDia): string[] {
+  return situacao.tipo === 'em-andamento' || situacao.tipo === 'concluido'
+    ? situacao.sessao.concluidos
+    : [];
 }

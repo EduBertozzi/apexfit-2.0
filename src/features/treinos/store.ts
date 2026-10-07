@@ -27,6 +27,7 @@ import {
   type Direcao,
 } from './logica';
 import type { ModeloTreino } from './modelos';
+import { diasDaSemana, nomeDoDia, resumoDaSemana, sequenciaDeDias } from './semana';
 import type { DadosExercicio, Sessao, Treino } from './types';
 
 type TreinosState = {
@@ -132,6 +133,22 @@ export const useTreinosStore = create<TreinosState>()(
     },
   ),
 );
+
+/** Hook da tela inicial: os 7 dias coloridos, a sequência de dias e o nome de hoje. */
+export function useSemanaDeTreinos(data: Date = new Date()) {
+  const treinos = useTreinosStore((state) => state.treinos);
+  const sessoes = useTreinosStore((state) => state.sessoes);
+  const hoje = chaveDoDia(data);
+  const dias = diasDaSemana(treinos, sessoes, hoje);
+
+  return {
+    hoje,
+    dias,
+    resumo: resumoDaSemana(dias),
+    sequencia: sequenciaDeDias(treinos, sessoes, hoje),
+    nomeDeHoje: nomeDoDia(hoje),
+  };
+}
 
 /** Hook para as telas: a situação do treino de hoje e quantos treinos na semana. */
 export function useTreinoDoDia(data: Date = new Date()) {

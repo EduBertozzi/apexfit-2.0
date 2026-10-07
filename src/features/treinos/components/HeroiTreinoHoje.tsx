@@ -29,9 +29,9 @@ export function HeroiTreinoHoje() {
   }
 
   const rotulo = {
-    sugerido: 'Treino de hoje',
-    'em-andamento': 'Treino em andamento',
-    concluido: 'Treino de hoje feito',
+    sugerido: 'treino de hoje',
+    'em-andamento': 'treino em andamento',
+    concluido: 'treino de hoje feito',
   }[situacao.tipo];
 
   return (
@@ -78,7 +78,7 @@ export function HeroiTreinoHoje() {
               : 'Mandou bem. Descansa e volta amanhã.'}
           </Texto>
           <Botao
-            titulo="Ver resumo"
+            titulo="ver resumo"
             variante="heroi"
             onPress={() => router.push('/treino/sessao')}
           />
@@ -91,7 +91,7 @@ export function HeroiTreinoHoje() {
             </Texto>
           ) : null}
           <Botao
-            titulo={situacao.tipo === 'em-andamento' ? 'Continuar treino' : 'Começar treino'}
+            titulo={situacao.tipo === 'em-andamento' ? 'continuar treino' : 'começar treino'}
             variante="destaque"
             onPress={comecar}
             desabilitado={semExercicios}
