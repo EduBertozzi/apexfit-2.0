@@ -17,59 +17,59 @@ describe('<OnboardingEtapas />', () => {
   it('começa nas boas-vindas e vai para a primeira pergunta', async () => {
     const { tocar } = await renderizar();
 
-    await tocar('Começar');
+    await tocar('começar');
 
-    expect(screen.getByText('Etapa 1 de 6')).toBeOnTheScreen();
-    expect(screen.getByText('Como quer ser chamado?')).toBeOnTheScreen();
+    expect(screen.getByText('etapa 1 de 6')).toBeOnTheScreen();
+    expect(screen.getByText('como quer ser chamado?')).toBeOnTheScreen();
   });
 
   it('não avança com a etapa inválida e mostra o erro', async () => {
     const { tocar } = await renderizar();
 
-    await tocar('Começar');
-    await tocar('Continuar');
+    await tocar('começar');
+    await tocar('continuar');
 
     expect(await screen.findByText('Informe seu nome')).toBeOnTheScreen();
-    expect(screen.getByText('Etapa 1 de 6')).toBeOnTheScreen();
+    expect(screen.getByText('etapa 1 de 6')).toBeOnTheScreen();
   });
 
   it('volta para a etapa anterior mantendo o que foi digitado', async () => {
     const { usuario, tocar } = await renderizar();
 
-    await tocar('Começar');
+    await tocar('começar');
     await usuario.type(screen.getByLabelText('Nome'), 'Luiz');
-    await tocar('Continuar');
-    expect(await screen.findByText('Etapa 2 de 6')).toBeOnTheScreen();
+    await tocar('continuar');
+    expect(await screen.findByText('etapa 2 de 6')).toBeOnTheScreen();
 
-    await tocar('Voltar');
+    await tocar('voltar');
 
-    expect(screen.getByText('Etapa 1 de 6')).toBeOnTheScreen();
+    expect(screen.getByText('etapa 1 de 6')).toBeOnTheScreen();
     expect(screen.getByLabelText('Nome')).toHaveDisplayValue('Luiz');
   });
 
   it('percorre todas as etapas e salva o perfil completo', async () => {
     const { onSalvar, usuario, tocar } = await renderizar();
 
-    await tocar('Começar');
+    await tocar('começar');
     await usuario.type(screen.getByLabelText('Nome'), 'Luiz');
-    await tocar('Continuar');
+    await tocar('continuar');
 
     await usuario.type(await screen.findByLabelText('Idade'), '17');
     await usuario.press(screen.getByRole('radio', { name: 'Masculino' }));
-    await tocar('Continuar');
+    await tocar('continuar');
 
     await usuario.type(await screen.findByLabelText('Altura'), '175');
     await usuario.type(screen.getByLabelText('Peso'), '70,5');
-    await tocar('Continuar');
+    await tocar('continuar');
 
     await usuario.press(await screen.findByRole('radio', { name: 'Moderado' }));
-    await tocar('Continuar');
+    await tocar('continuar');
 
     await usuario.press(await screen.findByRole('radio', { name: 'Ganhar massa' }));
-    await tocar('Continuar');
+    await tocar('continuar');
 
-    expect(await screen.findByText('Etapa 6 de 6')).toBeOnTheScreen();
-    await tocar('Criar meu perfil');
+    expect(await screen.findByText('etapa 6 de 6')).toBeOnTheScreen();
+    await tocar('criar meu perfil');
 
     await waitFor(() => expect(onSalvar).toHaveBeenCalledTimes(1));
     expect(onSalvar.mock.calls[0][0]).toEqual({

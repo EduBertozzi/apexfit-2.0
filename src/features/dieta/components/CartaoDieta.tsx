@@ -26,7 +26,7 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
 
   if (plano) {
     return (
-      <Cartao titulo="Sua dieta">
+      <Cartao titulo="sua dieta">
         <Texto variante="subtitulo">
           {plano.refeicoes.length} refeições, {formatarNumero(plano.caloriasDia)} kcal
         </Texto>
@@ -39,9 +39,9 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
             {plano.resumo}
           </Texto>
         )}
-        <Botao titulo="Ver minha dieta" onPress={() => router.push('/dieta')} />
+        <Botao titulo="ver minha dieta" onPress={() => router.push('/dieta')} />
         <Botao
-          titulo="Ajustar com o coach"
+          titulo="ajustar com o coach"
           variante="secundario"
           onPress={() => router.push('/coach')}
         />
@@ -50,7 +50,7 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
   }
 
   return (
-    <Cartao titulo="Dieta com IA">
+    <Cartao titulo="dieta com IA">
       <Texto secundario>
         {liberada
           ? 'Um plano de refeições feito com as suas calorias e macros, em segundos.'
@@ -62,7 +62,7 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
         </Texto>
       ) : null}
       <Botao
-        titulo="Montar minha dieta"
+        titulo="montar minha dieta"
         onPress={montar}
         desabilitado={!liberada}
         carregando={gerando}

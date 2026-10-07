@@ -13,7 +13,7 @@
 | Testes       | **Jest + React Native Testing Library**                    | Regras de negócio e componentes testados sem precisar de celular   |
 | Qualidade    | **ESLint, Prettier, `tsc`** e **GitHub Actions**           | Todo PR é checado automaticamente                                  |
 | IA           | **Claude (Anthropic)** numa **rota de API** do Expo Router | A chave fica no servidor; o app só chama `/api/dieta`              |
-| Fontes       | **Barlow Condensed + Barlow** (`@expo-google-fonts`)       | Identidade "Volt"; carregadas no `_layout` antes da splash sair    |
+| Fontes       | **Lexend** (`@expo-google-fonts`)                          | Identidade "Bento"; carregada no `_layout` antes da splash sair    |
 
 ## Organização por feature
 
@@ -130,14 +130,17 @@ O app foi pensado para apresentar sem gastar nada. O servidor escolhe a IA na ho
 
 O servidor publicado (EAS Hosting) não tem Ollama: lá, sem chave, vale o modo demonstração.
 
-### Design system "Volt"
+### Design system "Bento"
 
-Tudo visual sai de `src/shared/theme/tokens.ts`. Regras que valem para qualquer tela nova:
+Tudo visual sai de `src/shared/theme/tokens.ts` (cores, `espaco`, `raio`, `familia`, `fonte`). Nada de cor ou medida escrita direto no componente. Regras que valem para qualquer tela nova:
 
-- O verde menta (`destaque`) é claro demais para ser texto em fundo claro. Use como **fundo** atrás de texto preto, ou sobre fundo escuro.
-- Fontes: cada peso é uma família (`familia.display`, `familia.corpo`...). **Não use `fontWeight`** com elas: no Android a fonte volta para a do sistema.
-- Textos do app: **sem emoji e sem travessão**. Use vírgula, ponto ou dois-pontos.
-- Tema: `useCores()` já respeita a escolha em Ajustes (automático, claro ou escuro).
+- **Visual**: fundo preto (claro no tema claro), cards `superficie` com `raio.lg` (28), sem borda e com bastante respiro. Botões, chips e seletores são pílulas (`raio.total`); botões só de ícone são redondos e têm no mínimo 44 px.
+- **Cores pastel**: o menta (`destaque`) e as cores de categoria (`useCategorias()`) são claros demais para texto em fundo claro. Use como **fundo** atrás de texto escuro (`textoSobreDestaque`), ou como texto só no modo escuro. Para texto colorido no claro, use `useCategorias().texto`. Água usa `c.agua`.
+- **Fonte**: Lexend, cada peso é uma família (`familia.display`, `familia.corpo`...). **Não use `fontWeight`**: no Android a fonte volta para a do sistema. Nada de itálico.
+- **Textos**: títulos e botões em minúsculas ("ver dieta", "salvar peso de hoje"), escritos assim na própria copy (sem `textTransform`, para nomes próprios e siglas como IA continuarem certos). **Sem emoji e sem travessão**: use vírgula, ponto ou dois-pontos.
+- **Nada do Volt**: sem caixa alta, sem barras inclinadas (`skewX`), sem bordas grossas em cards.
+- **Peças prontas** em `src/shared/ui`: `Tela`, `Cartao`, `Secao` (grupo de ajustes), `Botao`, `CampoTexto`, `Opcoes`, `Contador`, `Interruptor`, `BarraProgresso`, `Marcado` (palavra em destaque dentro de um título).
+- **Tema**: `useCores()` já respeita a escolha em Ajustes (automático, claro ou escuro).
 
 ### Dados de saúde
 

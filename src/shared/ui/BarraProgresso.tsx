@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
+import { raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
 
 type Props = {
@@ -8,10 +9,12 @@ type Props = {
   cor?: string;
   corTrilho?: string;
   rotuloAcessivel: string;
+  /** Espessura da barra. Padrão 12. */
+  altura?: number;
 };
 
-/** Barra reta e inclinada, no estilo "pista de corrida". */
-export function BarraProgresso({ valor, cor, corTrilho, rotuloAcessivel }: Props) {
+/** Barra de progresso em pílula: trilho arredondado e preenchimento com as pontas redondas. */
+export function BarraProgresso({ valor, cor, corTrilho, rotuloAcessivel, altura = 12 }: Props) {
   const c = useCores();
   const porcentagem = Math.round(Math.min(Math.max(valor, 0), 1) * 100);
 
@@ -20,25 +23,35 @@ export function BarraProgresso({ valor, cor, corTrilho, rotuloAcessivel }: Props
       accessibilityRole="progressbar"
       accessibilityLabel={rotuloAcessivel}
       accessibilityValue={{ min: 0, max: 100, now: porcentagem }}
-      style={[estilos.trilho, { backgroundColor: corTrilho ?? c.superficieSecundaria }]}
+      style={[
+        estilos.trilho,
+        { height: altura, backgroundColor: corTrilho ?? c.superficieSecundaria },
+      ]}
     >
-      <View
-        style={[
-          estilos.preenchimento,
-          { width: `${porcentagem}%`, backgroundColor: cor ?? c.destaque },
-        ]}
-      />
+      {porcentagem > 0 ? (
+        <View
+          style={[
+            estilos.preenchimento,
+            {
+              // Nunca menor que a própria altura, para a ponta continuar redonda
+              width: `${porcentagem}%`,
+              minWidth: altura,
+              backgroundColor: cor ?? c.destaque,
+            },
+          ]}
+        />
+      ) : null}
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
   trilho: {
-    height: 20,
+    borderRadius: raio.total,
     overflow: 'hidden',
-    transform: [{ skewX: '-18deg' }],
   },
   preenchimento: {
     height: '100%',
+    borderRadius: raio.total,
   },
 });

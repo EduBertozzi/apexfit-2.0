@@ -76,10 +76,7 @@ export function GraficoPeso({ registros, mini = false, periodoInicial = 30 }: Pr
                 accessibilityState={{ checked: marcado }}
                 style={({ pressed }) => [
                   estilos.periodo,
-                  {
-                    backgroundColor: marcado ? c.destaque : 'transparent',
-                    borderColor: marcado ? c.destaque : c.bordaHeroi,
-                  },
+                  { backgroundColor: marcado ? c.destaque : c.trilhoHeroi },
                   pressed && { opacity: 0.75 },
                 ]}
               >
@@ -185,11 +182,11 @@ export function GraficoPeso({ registros, mini = false, periodoInicial = 30 }: Pr
           <View style={estilos.legenda}>
             <View style={[estilos.amostra, { backgroundColor: c.destaque }]} />
             <Texto variante="legenda" style={{ color: c.textoHeroiSecundario }}>
-              Tendência 7 dias
+              tendência 7 dias
             </Texto>
           </View>
           <Texto variante="legenda" style={{ color: c.textoHeroiSecundario }}>
-            Hoje
+            hoje
           </Texto>
         </View>
       )}
@@ -210,8 +207,7 @@ const estilos = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: borda.grossa,
-    borderRadius: raio.sm,
+    borderRadius: raio.total,
   },
   vazio: {
     flex: 1,
@@ -219,7 +215,7 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: borda.fina,
     borderStyle: 'dashed',
-    borderRadius: raio.sm,
+    borderRadius: raio.md,
   },
   escala: {
     position: 'absolute',
@@ -243,6 +239,7 @@ const estilos = StyleSheet.create({
   },
   amostra: {
     width: 14,
-    height: 3,
+    height: 4,
+    borderRadius: raio.total,
   },
 });

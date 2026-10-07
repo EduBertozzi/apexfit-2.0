@@ -1,6 +1,7 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { borda, espaco, raio } from '../theme/tokens';
+import { borda, espaco, familia, raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
 import { Texto } from './Texto';
 
@@ -16,26 +17,34 @@ type Props = {
   valor: string;
   onMudar: (valor: string) => void;
   erro?: string;
-  /** "linha" para opções curtas lado a lado; "coluna" para opções com descrição. */
+  /** "linha" para pílulas curtas lado a lado; "coluna" para cartões com descrição. */
   direcao?: 'linha' | 'coluna';
   testID?: string;
 };
 
-/** Escolha única (tipo "radio"), com o mesmo visual dos campos de texto. */
+/**
+ * Escolha única (tipo "radio"). Em linha vira pílulas; em coluna, cartões arredondados.
+ * A marcada ganha fundo menta com texto escuro e um ícone de check,
+ * para não depender só da cor.
+ */
 export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha', testID }: Props) {
   const c = useCores();
+  const emLinha = direcao === 'linha';
 
   return (
     <View style={estilos.container} testID={testID}>
-      <Texto variante="rotulo">{rotulo}</Texto>
+      <Texto variante="rotulo" secundario style={estilos.rotulo}>
+        {rotulo}
+      </Texto>
 
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={rotulo}
-        style={direcao === 'linha' ? estilos.linha : estilos.coluna}
+        style={emLinha ? estilos.linha : estilos.coluna}
       >
         {opcoes.map((opcao) => {
           const marcada = opcao.valor === valor;
+          const corTexto = marcada ? c.textoSobreDestaque : c.texto;
 
           return (
             <Pressable
@@ -47,28 +56,37 @@ export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha'
               accessibilityState={{ checked: marcada }}
               style={({ pressed }) => [
                 estilos.opcao,
-                direcao === 'linha' && estilos.opcaoLinha,
+                emLinha ? estilos.opcaoLinha : estilos.opcaoColuna,
                 {
-                  borderColor: erro ? c.erro : marcada ? c.texto : c.textoSecundario,
-                  backgroundColor: marcada ? c.destaque : c.superficie,
+                  backgroundColor: marcada ? c.destaque : c.superficieSecundaria,
+                  borderColor: erro && !marcada ? c.erro : 'transparent',
                 },
                 pressed && { opacity: 0.75 },
               ]}
             >
-              <Texto
-                variante="subtitulo"
-                style={[estilos.textoOpcao, marcada && { color: c.textoSobreDestaque }]}
-              >
-                {opcao.rotulo}
-              </Texto>
-              {opcao.descricao ? (
+              <View style={emLinha ? estilos.conteudoLinha : estilos.conteudoColuna}>
                 <Texto
-                  variante="legenda"
-                  secundario={!marcada}
-                  style={marcada && { color: c.textoSobreDestaque }}
+                  variante={emLinha ? 'rotulo' : 'corpo'}
+                  style={[estilos.textoOpcao, { color: corTexto }]}
                 >
-                  {opcao.descricao}
+                  {opcao.rotulo}
                 </Texto>
+                {opcao.descricao ? (
+                  <Texto
+                    variante="legenda"
+                    secundario={!marcada}
+                    style={marcada && { color: c.textoSobreDestaque }}
+                  >
+                    {opcao.descricao}
+                  </Texto>
+                ) : null}
+              </View>
+              {marcada ? (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={emLinha ? 18 : 24}
+                  color={c.textoSobreDestaque}
+                />
               ) : null}
             </Pressable>
           );
@@ -76,7 +94,11 @@ export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha'
       </View>
 
       {erro ? (
-        <Texto variante="legenda" style={{ color: c.erro }} accessibilityLiveRegion="polite">
+        <Texto
+          variante="legenda"
+          style={[estilos.rotulo, { color: c.erro }]}
+          accessibilityLiveRegion="polite"
+        >
           {erro}
         </Texto>
       ) : null}
@@ -86,7 +108,10 @@ export function Opcoes({ rotulo, opcoes, valor, onMudar, erro, direcao = 'linha'
 
 const estilos = StyleSheet.create({
   container: {
-    gap: espaco.xs,
+    gap: espaco.sm,
+  },
+  rotulo: {
+    paddingHorizontal: espaco.xs,
   },
   linha: {
     flexDirection: 'row',
@@ -97,19 +122,33 @@ const estilos = StyleSheet.create({
     gap: espaco.sm,
   },
   opcao: {
-    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.sm,
     borderWidth: borda.grossa,
-    borderRadius: raio.sm,
-    paddingHorizontal: espaco.md,
-    paddingVertical: espaco.sm,
-    justifyContent: 'center',
+    borderCurve: 'continuous',
   },
   opcaoLinha: {
     flexGrow: 1,
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingHorizontal: espaco.md + 2,
+    borderRadius: raio.total,
+  },
+  opcaoColuna: {
+    minHeight: 64,
+    paddingHorizontal: espaco.md + 4,
+    paddingVertical: espaco.md - 4,
+    borderRadius: raio.md,
+  },
+  conteudoLinha: {
     alignItems: 'center',
   },
+  conteudoColuna: {
+    flex: 1,
+    gap: 2,
+  },
   textoOpcao: {
-    fontSize: 18,
-    lineHeight: 22,
+    fontFamily: familia.corpoMedio,
   },
 });

@@ -1,6 +1,6 @@
 import { calcularMetaAguaMl, ML_POR_KG } from '@/features/perfil/calculos';
 import { formatarNumero } from '@/shared/lib/numero';
-import { Cartao, Contador, Interruptor, Texto } from '@/shared/ui';
+import { Contador, Interruptor, Secao, Texto } from '@/shared/ui';
 
 import { ajustarMetaManual, META_AGUA_MANUAL } from '../logica';
 import { useAjustesStore } from '../store';
@@ -14,7 +14,7 @@ export function AjustesAgua({ pesoKg }: { pesoKg: number }) {
   const automaticaMl = calcularMetaAguaMl(pesoKg);
 
   return (
-    <Cartao titulo="Água">
+    <Secao titulo="água">
       <Interruptor
         rotulo="Escolher minha meta"
         descricao={`Automática: ${formatarNumero(automaticaMl)} ml (${ML_POR_KG} ml por kg)`}
@@ -46,6 +46,6 @@ export function AjustesAgua({ pesoKg }: { pesoKg: number }) {
         onMudar={definirVibracao}
         testID="ajuste-vibracao"
       />
-    </Cartao>
+    </Secao>
   );
 }

@@ -1,39 +1,30 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import type { Perfil } from '@/features/perfil/types';
 import { formatarNumero } from '@/shared/lib/numero';
-import { borda, espaco } from '@/shared/theme/tokens';
-import { useCores } from '@/shared/theme/useCores';
+import { espaco } from '@/shared/theme/tokens';
+import { useCategorias } from '@/shared/theme/useCores';
 import { Botao, Cartao, Texto } from '@/shared/ui';
 
 import { calcularNecessidades } from '../calculos';
-
-function Macro({ rotulo, gramas }: { rotulo: string; gramas: number }) {
-  return (
-    <View style={estilos.macro} accessible accessibilityLabel={`${rotulo}: ${gramas} gramas`}>
-      <Texto variante="rotulo" secundario>
-        {rotulo}
-      </Texto>
-      <Texto variante="subtitulo">{gramas} g</Texto>
-    </View>
-  );
-}
+import { ChipsMacros } from './ChipsMacros';
 
 /** Calorias e macros do dia. Se o perfil é antigo e falta dado, convida a completar. */
 export function CartaoMetas({ perfil }: { perfil: Perfil }) {
-  const c = useCores();
+  const categorias = useCategorias();
   const necessidades = calcularNecessidades(perfil);
 
   if (!necessidades) {
     return (
-      <Cartao titulo="Calorias do dia" variante="tracejado">
-        <Texto variante="subtitulo">Falta pouco</Texto>
+      <Cartao titulo="calorias do dia" variante="tracejado">
+        <Texto variante="subtitulo">falta pouco</Texto>
         <Texto secundario>
           Diga seu sexo, nível de atividade e objetivo para o app calcular suas calorias e liberar a
           dieta com IA.
         </Texto>
-        <Botao titulo="Completar perfil" onPress={() => router.push('/editar-perfil')} />
+        <Botao titulo="completar perfil" onPress={() => router.push('/editar-perfil')} />
       </Cartao>
     );
   }
@@ -41,38 +32,46 @@ export function CartaoMetas({ perfil }: { perfil: Perfil }) {
   const { metaCalorias, gastoDiario, tmb, macros } = necessidades;
 
   return (
-    <Cartao titulo="Calorias do dia">
+    <Cartao>
+      <View style={estilos.cabecalho}>
+        <Ionicons name="flame" size={20} color={categorias.texto.cardio} />
+        <Texto
+          variante="rotulo"
+          style={{ color: categorias.texto.cardio }}
+          accessibilityRole="header"
+        >
+          calorias do dia
+        </Texto>
+      </View>
       <View style={estilos.linhaTotal}>
         <Texto variante="destaque">{formatarNumero(metaCalorias)}</Texto>
-        <Texto variante="rotulo">kcal</Texto>
+        <Texto variante="rotulo" secundario>
+          kcal
+        </Texto>
       </View>
       <Texto variante="legenda" secundario>
         Gasto diário {formatarNumero(gastoDiario)} kcal, metabolismo basal {formatarNumero(tmb)}{' '}
         kcal.
       </Texto>
-
-      <View style={[estilos.macros, { borderTopColor: c.superficieSecundaria }]}>
-        <Macro rotulo="Proteína" gramas={macros.proteinaG} />
-        <Macro rotulo="Carboidrato" gramas={macros.carboidratoG} />
-        <Macro rotulo="Gordura" gramas={macros.gorduraG} />
+      <View style={estilos.chips}>
+        <ChipsMacros macros={macros} />
       </View>
     </Cartao>
   );
 }
 
 const estilos = StyleSheet.create({
+  cabecalho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.xs + 2,
+  },
   linhaTotal: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: espaco.sm,
   },
-  macros: {
-    flexDirection: 'row',
-    borderTopWidth: borda.grossa,
-    paddingTop: espaco.sm,
+  chips: {
     marginTop: espaco.xs,
-  },
-  macro: {
-    flex: 1,
   },
 });

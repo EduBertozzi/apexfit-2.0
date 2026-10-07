@@ -1,91 +1,107 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, View } from 'react-native';
 
+import { ChipsMacros } from '@/features/nutricao/components/ChipsMacros';
 import { formatarNumero } from '@/shared/lib/numero';
-import { borda, espaco } from '@/shared/theme/tokens';
-import { useCores } from '@/shared/theme/useCores';
+import type { CorCategoria } from '@/shared/theme/tokens';
+import { espaco, raio } from '@/shared/theme/tokens';
+import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { Cartao, Texto } from '@/shared/ui';
 
 import type { PlanoDieta } from '../contrato';
 
-function Numero({ rotulo, valor }: { rotulo: string; valor: string }) {
-  return (
-    <View
-      style={estilos.numero}
-      accessible
-      accessibilityLabel={`${rotulo}: ${valor.replace(' g', ' gramas')}`}
-    >
-      <Texto variante="rotulo" style={{ opacity: 0.7 }}>
-        {rotulo}
-      </Texto>
-      <Texto variante="subtitulo">{valor}</Texto>
-    </View>
-  );
-}
+/** Cada refeição ganha uma cor pastel, na ordem do dia, só para separar visualmente. */
+const CORES_REFEICAO: CorCategoria[] = ['peito', 'aquecimento', 'braco', 'abdominal', 'perna'];
 
 export function PlanoDietaDetalhe({ plano }: { plano: PlanoDieta }) {
   const c = useCores();
-  const corHeroi = { color: c.textoHeroi };
+  const categorias = useCategorias();
 
   return (
     <View style={estilos.container}>
       <Cartao variante="heroi">
         <Texto variante="rotulo" style={{ color: c.textoHeroiSecundario }}>
-          Meta do dia
+          meta do dia
         </Texto>
-        <Texto variante="destaque" style={{ color: c.destaque }}>
-          {formatarNumero(plano.caloriasDia)} kcal
-        </Texto>
-        <View style={estilos.numeros}>
-          <Numero rotulo="Proteína" valor={`${plano.macros.proteinaG} g`} />
-          <Numero rotulo="Carboidrato" valor={`${plano.macros.carboidratoG} g`} />
-          <Numero rotulo="Gordura" valor={`${plano.macros.gorduraG} g`} />
+        <View style={estilos.linhaTotal}>
+          <Texto variante="gigante" style={{ color: c.textoHeroi }}>
+            {formatarNumero(plano.caloriasDia)}
+          </Texto>
+          <Texto variante="subtitulo" style={{ color: c.textoHeroiSecundario }}>
+            kcal
+          </Texto>
         </View>
-        <Texto style={[corHeroi, estilos.resumo]}>{plano.resumo}</Texto>
+        <ChipsMacros macros={plano.macros} />
+        <Texto style={[estilos.resumo, { color: c.textoHeroi }]}>{plano.resumo}</Texto>
       </Cartao>
 
-      {plano.refeicoes.map((refeicao) => (
-        <Cartao key={`${refeicao.horario}-${refeicao.nome}`}>
-          <View style={estilos.cabecalhoRefeicao}>
-            <Texto variante="subtitulo" style={estilos.nomeRefeicao}>
-              {refeicao.nome}
-            </Texto>
-            <Texto variante="rotulo" secundario>
-              {refeicao.horario}
-            </Texto>
-          </View>
-          <Texto variante="rotulo">{formatarNumero(refeicao.calorias)} kcal</Texto>
+      {plano.refeicoes.map((refeicao, indice) => {
+        const cor = CORES_REFEICAO[indice % CORES_REFEICAO.length];
 
-          <View style={[estilos.itens, { borderTopColor: c.superficieSecundaria }]}>
-            {refeicao.itens.map((item) => (
-              <View key={item.alimento} style={estilos.item}>
-                <Texto style={estilos.alimento}>{item.alimento}</Texto>
-                <Texto secundario style={estilos.quantidade}>
-                  {item.quantidade}
+        return (
+          <Cartao key={`${refeicao.horario}-${refeicao.nome}`}>
+            <View style={estilos.cabecalhoRefeicao}>
+              <Texto
+                variante="subtitulo"
+                accessibilityRole="header"
+                style={[estilos.nomeRefeicao, { color: categorias.texto[cor] }]}
+              >
+                {refeicao.nome.toLowerCase()}
+              </Texto>
+              <View style={[estilos.horario, { backgroundColor: c.superficieSecundaria }]}>
+                <Ionicons name="time-outline" size={14} color={c.textoSecundario} />
+                <Texto variante="legenda" secundario>
+                  {refeicao.horario}
                 </Texto>
               </View>
-            ))}
-          </View>
-
-          {refeicao.substituicoes.length > 0 ? (
-            <Texto variante="legenda" secundario>
-              Pode trocar: {refeicao.substituicoes.join('; ')}.
+            </View>
+            <Texto variante="rotulo" secundario>
+              {formatarNumero(refeicao.calorias)} kcal
             </Texto>
-          ) : null}
-        </Cartao>
-      ))}
+
+            <View style={estilos.itens}>
+              {refeicao.itens.map((item, i) => (
+                <View
+                  key={item.alimento}
+                  style={[
+                    estilos.item,
+                    i > 0 && { borderTopColor: c.borda, borderTopWidth: StyleSheet.hairlineWidth },
+                  ]}
+                >
+                  <Texto style={estilos.alimento}>{item.alimento}</Texto>
+                  <Texto secundario style={estilos.quantidade}>
+                    {item.quantidade}
+                  </Texto>
+                </View>
+              ))}
+            </View>
+
+            {refeicao.substituicoes.length > 0 ? (
+              <Texto variante="legenda" secundario>
+                Pode trocar: {refeicao.substituicoes.join('; ')}.
+              </Texto>
+            ) : null}
+          </Cartao>
+        );
+      })}
 
       {plano.dicas.length > 0 ? (
-        <Cartao titulo="Dicas">
+        <Cartao titulo="dicas">
           {plano.dicas.map((dica) => (
             <View key={dica} style={estilos.dica}>
-              <View style={[estilos.marcador, { backgroundColor: c.destaque }]} />
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color={categorias.texto.aquecimento}
+                style={estilos.icone}
+              />
               <Texto style={estilos.textoDica}>{dica}</Texto>
             </View>
           ))}
         </Cartao>
       ) : null}
 
-      <Texto variante="legenda" secundario>
+      <Texto variante="legenda" secundario style={estilos.aviso}>
         {plano.aviso}
       </Texto>
     </View>
@@ -96,34 +112,40 @@ const estilos = StyleSheet.create({
   container: {
     gap: espaco.md,
   },
-  numeros: {
+  linhaTotal: {
     flexDirection: 'row',
-    marginTop: espaco.xs,
-  },
-  numero: {
-    flex: 1,
+    alignItems: 'baseline',
+    gap: espaco.sm,
+    marginBottom: espaco.xs,
   },
   resumo: {
     marginTop: espaco.xs,
   },
   cabecalhoRefeicao: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: espaco.sm,
   },
   nomeRefeicao: {
     flex: 1,
   },
+  horario: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.xs,
+    paddingHorizontal: espaco.sm + 2,
+    paddingVertical: espaco.xs,
+    borderRadius: raio.total,
+  },
   itens: {
-    borderTopWidth: borda.grossa,
-    paddingTop: espaco.sm,
-    gap: espaco.sm,
+    marginTop: espaco.xs,
   },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: espaco.md,
+    paddingVertical: espaco.sm,
   },
   alimento: {
     flex: 1,
@@ -137,12 +159,13 @@ const estilos = StyleSheet.create({
     gap: espaco.sm,
     alignItems: 'flex-start',
   },
-  marcador: {
-    width: 8,
-    height: 8,
-    marginTop: 7,
+  icone: {
+    marginTop: 3,
   },
   textoDica: {
     flex: 1,
+  },
+  aviso: {
+    paddingHorizontal: espaco.xs,
   },
 });

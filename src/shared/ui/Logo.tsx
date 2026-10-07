@@ -10,7 +10,8 @@ type Props = {
 
 /**
  * Símbolo do ApexFit: o "A" de pico com a barra para frente.
- * Sempre num quadrado escuro, como o ícone: o menta não funciona sobre fundo claro.
+ * Sempre num quadrado escuro arredondado, como o ícone: o menta (`destaque`)
+ * não funciona sobre fundo claro.
  */
 export function Logo({ tamanho = 72 }: Props) {
   const c = useCores();
@@ -22,7 +23,8 @@ export function Logo({ tamanho = 72 }: Props) {
       style={{
         width: tamanho,
         height: tamanho,
-        borderRadius: raio.md * (tamanho / 48),
+        borderRadius: raio.lg * (tamanho / 72),
+        borderCurve: 'continuous',
         backgroundColor: c.heroi,
         overflow: 'hidden',
       }}

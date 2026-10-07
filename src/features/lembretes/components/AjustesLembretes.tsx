@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { Cartao, Contador, Interruptor, Opcoes, Texto } from '@/shared/ui';
+import { espaco } from '@/shared/theme/tokens';
+
+import { Contador, Interruptor, Opcoes, Secao, Texto } from '@/shared/ui';
 
 import {
   ajustarFim,
@@ -34,12 +37,12 @@ export function AjustesLembretes() {
 
   if (!notificacoesSuportadas()) {
     return (
-      <Cartao titulo="Lembretes de água">
+      <Secao titulo="lembretes de água">
         <Texto variante="legenda" secundario>
           Lembretes só funcionam no app do celular (Android ou iPhone). No navegador não dá para
           agendar notificações.
         </Texto>
-      </Cartao>
+      </Secao>
     );
   }
 
@@ -64,7 +67,7 @@ export function AjustesLembretes() {
   }
 
   return (
-    <Cartao titulo="Lembretes de água">
+    <Secao titulo="lembretes de água">
       <Interruptor
         rotulo="Lembrar de beber água"
         descricao="Uma notificação no intervalo escolhido, mesmo com o app fechado."
@@ -80,16 +83,20 @@ export function AjustesLembretes() {
       ) : null}
 
       {ativo ? (
-        <>
-          <Opcoes
-            rotulo="Intervalo"
-            opcoes={OPCOES_INTERVALO}
-            valor={String(intervaloMin)}
-            onMudar={(valor) => definirIntervalo(Number(valor))}
-            testID="ajuste-lembretes-intervalo"
-          />
+        <Opcoes
+          rotulo="Intervalo"
+          opcoes={OPCOES_INTERVALO}
+          valor={String(intervaloMin)}
+          onMudar={(valor) => definirIntervalo(Number(valor))}
+          testID="ajuste-lembretes-intervalo"
+        />
+      ) : null}
 
-          <Texto variante="rotulo">Começa às</Texto>
+      {ativo ? (
+        <View style={estilos.horario}>
+          <Texto variante="rotulo" secundario>
+            Começa às
+          </Texto>
           <Contador
             rotulo="horário de início dos lembretes"
             valorTexto={inicio}
@@ -98,8 +105,14 @@ export function AjustesLembretes() {
             podeMenos={ajustarInicio(config, -1) !== inicio}
             podeMais={ajustarInicio(config, 1) !== inicio}
           />
+        </View>
+      ) : null}
 
-          <Texto variante="rotulo">Termina às</Texto>
+      {ativo ? (
+        <View style={estilos.horario}>
+          <Texto variante="rotulo" secundario>
+            Termina às
+          </Texto>
           <Contador
             rotulo="horário de fim dos lembretes"
             valorTexto={fim}
@@ -108,12 +121,17 @@ export function AjustesLembretes() {
             podeMenos={ajustarFim(config, -1) !== fim}
             podeMais={ajustarFim(config, 1) !== fim}
           />
-
           <Texto variante="legenda" secundario accessibilityLiveRegion="polite">
             {resumoLembretes(config)}. Os lembretes tocam mesmo se você já bateu a meta do dia.
           </Texto>
-        </>
+        </View>
       ) : null}
-    </Cartao>
+    </Secao>
   );
 }
+
+const estilos = StyleSheet.create({
+  horario: {
+    gap: espaco.sm,
+  },
+});

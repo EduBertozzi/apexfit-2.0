@@ -17,7 +17,7 @@ export function CartaoPeso({ pesoPerfilKg }: { pesoPerfilKg: number }) {
   const resumo = resumoPeso(registros, chaveDoDia(new Date()), pesoPerfilKg);
 
   return (
-    <Cartao titulo="Peso" variante="heroi">
+    <Cartao titulo="peso" variante="heroi">
       <View style={estilos.cabecalho}>
         <Texto variante="destaque" style={{ color: c.textoHeroi }}>
           {formatarKg(resumo.atualKg)}
@@ -41,7 +41,7 @@ export function CartaoPeso({ pesoPerfilKg }: { pesoPerfilKg: number }) {
         </Texto>
       )}
 
-      <Botao titulo="Registrar peso" variante="destaque" onPress={() => router.push('/peso')} />
+      <Botao titulo="registrar peso" variante="destaque" onPress={() => router.push('/peso')} />
     </Cartao>
   );
 }
