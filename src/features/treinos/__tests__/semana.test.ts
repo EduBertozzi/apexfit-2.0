@@ -199,7 +199,7 @@ describe('toque e leitor de tela em cada dia', () => {
   const [domingo, segunda, , quarta, quinta] = dias;
 
   it('traz o treino e a contagem do dia', () => {
-    expect(segunda.detalhe).toEqual({ treino: 'Treino A', feitos: 2, total: 4 });
+    expect(segunda.detalhe).toEqual({ treino: 'treino A', feitos: 2, total: 4 });
     expect(domingo.detalhe).toBeNull();
     expect(quinta.detalhe).toBeNull();
   });
@@ -212,9 +212,9 @@ describe('toque e leitor de tela em cada dia', () => {
   });
 
   it('resumo ao tocar', () => {
-    expect(resumoDoDia(segunda)).toBe('segunda: Treino A, 2 de 4 exercícios');
+    expect(resumoDoDia(segunda)).toBe('segunda: treino A, 2 de 4 exercícios');
     expect(resumoDoDia(domingo)).toBe('domingo: descanso');
-    expect(resumoDoDia(quarta)).toBe('hoje: Treino A, 1 de 4 exercícios');
+    expect(resumoDoDia(quarta)).toBe('hoje: treino A, 1 de 4 exercícios');
     expect(resumoDoDia(quinta)).toBe('quinta: ainda não chegou');
     expect(resumoDoDia(diasDaSemana([], [], HOJE)[3])).toBe('hoje: ainda sem treino');
   });

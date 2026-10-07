@@ -2,6 +2,7 @@ import { chaveDoDia, diasEntre } from '@/shared/lib/data';
 import { formatarNumero } from '@/shared/lib/numero';
 
 import type { DadosExercicio, DadosTreino, Exercicio, GeradorId, Sessao, Treino } from './types';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 /** Quantos dias de sessões guardamos no aparelho. */
 export const DIAS_DE_HISTORICO = 365;
@@ -606,21 +607,21 @@ export function legendaTreinoDoDia(situacao: SituacaoDoDia): string {
       return 'nenhum treino montado ainda';
     case 'sugerido':
       if (situacao.descanso) {
-        return `dia de descanso. Próximo: ${situacao.treino.nome}`;
+        return `dia de descanso. próximo: ${minusculaInicial(situacao.treino.nome)}`;
       }
 
       return situacao.treino.foco
-        ? `${situacao.treino.nome}, ${situacao.treino.foco}`
-        : situacao.treino.nome;
+        ? `${minusculaInicial(situacao.treino.nome)}, ${minusculaInicial(situacao.treino.foco)}`
+        : minusculaInicial(situacao.treino.nome);
     case 'em-andamento': {
       const { feitos, total } = progressoDaSessao(situacao.sessao, situacao.treino);
 
-      return `${situacao.treino.nome}, ${feitos} de ${total} feitos`;
+      return `${minusculaInicial(situacao.treino.nome)}, ${feitos} de ${total} feitos`;
     }
     case 'concluido':
       return situacao.proximo
-        ? `${situacao.treino.nome} feito. Próximo: ${situacao.proximo.nome}`
-        : `${situacao.treino.nome} feito`;
+        ? `${minusculaInicial(situacao.treino.nome)} feito. próximo: ${minusculaInicial(situacao.proximo.nome)}`
+        : `${minusculaInicial(situacao.treino.nome)} feito`;
   }
 }
 

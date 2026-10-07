@@ -22,6 +22,7 @@ import {
 import { useTreinosStore } from '../store';
 import type { Exercicio, Sessao, Treino } from '../types';
 import { IconeGrupo } from './IconeGrupo';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 type ItemProps = {
   exercicio: Exercicio;
@@ -137,9 +138,9 @@ export function ChecklistSessao({ treino, sessao }: Props) {
     <View style={estilos.container}>
       <View>
         <Texto variante="titulo" style={estilos.titulo} accessibilityRole="header">
-          {treino.nome}
+          {minusculaInicial(treino.nome)}
         </Texto>
-        {treino.foco ? <Texto secundario>{treino.foco}</Texto> : null}
+        {treino.foco ? <Texto secundario>{minusculaInicial(treino.foco)}</Texto> : null}
       </View>
 
       <Cartao>

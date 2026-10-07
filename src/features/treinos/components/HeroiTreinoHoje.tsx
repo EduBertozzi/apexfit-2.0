@@ -7,6 +7,7 @@ import { BarraProgresso, Botao, Cartao, Texto } from '@/shared/ui';
 
 import { progressoDaSessao, resumoTreino } from '../logica';
 import { useTreinoDoDia, useTreinosStore } from '../store';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 /** Cartão herói da aba Treinos: o treino sugerido para hoje e a contagem da semana. */
 export function HeroiTreinoHoje() {
@@ -56,7 +57,7 @@ export function HeroiTreinoHoje() {
 
       <View>
         <Texto variante="titulo" style={{ color: c.textoHeroi }}>
-          {treino.nome}
+          {minusculaInicial(treino.nome)}
         </Texto>
         <Texto style={{ color: c.textoHeroiSecundario }}>{resumoTreino(treino)}</Texto>
       </View>
@@ -74,7 +75,7 @@ export function HeroiTreinoHoje() {
         <>
           <Texto style={{ color: c.textoHeroiSecundario }}>
             {situacao.proximo
-              ? `Mandou bem. Próximo: ${situacao.proximo.nome}.`
+              ? `Mandou bem. Próximo: ${minusculaInicial(situacao.proximo.nome)}.`
               : 'Mandou bem. Descansa e volta amanhã.'}
           </Texto>
           <Botao

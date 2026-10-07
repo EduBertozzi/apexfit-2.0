@@ -12,6 +12,7 @@ import { agruparPorGrupo, type BlocoDoTreino } from '../grupos';
 import { concluidosDeHoje, podeMarcarNoInicio } from '../logica';
 import { useTreinoDoDia, useTreinosStore } from '../store';
 import { CartaoGrupo } from './CartaoGrupo';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 const abrirSessao = () => router.push('/treino/sessao');
 
@@ -87,7 +88,7 @@ export function GradeTreinoHoje() {
 
       {treino && treino.exercicios.length === 0 ? (
         <CartaoToque
-          rotuloAcessivel={`${treino.nome} ainda não tem exercícios. Adicionar exercícios`}
+          rotuloAcessivel={`${minusculaInicial(treino.nome)} ainda não tem exercícios. Adicionar exercícios`}
           onPress={() => router.push({ pathname: '/treino/[id]', params: { id: treino.id } })}
         >
           <MaterialCommunityIcons name="playlist-plus" size={28} color={c.texto} />
@@ -95,7 +96,7 @@ export function GradeTreinoHoje() {
             adicionar exercícios
           </Texto>
           <Texto variante="legenda" secundario>
-            {treino.nome} ainda está vazio
+            {minusculaInicial(treino.nome)} ainda está vazio
           </Texto>
         </CartaoToque>
       ) : null}

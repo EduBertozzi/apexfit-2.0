@@ -18,6 +18,7 @@ import { useEntrada } from '@/shared/ui/animacao';
 
 import { progressoDaSessao } from '../logica';
 import type { Sessao, Treino } from '../types';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 const TAMANHO_SELO = 72;
 const TAMANHO_PONTO = 10;
@@ -151,8 +152,8 @@ export function TreinoConcluido({
 
       <Cartao variante="heroi">
         <Texto variante="rotulo" style={{ color: c.textoHeroiSecundario }}>
-          {treino.nome}
-          {treino.foco ? `, ${treino.foco}` : ''}
+          {minusculaInicial(treino.nome)}
+          {treino.foco ? `, ${minusculaInicial(treino.foco)}` : ''}
         </Texto>
         <Texto variante="subtitulo" style={{ color: c.textoHeroi }}>
           {feitos} de {total} exercícios
@@ -170,7 +171,7 @@ export function TreinoConcluido({
 
       {proximo ? (
         <Texto secundario>
-          Próximo: {proximo.nome}
+          Próximo: {minusculaInicial(proximo.nome)}
           {proximo.foco ? `, ${proximo.foco}` : ''}. Descansa e volta com tudo.
         </Texto>
       ) : null}

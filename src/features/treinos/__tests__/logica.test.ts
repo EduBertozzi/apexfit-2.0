@@ -538,18 +538,18 @@ describe('legendaTreinoDoDia e concluidosDeHoje', () => {
   it('descreve cada situação', () => {
     expect(legendaTreinoDoDia({ tipo: 'sem-treinos' })).toBe('nenhum treino montado ainda');
     expect(legendaTreinoDoDia({ tipo: 'sugerido', treino: { ...A, foco: 'Peito' } })).toBe(
-      'Treino A, Peito',
+      'treino A, peito',
     );
-    expect(legendaTreinoDoDia({ tipo: 'sugerido', treino: A })).toBe('Treino A');
+    expect(legendaTreinoDoDia({ tipo: 'sugerido', treino: A })).toBe('treino A');
     expect(legendaTreinoDoDia({ tipo: 'em-andamento', treino: A, sessao: emAndamento })).toBe(
-      'Treino A, 1 de 2 feitos',
+      'treino A, 1 de 2 feitos',
     );
     expect(
       legendaTreinoDoDia({ tipo: 'concluido', treino: A, sessao: emAndamento, proximo: B }),
-    ).toBe('Treino A feito. Próximo: Treino B');
+    ).toBe('treino A feito. próximo: treino B');
     expect(
       legendaTreinoDoDia({ tipo: 'concluido', treino: A, sessao: emAndamento, proximo: null }),
-    ).toBe('Treino A feito');
+    ).toBe('treino A feito');
   });
 
   it('só há marcados quando existe sessão hoje', () => {

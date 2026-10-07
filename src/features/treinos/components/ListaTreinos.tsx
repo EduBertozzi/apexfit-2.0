@@ -10,6 +10,7 @@ import { agruparPorGrupo, NOME_GRUPO } from '../grupos';
 import { proximoTreino, resumoTreino } from '../logica';
 import { useTreinosStore } from '../store';
 import { BotoesOrdem } from './BotoesOrdem';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 /** Todos os treinos, na ordem do rodízio. Tocar abre a edição. */
 export function ListaTreinos() {
@@ -43,13 +44,13 @@ export function ListaTreinos() {
             <Pressable
               onPress={() => abrir(treino.id)}
               accessibilityRole="button"
-              accessibilityLabel={`${treino.nome}, ${resumoTreino(treino)}${ehProximo ? ', próximo da fila' : ''}`}
+              accessibilityLabel={`${minusculaInicial(treino.nome)}, ${resumoTreino(treino)}${ehProximo ? ', próximo da fila' : ''}`}
               accessibilityHint="Abre para editar"
               style={({ pressed }) => [estilos.toque, pressed && { opacity: 0.75 }]}
             >
               <View style={estilos.linhaNome}>
                 <Texto variante="subtitulo" style={estilos.nome}>
-                  {treino.nome}
+                  {minusculaInicial(treino.nome)}
                 </Texto>
                 {ehProximo ? (
                   <View style={[estilos.selo, { backgroundColor: c.destaque }]}>
@@ -73,7 +74,7 @@ export function ListaTreinos() {
               ) : null}
             </Pressable>
             <BotoesOrdem
-              nome={treino.nome}
+              nome={minusculaInicial(treino.nome)}
               primeiro={indice === 0}
               ultimo={indice === treinos.length - 1}
               onSubir={() => mover(treino.id, 'cima')}

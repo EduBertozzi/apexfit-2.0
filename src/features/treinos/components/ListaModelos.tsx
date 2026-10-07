@@ -5,6 +5,7 @@ import { Botao, Cartao, Texto } from '@/shared/ui';
 
 import { MODELOS, type ModeloTreino } from '../modelos';
 import { useTreinosStore } from '../store';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 type Props = {
   /** Chamado depois de adicionar, ex: para voltar à tela anterior. */
@@ -18,7 +19,7 @@ export function ListaModelos({ onUsado }: Props) {
   function usar(modelo: ModeloTreino) {
     usarModelo(modelo);
     AccessibilityInfo.announceForAccessibility(
-      `${modelo.nome} adicionado: ${modelo.treinos.length} treinos.`,
+      `${minusculaInicial(modelo.nome)} adicionado: ${modelo.treinos.length} treinos.`,
     );
     onUsado?.(modelo);
   }
@@ -29,7 +30,7 @@ export function ListaModelos({ onUsado }: Props) {
         <Cartao key={modelo.id}>
           <View style={estilos.cabecalho}>
             <Texto variante="subtitulo" accessibilityRole="header" style={estilos.nome}>
-              {modelo.nome}
+              {minusculaInicial(modelo.nome)}
             </Texto>
             <Texto variante="rotulo" secundario>
               {modelo.frequencia}
@@ -38,14 +39,15 @@ export function ListaModelos({ onUsado }: Props) {
           <Texto secundario>{modelo.descricao}</Texto>
           <View style={estilos.treinos}>
             {modelo.treinos.map((treino, indice) => (
-              <Texto key={treino.nome} variante="legenda">
-                {indice + 1}. {treino.foco} ({treino.exercicios?.length ?? 0} exercícios)
+              <Texto key={minusculaInicial(treino.nome)} variante="legenda">
+                {indice + 1}. {minusculaInicial(treino.foco)} ({treino.exercicios?.length ?? 0}{' '}
+                exercícios)
               </Texto>
             ))}
           </View>
           <Botao
             titulo="usar este modelo"
-            descricaoAcessivel={`Usar o modelo ${modelo.nome}`}
+            descricaoAcessivel={`Usar o modelo ${minusculaInicial(modelo.nome)}`}
             onPress={() => usar(modelo)}
           />
         </Cartao>

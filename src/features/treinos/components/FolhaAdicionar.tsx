@@ -42,6 +42,7 @@ import { NOME_DIA, SIGLAS_DIA } from '../semana';
 import type { DadosExercicio, GrupoMuscular, Treino } from '../types';
 import { ContadorCompacto } from './ContadorCompacto';
 import { GrupoAbas, Pilula } from './Pilula';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 export type ResultadoFolha = {
   exercicios: DadosExercicio[];
@@ -268,8 +269,8 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
         {aba === 'plano' ? (
           <>
             <Texto secundario>
-              Em quais dias da semana o {treino.nome} acontece? No dia marcado, ele vira o treino de
-              hoje. Sem dia marcado, segue o rodízio.
+              Em quais dias da semana o {minusculaInicial(treino.nome)} acontece? No dia marcado,
+              ele vira o treino de hoje. Sem dia marcado, segue o rodízio.
             </Texto>
             <View style={estilos.dias}>
               {SIGLAS_DIA.map((sigla, dia) => {

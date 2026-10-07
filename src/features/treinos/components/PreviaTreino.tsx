@@ -8,6 +8,7 @@ import { agruparPorGrupo, NOME_GRUPO, textoEsquema } from '../grupos';
 import { resumoExercicio, resumoTreino } from '../logica';
 import type { Treino } from '../types';
 import { IconeGrupo } from './IconeGrupo';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 type Props = {
   treino: Treino;
@@ -25,7 +26,7 @@ export function PreviaTreino({ treino, onComecar, onEditar }: Props) {
     <View style={estilos.container}>
       <View>
         <Texto variante="titulo" style={estilos.titulo} accessibilityRole="header">
-          {treino.nome}
+          {minusculaInicial(treino.nome)}
         </Texto>
         <Texto secundario>{resumoTreino(treino)}</Texto>
       </View>

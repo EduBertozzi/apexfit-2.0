@@ -2,6 +2,7 @@ import { chaveDoDia } from '@/shared/lib/data';
 
 import { progressoDaSessao } from './logica';
 import type { Sessao, Treino } from './types';
+import { minusculaInicial } from '@/shared/lib/texto';
 
 /**
  * Cor de cada dia na faixa da semana (regra do dono do produto):
@@ -134,7 +135,7 @@ export function detalheDoDia(
 
   const { feitos, total } = progressoDaSessao(sessao, treino);
 
-  return { treino: treino.nome, feitos, total };
+  return { treino: minusculaInicial(treino.nome), feitos, total };
 }
 
 /** Cor de um dia que já passou, pelo quanto foi feito. */

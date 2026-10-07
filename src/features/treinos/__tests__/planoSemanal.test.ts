@@ -119,7 +119,7 @@ describe('situacaoDoDia com plano semanal', () => {
     const situacao = situacaoDoDia(treinos, [], TERCA);
 
     expect(situacao).toEqual({ tipo: 'sugerido', treino: treinos[1], descanso: true });
-    expect(legendaTreinoDoDia(situacao)).toBe('dia de descanso. Próximo: Treino B');
+    expect(legendaTreinoDoDia(situacao)).toBe('dia de descanso. próximo: treino B');
   });
 
   it('depois de concluir, o próximo é o do dia seguinte no plano', () => {
