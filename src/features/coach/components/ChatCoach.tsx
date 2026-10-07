@@ -1,6 +1,8 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,9 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { primeiroNome } from '@/features/perfil/calculos';
 import { usePerfilStore } from '@/features/perfil/store';
 import { confirmar } from '@/shared/lib/confirmar';
-import { borda, espaco, familia, fonte, raio } from '@/shared/theme/tokens';
+import { espaco, familia, fonte, raio } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
-import { Botao, Marcado, Texto } from '@/shared/ui';
+import { Texto } from '@/shared/ui';
 
 import { LIMITES_COACH } from '../contrato';
 import { dadosAtuais } from '../contextoAtual';
@@ -29,6 +31,36 @@ const SUGESTOES = [
   'Como estou na água hoje?',
 ];
 
+const TAMANHO_BOTAO = 44;
+
+function BotaoRedondo({
+  icone,
+  rotulo,
+  onPress,
+}: {
+  icone: 'chevron-back' | 'trash-outline';
+  rotulo: string;
+  onPress: () => void;
+}) {
+  const c = useCores();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={rotulo}
+      hitSlop={4}
+      style={({ pressed }) => [
+        estilos.botaoRedondo,
+        { backgroundColor: c.superficie },
+        pressed && { opacity: 0.75 },
+      ]}
+    >
+      <Ionicons name={icone} size={icone === 'chevron-back' ? 24 : 20} color={c.texto} />
+    </Pressable>
+  );
+}
+
 function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boolean }) {
   const c = useCores();
   const doUsuario = mensagem.papel === 'usuario';
@@ -40,17 +72,17 @@ function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boo
       style={[
         estilos.bolha,
         doUsuario
-          ? [estilos.bolhaUsuario, { backgroundColor: c.primaria }]
-          : [estilos.bolhaCoach, { backgroundColor: c.superficie, borderColor: c.borda }],
+          ? [estilos.bolhaUsuario, { backgroundColor: c.destaque }]
+          : [estilos.bolhaCoach, { backgroundColor: c.superficie }],
       ]}
     >
       {!doUsuario ? (
-        <Texto variante="rotulo" secundario>
-          {mensagem.demo ? 'Coach · modo demonstração' : 'Coach'}
+        <Texto variante="legenda" secundario>
+          {mensagem.demo ? 'coach · modo demonstração' : 'coach'}
         </Texto>
       ) : null}
       <Texto
-        style={doUsuario && { color: c.textoSobrePrimaria }}
+        style={doUsuario && { color: c.textoSobreDestaque }}
         selectable
         accessibilityLiveRegion={doUsuario ? undefined : 'polite'}
       >
@@ -61,17 +93,23 @@ function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boo
           onPress={() => router.push('/dieta')}
           accessibilityRole="button"
           accessibilityLabel="Dieta atualizada. Ver dieta"
-          style={[estilos.chipDieta, { backgroundColor: c.destaque }]}
+          style={({ pressed }) => [
+            estilos.chipDieta,
+            { backgroundColor: c.destaque },
+            pressed && { opacity: 0.75 },
+          ]}
         >
           <Texto variante="rotulo" style={{ color: c.textoSobreDestaque }}>
-            Dieta atualizada: ver
+            ver dieta atualizada
           </Texto>
+          <Ionicons name="arrow-forward" size={16} color={c.textoSobreDestaque} />
         </Pressable>
       ) : null}
     </View>
   );
 }
 
+/** Tela do coach: barra própria com voltar, conversa em bolhas e campo em pílula. */
 export function ChatCoach() {
   const c = useCores();
   const perfil = usePerfilStore((state) => state.perfil);
@@ -103,22 +141,35 @@ export function ChatCoach() {
     }
   }
 
+  function voltar() {
+    // Aberto por link direto não tem para onde voltar: vai para o início
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  }
+
   const nome = perfil ? primeiroNome(perfil.nome) : '';
   const podeEnviar = texto.trim() !== '' && !respondendo;
 
   return (
-    <SafeAreaView edges={['top']} style={[estilos.raiz, { backgroundColor: c.fundo }]}>
+    <SafeAreaView edges={['top', 'bottom']} style={[estilos.raiz, { backgroundColor: c.fundo }]}>
       <KeyboardAvoidingView
         style={estilos.raiz}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={[estilos.topo, { borderBottomColor: c.borda }]}>
-          <Texto variante="titulo" accessibilityRole="header">
-            <Marcado>Coach</Marcado>
+        <View style={estilos.topo}>
+          <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={voltar} />
+          <Texto variante="subtitulo" accessibilityRole="header" style={estilos.tituloTopo}>
+            coach
           </Texto>
           {mensagens.length > 0 ? (
-            <Botao titulo="Limpar" variante="texto" onPress={apagarConversa} />
-          ) : null}
+            <BotaoRedondo icone="trash-outline" rotulo="Limpar conversa" onPress={apagarConversa} />
+          ) : (
+            // Mantém o título centralizado quando não há botão de limpar
+            <View style={estilos.botaoRedondo} />
+          )}
         </View>
 
         <ScrollView
@@ -126,10 +177,11 @@ export function ChatCoach() {
           contentContainerStyle={estilos.conversa}
           onContentSizeChange={() => rolagem.current?.scrollToEnd({ animated: true })}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           {mensagens.length === 0 ? (
             <View style={estilos.vazio}>
-              <Texto variante="subtitulo">Fala, {nome}!</Texto>
+              <Texto variante="titulo">fala, {nome}!</Texto>
               <Texto secundario>
                 Sou seu coach. Sei suas metas, sua água e sua dieta. Pergunte o que quiser ou peça
                 para eu montar ou mudar seu plano alimentar.
@@ -142,11 +194,11 @@ export function ChatCoach() {
                     accessibilityRole="button"
                     style={({ pressed }) => [
                       estilos.sugestao,
-                      { borderColor: c.borda, backgroundColor: c.superficie },
+                      { backgroundColor: c.superficie },
                       pressed && { opacity: 0.75 },
                     ]}
                   >
-                    <Texto>{sugestao}</Texto>
+                    <Texto variante="rotulo">{sugestao}</Texto>
                   </Pressable>
                 ))}
               </View>
@@ -168,31 +220,38 @@ export function ChatCoach() {
           ) : null}
         </ScrollView>
 
-        <View
-          style={[estilos.compositor, { borderTopColor: c.borda, backgroundColor: c.superficie }]}
-        >
-          <TextInput
-            value={texto}
-            onChangeText={setTexto}
-            placeholder="Escreva para o coach"
-            placeholderTextColor={c.textoSecundario}
-            accessibilityLabel="Mensagem para o coach"
-            multiline
-            maxLength={LIMITES_COACH.texto}
-            style={[
-              estilos.entrada,
-              { color: c.texto, borderColor: c.textoSecundario, backgroundColor: c.fundo },
-            ]}
-          />
-          <View style={estilos.botaoEnviar}>
-            <Botao
-              titulo="Enviar"
-              icone="arrow-up"
-              variante="destaque"
-              onPress={() => mandar(texto)}
-              desabilitado={!podeEnviar}
-              carregando={respondendo}
+        <View style={estilos.compositor}>
+          <View style={[estilos.pilula, { backgroundColor: c.superficie }]}>
+            <TextInput
+              value={texto}
+              onChangeText={setTexto}
+              placeholder="escreva para o coach"
+              placeholderTextColor={c.textoSecundario}
+              selectionColor={c.textoSecundario}
+              accessibilityLabel="Mensagem para o coach"
+              multiline
+              maxLength={LIMITES_COACH.texto}
+              style={[estilos.entrada, { color: c.texto }]}
             />
+            <Pressable
+              onPress={() => mandar(texto)}
+              disabled={!podeEnviar}
+              accessibilityRole="button"
+              accessibilityLabel="Enviar"
+              accessibilityState={{ disabled: !podeEnviar, busy: respondendo }}
+              style={({ pressed }) => [
+                estilos.enviar,
+                { backgroundColor: c.destaque },
+                pressed && { opacity: 0.75 },
+                !podeEnviar && !respondendo && { opacity: 0.4 },
+              ]}
+            >
+              {respondendo ? (
+                <ActivityIndicator color={c.textoSobreDestaque} />
+              ) : (
+                <Ionicons name="arrow-up" size={24} color={c.textoSobreDestaque} />
+              )}
+            </Pressable>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -207,10 +266,20 @@ const estilos = StyleSheet.create({
   topo: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: espaco.sm,
     paddingHorizontal: espaco.md,
     paddingVertical: espaco.sm,
-    borderBottomWidth: borda.grossa,
+  },
+  tituloTopo: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  botaoRedondo: {
+    width: TAMANHO_BOTAO,
+    height: TAMANHO_BOTAO,
+    borderRadius: raio.total,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   conversa: {
     padding: espaco.md,
@@ -224,58 +293,75 @@ const estilos = StyleSheet.create({
     paddingVertical: espaco.lg,
   },
   sugestoes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: espaco.sm,
-    marginTop: espaco.sm,
+    marginTop: espaco.md,
   },
   sugestao: {
-    minHeight: 48,
+    minHeight: TAMANHO_BOTAO,
     justifyContent: 'center',
-    paddingHorizontal: espaco.md,
-    borderWidth: borda.grossa,
-    borderRadius: raio.sm,
+    paddingHorizontal: espaco.md + 2,
+    borderRadius: raio.total,
   },
   bolha: {
-    maxWidth: '88%',
-    paddingHorizontal: espaco.md,
-    paddingVertical: espaco.sm,
-    borderRadius: raio.md,
+    maxWidth: '85%',
+    paddingHorizontal: espaco.md + 2,
+    paddingVertical: espaco.sm + 4,
+    borderRadius: raio.lg,
+    borderCurve: 'continuous',
     gap: espaco.xs,
   },
   bolhaUsuario: {
     alignSelf: 'flex-end',
+    borderBottomRightRadius: espaco.sm,
   },
   bolhaCoach: {
     alignSelf: 'flex-start',
-    borderWidth: borda.grossa,
+    borderBottomLeftRadius: espaco.sm,
   },
   chipDieta: {
     alignSelf: 'flex-start',
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: espaco.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.xs,
+    minHeight: TAMANHO_BOTAO,
+    paddingHorizontal: espaco.md,
     marginTop: espaco.xs,
+    borderRadius: raio.total,
   },
   compositor: {
+    width: '100%',
+    maxWidth: 560 + espaco.md * 2,
+    alignSelf: 'center',
+    paddingHorizontal: espaco.md,
+    paddingTop: espaco.xs,
+    paddingBottom: espaco.sm,
+  },
+  pilula: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: espaco.sm,
-    padding: espaco.sm,
-    borderTopWidth: borda.grossa,
+    borderRadius: raio.lg,
+    borderCurve: 'continuous',
+    padding: 6,
+    paddingLeft: espaco.md + 2,
   },
   entrada: {
     flex: 1,
-    minHeight: 50,
+    minHeight: TAMANHO_BOTAO,
     maxHeight: 140,
-    borderWidth: borda.grossa,
-    borderRadius: raio.sm,
-    paddingHorizontal: espaco.md,
-    paddingTop: 14,
-    paddingBottom: 14,
+    paddingTop: 11,
+    paddingBottom: 11,
     fontFamily: familia.corpo,
     fontSize: fonte.corpo,
     ...Platform.select({ web: { outlineWidth: 0 } }),
   },
-  botaoEnviar: {
-    width: 56,
+  enviar: {
+    width: TAMANHO_BOTAO,
+    height: TAMANHO_BOTAO,
+    borderRadius: raio.total,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

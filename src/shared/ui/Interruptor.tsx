@@ -1,4 +1,4 @@
-import { StyleSheet, Switch, View } from 'react-native';
+import { Platform, StyleSheet, Switch, View } from 'react-native';
 
 import { espaco } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
@@ -32,7 +32,10 @@ export function Interruptor({ rotulo, descricao, valor, onMudar, testID }: Props
         accessibilityLabel={rotulo}
         accessibilityHint={descricao}
         trackColor={{ false: c.superficieSecundaria, true: c.destaque }}
-        thumbColor={valor ? c.textoSobreDestaque : c.textoSecundario}
+        // No iPhone a bolinha branca do sistema já fica certa; no Android pintamos
+        thumbColor={
+          Platform.OS === 'android' ? (valor ? c.textoSobreDestaque : c.textoSecundario) : undefined
+        }
         ios_backgroundColor={c.superficieSecundaria}
         testID={testID}
       />
@@ -45,7 +48,8 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: espaco.md,
-    minHeight: 48,
+    minHeight: 52,
+    paddingVertical: espaco.xs,
   },
   textos: {
     flex: 1,

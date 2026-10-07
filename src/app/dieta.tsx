@@ -6,7 +6,7 @@ import { planoDesatualizado } from '@/features/dieta/logica';
 import { useDietaStore } from '@/features/dieta/store';
 import { calcularNecessidades } from '@/features/nutricao/calculos';
 import { usePerfilStore } from '@/features/perfil/store';
-import { espaco } from '@/shared/theme/tokens';
+import { espaco, raio } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
 import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
 
@@ -26,13 +26,15 @@ export default function Dieta() {
   return (
     <Tela bordas={['bottom']}>
       {gerando && !plano ? (
-        <View style={estilos.carregando}>
-          <ActivityIndicator size="large" color={c.texto} />
-          <Texto variante="subtitulo">Montando seu plano</Texto>
-          <Texto secundario style={estilos.centro}>
-            A IA está montando as refeições com as suas metas. Pode levar até 1 minuto.
-          </Texto>
-        </View>
+        <Cartao>
+          <View style={estilos.carregando}>
+            <ActivityIndicator size="large" color={c.texto} />
+            <Texto variante="subtitulo">montando seu plano</Texto>
+            <Texto secundario style={estilos.centro}>
+              A IA está montando as refeições com as suas metas. Pode levar até 1 minuto.
+            </Texto>
+          </View>
+        </Cartao>
       ) : null}
 
       {erro ? (
@@ -43,7 +45,7 @@ export default function Dieta() {
 
       {plano &&
       planoDesatualizado(plano.caloriasDia, calcularNecessidades(perfil)?.metaCalorias ?? null) ? (
-        <Cartao titulo="Plano desatualizado" variante="tracejado">
+        <Cartao titulo="plano desatualizado" variante="tracejado">
           <Texto>
             Seu perfil mudou depois que este plano foi feito. Gere um novo para bater com a sua meta
             atual.
@@ -51,25 +53,30 @@ export default function Dieta() {
         </Cartao>
       ) : null}
 
+      {plano && origem === 'demo' ? (
+        <View style={estilos.demo}>
+          <View style={[estilos.selo, { backgroundColor: c.superficieSecundaria }]}>
+            <Texto variante="legenda">modo demonstração</Texto>
+          </View>
+          <Texto variante="legenda" secundario>
+            Sem IA disponível, o próprio app montou este plano com as suas metas.
+          </Texto>
+        </View>
+      ) : null}
+
+      {plano ? <PlanoDietaDetalhe plano={plano} /> : null}
+
       {plano ? (
         <Botao
-          titulo="Mudar algo com o coach"
+          titulo="mudar algo com o coach"
           variante="destaque"
           onPress={() => router.push('/coach')}
         />
       ) : null}
 
-      {plano && origem === 'demo' ? (
-        <Texto variante="legenda" secundario>
-          Modo demonstração: sem IA disponível, o próprio app montou este plano com as suas metas.
-        </Texto>
-      ) : null}
-
-      {plano ? <PlanoDietaDetalhe plano={plano} /> : null}
-
       {!gerando || plano ? (
         <Botao
-          titulo={plano ? 'Gerar outro plano' : 'Tentar de novo'}
+          titulo={plano ? 'gerar outro plano' : 'tentar de novo'}
           variante={plano ? 'secundario' : 'primario'}
           onPress={() => gerar(perfil)}
           carregando={gerando}
@@ -83,9 +90,19 @@ const estilos = StyleSheet.create({
   carregando: {
     alignItems: 'center',
     gap: espaco.md,
-    paddingVertical: espaco.xl,
+    paddingVertical: espaco.lg,
   },
   centro: {
     textAlign: 'center',
+  },
+  demo: {
+    gap: espaco.xs,
+    paddingHorizontal: espaco.xs,
+  },
+  selo: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: espaco.sm + 2,
+    paddingVertical: espaco.xs,
+    borderRadius: raio.total,
   },
 });

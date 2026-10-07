@@ -85,7 +85,7 @@ export function FormularioPerfil({
 
 const estilos = StyleSheet.create({
   container: {
-    gap: espaco.lg,
+    gap: espaco.xl,
   },
   secao: {
     gap: espaco.md,

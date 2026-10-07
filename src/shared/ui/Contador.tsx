@@ -1,7 +1,8 @@
-import { StyleSheet, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { espaco } from '../theme/tokens';
-import { Botao } from './Botao';
+import { espaco, raio } from '../theme/tokens';
+import { useCores } from '../theme/useCores';
 import { Texto } from './Texto';
 
 type Props = {
@@ -14,9 +15,44 @@ type Props = {
   podeMais?: boolean;
 };
 
+const TAMANHO_BOTAO = 52;
+
+function BotaoRedondo({
+  icone,
+  rotulo,
+  onPress,
+  ativo,
+}: {
+  icone: 'remove' | 'add';
+  rotulo: string;
+  onPress: () => void;
+  ativo: boolean;
+}) {
+  const c = useCores();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!ativo}
+      accessibilityRole="button"
+      accessibilityLabel={rotulo}
+      accessibilityState={{ disabled: !ativo }}
+      hitSlop={4}
+      style={({ pressed }) => [
+        estilos.botao,
+        { backgroundColor: c.superficieSecundaria },
+        pressed && { opacity: 0.75 },
+        !ativo && { opacity: 0.4 },
+      ]}
+    >
+      <Ionicons name={icone} size={26} color={c.texto} />
+    </Pressable>
+  );
+}
+
 /**
- * Valor com botões − e +. Para o leitor de tela é um só controle "ajustável":
- * deslizar para cima/baixo aumenta ou diminui.
+ * Valor com botões redondos de menos e mais. Para o leitor de tela é um só
+ * controle "ajustável": deslizar para cima/baixo aumenta ou diminui.
  */
 export function Contador({
   rotulo,
@@ -44,27 +80,16 @@ export function Contador({
       }}
       style={estilos.linha}
     >
-      <View style={estilos.botao}>
-        <Botao
-          titulo={`Diminuir ${rotulo}`}
-          icone="remove"
-          variante="secundario"
-          onPress={onMenos}
-          desabilitado={!podeMenos}
-        />
-      </View>
+      <BotaoRedondo
+        icone="remove"
+        rotulo={`Diminuir ${rotulo}`}
+        onPress={onMenos}
+        ativo={podeMenos}
+      />
       <Texto variante="titulo" style={estilos.valor}>
         {valorTexto}
       </Texto>
-      <View style={estilos.botao}>
-        <Botao
-          titulo={`Aumentar ${rotulo}`}
-          icone="add"
-          variante="secundario"
-          onPress={onMais}
-          desabilitado={!podeMais}
-        />
-      </View>
+      <BotaoRedondo icone="add" rotulo={`Aumentar ${rotulo}`} onPress={onMais} ativo={podeMais} />
     </View>
   );
 }
@@ -76,7 +101,11 @@ const estilos = StyleSheet.create({
     gap: espaco.md,
   },
   botao: {
-    width: 56,
+    width: TAMANHO_BOTAO,
+    height: TAMANHO_BOTAO,
+    borderRadius: raio.total,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   valor: {
     flex: 1,

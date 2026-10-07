@@ -7,5 +7,6 @@ export { Interruptor } from './Interruptor';
 export { Logo } from './Logo';
 export { Marcado } from './Marcado';
 export { Opcoes, type Opcao } from './Opcoes';
+export { Secao } from './Secao';
 export { Tela } from './Tela';
 export { Texto } from './Texto';

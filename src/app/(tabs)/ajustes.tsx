@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { StyleSheet, View } from 'react-native';
 
 import { AjustesAgua } from '@/features/ajustes/components/AjustesAgua';
 import { apagarTodosOsDados } from '@/features/ajustes/apagarDados';
@@ -7,9 +8,8 @@ import { useAjustesStore } from '@/features/ajustes/store';
 import { AjustesLembretes } from '@/features/lembretes/components/AjustesLembretes';
 import { usePerfilStore } from '@/features/perfil/store';
 import { confirmar } from '@/shared/lib/confirmar';
-import { View } from 'react-native';
-
-import { Botao, Cartao, Logo, Opcoes, Tela, Texto } from '@/shared/ui';
+import { espaco } from '@/shared/theme/tokens';
+import { Botao, Logo, Opcoes, Secao, Tela, Texto } from '@/shared/ui';
 
 const TEMAS: PreferenciaTema[] = ['sistema', 'claro', 'escuro'];
 const OPCOES_TEMA = TEMAS.map((valor) => ({ valor, rotulo: NOME_TEMA[valor] }));
@@ -37,11 +37,14 @@ export default function Ajustes() {
 
   return (
     <Tela>
-      <Texto variante="titulo" accessibilityRole="header">
-        Ajustes
+      <Texto variante="titulo" accessibilityRole="header" style={estilos.titulo}>
+        ajustes
       </Texto>
 
-      <Cartao titulo="Aparência">
+      <Secao
+        titulo="aparência"
+        rodape="No automático, o app segue o modo claro ou escuro do celular."
+      >
         <Opcoes
           rotulo="Tema"
           opcoes={OPCOES_TEMA}
@@ -49,34 +52,46 @@ export default function Ajustes() {
           onMudar={(valor) => definirTema(valor as PreferenciaTema)}
           testID="ajuste-tema"
         />
-        <Texto variante="legenda" secundario>
-          No automático, o app segue o modo claro ou escuro do celular.
-        </Texto>
-      </Cartao>
+      </Secao>
 
       <AjustesAgua pesoKg={perfil.pesoKg} />
 
       <AjustesLembretes />
 
-      <Cartao titulo="Privacidade">
-        <Texto variante="legenda" secundario>
-          Seus dados ficam salvos neste aparelho. Quando você pede a dieta ou conversa com o coach,
-          seu perfil e suas metas vão para o servidor do ApexFit e para a Anthropic (empresa da IA)
-          só para responder.
-        </Texto>
-        <Botao titulo="Apagar meus dados" variante="perigo" onPress={apagarDados} />
-      </Cartao>
+      <Secao
+        titulo="privacidade"
+        rodape="Seus dados ficam salvos neste aparelho. Quando você pede a dieta ou conversa com o coach, seu perfil e suas metas vão para o servidor do ApexFit e para a Anthropic (empresa da IA) só para responder."
+      >
+        <Botao titulo="apagar meus dados" variante="perigo" onPress={apagarDados} />
+      </Secao>
 
-      <Cartao titulo="Sobre">
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Secao
+        titulo="sobre"
+        rodape="O ApexFit ajuda a organizar sua rotina, mas não substitui médico, nutricionista ou educador físico."
+      >
+        <View style={estilos.sobre}>
           <Logo tamanho={48} />
-          <Texto variante="subtitulo">ApexFit {Constants.expoConfig?.version ?? ''}</Texto>
+          <View>
+            <Texto variante="subtitulo">ApexFit</Texto>
+            <Texto variante="legenda" secundario>
+              versão {Constants.expoConfig?.version ?? ''}
+            </Texto>
+          </View>
         </View>
-        <Texto variante="legenda" secundario>
-          O ApexFit ajuda a organizar sua rotina, mas não substitui médico, nutricionista ou
-          educador físico.
-        </Texto>
-      </Cartao>
+      </Secao>
     </Tela>
   );
 }
+
+const estilos = StyleSheet.create({
+  titulo: {
+    paddingHorizontal: espaco.xs,
+    paddingTop: espaco.md,
+    paddingBottom: espaco.sm,
+  },
+  sobre: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.md - 4,
+  },
+});

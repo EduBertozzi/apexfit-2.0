@@ -1,5 +1,6 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { GraficoPeso } from '@/features/peso/components/GraficoPeso';
 import {
@@ -16,7 +17,7 @@ import { usePesoStore } from '@/features/peso/store';
 import { usePerfilStore } from '@/features/perfil/store';
 import { confirmar } from '@/shared/lib/confirmar';
 import { chaveDoDia } from '@/shared/lib/data';
-import { espaco, familia } from '@/shared/theme/tokens';
+import { espaco, familia, raio } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
 import { Botao, Cartao, Contador, Tela, Texto } from '@/shared/ui';
 
@@ -62,9 +63,9 @@ export default function PesoTela() {
     <Tela bordas={['bottom']}>
       <Cartao variante="heroi">
         <Texto variante="rotulo" style={{ color: c.textoHeroiSecundario }}>
-          {resumo.temRegistros ? 'Peso atual' : 'Peso do perfil'}
+          {resumo.temRegistros ? 'peso atual' : 'peso do perfil'}
         </Texto>
-        <Texto variante="destaque" style={{ color: c.textoHeroi }}>
+        <Texto variante="gigante" style={{ color: c.textoHeroi }}>
           {formatarKg(resumo.atualKg)}
         </Texto>
         <Texto variante="legenda" style={{ color: c.textoHeroiSecundario }}>
@@ -73,7 +74,7 @@ export default function PesoTela() {
         <GraficoPeso registros={registros} />
       </Cartao>
 
-      <Cartao titulo="Registrar">
+      <Cartao titulo="registrar peso">
         <Contador
           rotulo="peso"
           valorTexto={formatarKg(kg)}
@@ -82,7 +83,7 @@ export default function PesoTela() {
           podeMenos={podeAjustarPeso(kg, -1)}
           podeMais={podeAjustarPeso(kg, 1)}
         />
-        <Botao titulo="Salvar peso de hoje" onPress={salvar} />
+        <Botao titulo="salvar peso de hoje" onPress={salvar} />
         {salvo ? (
           <Texto variante="legenda" accessibilityLiveRegion="polite">
             Peso de hoje salvo. Suas metas de água e calorias já usam ele.
@@ -99,21 +100,34 @@ export default function PesoTela() {
       </Cartao>
 
       {registros.length > 0 ? (
-        <Cartao titulo="Últimos registros">
-          {registrosRecentes(registros).map((registro) => (
-            <View key={registro.data} style={estilos.linha}>
+        <Cartao titulo="últimos registros">
+          {registrosRecentes(registros).map((registro, indice) => (
+            <View
+              key={registro.data}
+              style={[
+                estilos.linha,
+                indice > 0 && {
+                  borderTopColor: c.borda,
+                  borderTopWidth: StyleSheet.hairlineWidth,
+                },
+              ]}
+            >
               <Texto secundario style={estilos.dia}>
                 {rotuloDia(registro.data, hoje)}
               </Texto>
               <Texto style={estilos.valor}>{formatarKg(registro.kg)}</Texto>
-              <View style={estilos.remover}>
-                <Botao
-                  titulo={`Remover peso de ${rotuloDia(registro.data, hoje)}`}
-                  icone="trash-outline"
-                  variante="texto"
-                  onPress={() => apagar(registro.data)}
-                />
-              </View>
+              <Pressable
+                onPress={() => apagar(registro.data)}
+                accessibilityRole="button"
+                accessibilityLabel={`Remover peso de ${rotuloDia(registro.data, hoje)}`}
+                style={({ pressed }) => [
+                  estilos.remover,
+                  { backgroundColor: c.superficieSecundaria },
+                  pressed && { opacity: 0.75 },
+                ]}
+              >
+                <Ionicons name="trash-outline" size={20} color={c.texto} />
+              </Pressable>
             </View>
           ))}
         </Cartao>
@@ -126,7 +140,8 @@ const estilos = StyleSheet.create({
   linha: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espaco.sm,
+    gap: espaco.md - 4,
+    paddingVertical: espaco.sm,
   },
   dia: {
     flex: 1,
@@ -135,6 +150,10 @@ const estilos = StyleSheet.create({
     fontFamily: familia.corpoForte,
   },
   remover: {
-    width: 48,
+    width: 44,
+    height: 44,
+    borderRadius: raio.total,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

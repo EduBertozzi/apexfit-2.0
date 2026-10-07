@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { useForm } from 'react-hook-form';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 
-import { espaco } from '@/shared/theme/tokens';
-import { useCores } from '@/shared/theme/useCores';
-import { BarraProgresso, Botao, Logo, Marcado, Texto } from '@/shared/ui';
+import { espaco, raio, type CorCategoria } from '@/shared/theme/tokens';
+import { useCategorias, useCores } from '@/shared/theme/useCores';
+import { BarraProgresso, Botao, Logo, Texto } from '@/shared/ui';
 
 import { CONFIG_CAMPOS, ETAPAS_ONBOARDING } from '../campos';
 import { FORMULARIO_VAZIO, perfilSchema, type FormularioPerfilValores } from '../schema';
@@ -14,36 +15,47 @@ import { CampoPerfil } from './CampoPerfil';
 
 const TOTAL = ETAPAS_ONBOARDING.length;
 
-const DESTAQUES = [
-  'Meta de água pelo seu peso',
-  'Calorias e macros do seu objetivo',
-  'Dieta montada por IA em segundos',
+const DESTAQUES: {
+  texto: string;
+  icone: ComponentProps<typeof Ionicons>['name'];
+  cor: CorCategoria;
+}[] = [
+  { texto: 'Meta de água pelo seu peso', icone: 'water', cor: 'agua' },
+  { texto: 'Calorias e macros do seu objetivo', icone: 'flame', cor: 'braco' },
+  { texto: 'Dieta montada por IA em segundos', icone: 'sparkles', cor: 'aquecimento' },
 ];
 
 function BoasVindas({ onComecar }: { onComecar: () => void }) {
   const c = useCores();
+  const categorias = useCategorias();
 
   return (
     <View style={estilos.etapa}>
       <Logo tamanho={88} />
-      <Texto variante="gigante" accessibilityRole="header">
-        Apex<Marcado>Fit</Marcado>
-      </Texto>
-      <Texto variante="subtitulo">Seu treino fora da academia também conta.</Texto>
+      <View style={estilos.cabecalho}>
+        <Texto variante="gigante" accessibilityRole="header">
+          ApexFit
+        </Texto>
+        <Texto variante="subtitulo" secundario>
+          seu treino fora da academia também conta.
+        </Texto>
+      </View>
 
       <View style={estilos.destaques}>
-        {DESTAQUES.map((texto) => (
-          <View key={texto} style={estilos.destaque}>
-            <View style={[estilos.marcador, { backgroundColor: c.destaque }]} />
-            <Texto style={estilos.textoDestaque}>{texto}</Texto>
+        {DESTAQUES.map((destaque) => (
+          <View key={destaque.texto} style={[estilos.destaque, { backgroundColor: c.superficie }]}>
+            <View style={[estilos.icone, { backgroundColor: categorias.fundo[destaque.cor] }]}>
+              <Ionicons name={destaque.icone} size={20} color={c.textoSobreDestaque} />
+            </View>
+            <Texto style={estilos.textoDestaque}>{destaque.texto}</Texto>
           </View>
         ))}
       </View>
 
-      <Texto variante="legenda" secundario>
+      <Texto variante="legenda" secundario style={estilos.legenda}>
         São 6 perguntas rápidas. Seus dados ficam no seu celular.
       </Texto>
-      <Botao titulo="Começar" onPress={onComecar} />
+      <Botao titulo="começar" onPress={onComecar} />
     </View>
   );
 }
@@ -110,7 +122,7 @@ export function OnboardingEtapas({ onSalvar }: Props) {
     <View style={estilos.etapa}>
       <View style={estilos.progresso}>
         <Texto variante="rotulo" secundario>
-          Etapa {indice + 1} de {TOTAL}
+          etapa {indice + 1} de {TOTAL}
         </Texto>
         <BarraProgresso
           valor={(indice + 1) / TOTAL}
@@ -147,11 +159,11 @@ export function OnboardingEtapas({ onSalvar }: Props) {
 
       <View style={estilos.botoes}>
         <Botao
-          titulo={ultima ? 'Criar meu perfil' : 'Continuar'}
+          titulo={ultima ? 'criar meu perfil' : 'continuar'}
           onPress={continuar}
           carregando={isSubmitting}
         />
-        <Botao titulo="Voltar" variante="texto" onPress={() => setIndice(indice - 1)} />
+        <Botao titulo="voltar" variante="texto" onPress={() => setIndice(indice - 1)} />
       </View>
     </View>
   );
@@ -166,7 +178,7 @@ const estilos = StyleSheet.create({
     gap: espaco.sm,
   },
   cabecalho: {
-    gap: espaco.xs,
+    gap: espaco.sm,
   },
   campos: {
     gap: espaco.md,
@@ -180,11 +192,20 @@ const estilos = StyleSheet.create({
   destaque: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espaco.sm,
+    gap: espaco.md - 4,
+    padding: espaco.md - 4,
+    borderRadius: raio.lg,
+    borderCurve: 'continuous',
   },
-  marcador: {
-    width: 10,
-    height: 10,
+  icone: {
+    width: 40,
+    height: 40,
+    borderRadius: raio.total,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  legenda: {
+    paddingHorizontal: espaco.xs,
   },
   textoDestaque: {
     flex: 1,

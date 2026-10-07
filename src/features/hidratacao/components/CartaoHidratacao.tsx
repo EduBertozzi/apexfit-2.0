@@ -1,12 +1,13 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { AccessibilityInfo, Platform, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { useAjustesStore } from '@/features/ajustes/store';
 import { formatarNumero } from '@/shared/lib/numero';
-import { espaco } from '@/shared/theme/tokens';
-import { useCores } from '@/shared/theme/useCores';
-import { BarraProgresso, Botao, Cartao, Texto } from '@/shared/ui';
+import { espaco, raio } from '@/shared/theme/tokens';
+import { useCategorias, useCores } from '@/shared/theme/useCores';
+import { BarraProgresso, Cartao, Texto } from '@/shared/ui';
 
 import { bateuMetaAgora, PORCOES_ML, progresso } from '../logica';
 import { useAguaDoDia, useHidratacaoStore } from '../store';
@@ -14,6 +15,8 @@ import { useAguaDoDia, useHidratacaoStore } from '../store';
 type Props = {
   metaMl: number;
 };
+
+const TAMANHO_BOTAO = 52;
 
 function vibrar(tipo: 'leve' | 'sucesso') {
   // Vibração não existe no navegador
@@ -28,8 +31,10 @@ function vibrar(tipo: 'leve' | 'sucesso') {
   }
 }
 
+/** Água de hoje: total, barra de progresso, copos rápidos e desfazer. */
 export function CartaoHidratacao({ metaMl }: Props) {
   const c = useCores();
+  const categorias = useCategorias();
   const { totalMl, podeDesfazer } = useAguaDoDia();
   const adicionar = useHidratacaoStore((state) => state.adicionar);
   const desfazer = useHidratacaoStore((state) => state.desfazer);
@@ -38,6 +43,9 @@ export function CartaoHidratacao({ metaMl }: Props) {
 
   const fracao = progresso(totalMl, metaMl);
   const faltamMl = Math.max(metaMl - totalMl, 0);
+  // Azul pastel como fundo (com texto escuro); a versão forte para ícone e texto no modo claro
+  const corAgua = c.agua;
+  const corAguaTexto = categorias.texto.agua;
 
   function beber(ml: number) {
     const { antesMl, depoisMl } = adicionar(ml);
@@ -61,44 +69,44 @@ export function CartaoHidratacao({ metaMl }: Props) {
   }
 
   return (
-    <Cartao variante="heroi">
+    <Cartao>
       <View style={estilos.linhaTopo}>
-        <Texto variante="rotulo" style={{ color: c.textoHeroi }} accessibilityRole="header">
-          Hidratação
-        </Texto>
-        <Texto variante="destaque" style={{ color: c.destaque }}>
+        <View style={estilos.titulo}>
+          <Ionicons name="water" size={22} color={corAguaTexto} />
+          <Texto variante="rotulo" style={{ color: corAguaTexto }} accessibilityRole="header">
+            água de hoje
+          </Texto>
+        </View>
+        <Texto variante="rotulo" secundario>
           {Math.round(fracao * 100)}%
+        </Texto>
+      </View>
+
+      <View style={estilos.linhaTotal}>
+        <Texto variante="gigante" testID="agua-total">
+          {formatarNumero(totalMl)}
+        </Texto>
+        <Texto variante="subtitulo" secundario>
+          / {formatarNumero(metaMl)} ml
         </Texto>
       </View>
 
       <BarraProgresso
         valor={fracao}
-        cor={c.agua}
-        corTrilho={c.trilhoHeroi}
+        cor={corAgua}
+        altura={14}
         rotuloAcessivel={`Água de hoje: ${totalMl} de ${metaMl} mililitros`}
       />
 
-      <View style={estilos.linhaTotal}>
-        <Texto variante="subtitulo" style={{ color: c.textoHeroi }} testID="agua-total">
-          {formatarNumero(totalMl)} ml
-        </Texto>
-        <Texto variante="rotulo" style={{ color: c.textoHeroiSecundario }}>
-          Meta {formatarNumero(metaMl)}
-        </Texto>
-      </View>
-
       {comemorando ? (
-        <View style={[estilos.comemoracao, { backgroundColor: c.destaque }]}>
-          <Texto variante="subtitulo" style={{ color: c.textoSobreDestaque }}>
-            Meta batida! Boa!
+        <View style={[estilos.comemoracao, { backgroundColor: corAgua }]}>
+          <Ionicons name="checkmark-circle" size={18} color={c.textoSobreDestaque} />
+          <Texto variante="rotulo" style={{ color: c.textoSobreDestaque }}>
+            meta batida, boa!
           </Texto>
         </View>
       ) : (
-        <Texto
-          variante="legenda"
-          style={{ color: c.textoHeroiSecundario }}
-          accessibilityLiveRegion="polite"
-        >
+        <Texto variante="legenda" secundario accessibilityLiveRegion="polite">
           {faltamMl > 0
             ? `Faltam ${formatarNumero(faltamMl)} ml para a meta`
             : 'Meta do dia concluída'}
@@ -107,24 +115,37 @@ export function CartaoHidratacao({ metaMl }: Props) {
 
       <View style={estilos.botoes}>
         {PORCOES_ML.map((ml) => (
-          <View key={ml} style={estilos.botao}>
-            <Botao
-              titulo={`+${ml}`}
-              descricaoAcessivel={`Adicionar ${ml} mililitros`}
-              variante="destaque"
-              onPress={() => beber(ml)}
-            />
-          </View>
+          <Pressable
+            key={ml}
+            onPress={() => beber(ml)}
+            accessibilityRole="button"
+            accessibilityLabel={`Adicionar ${ml} mililitros`}
+            style={({ pressed }) => [
+              estilos.copo,
+              { backgroundColor: corAgua },
+              pressed && { opacity: 0.75 },
+            ]}
+          >
+            <Texto variante="rotulo" style={{ color: c.textoSobreDestaque }}>
+              +{ml} ml
+            </Texto>
+          </Pressable>
         ))}
-        <View style={estilos.botaoIcone}>
-          <Botao
-            titulo="Desfazer último"
-            icone="arrow-undo"
-            variante="heroi"
-            onPress={desfazerUltimo}
-            desabilitado={!podeDesfazer}
-          />
-        </View>
+        <Pressable
+          onPress={desfazerUltimo}
+          disabled={!podeDesfazer}
+          accessibilityRole="button"
+          accessibilityLabel="Desfazer último"
+          accessibilityState={{ disabled: !podeDesfazer }}
+          style={({ pressed }) => [
+            estilos.desfazer,
+            { backgroundColor: c.superficieSecundaria },
+            pressed && { opacity: 0.75 },
+            !podeDesfazer && { opacity: 0.4 },
+          ]}
+        >
+          <Ionicons name="arrow-undo" size={22} color={c.texto} />
+        </Pressable>
       </View>
     </Cartao>
   );
@@ -133,29 +154,46 @@ export function CartaoHidratacao({ metaMl }: Props) {
 const estilos = StyleSheet.create({
   linhaTopo: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  titulo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.xs + 2,
   },
   linhaTotal: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginTop: espaco.xs,
+    flexWrap: 'wrap',
+    gap: espaco.xs + 2,
   },
   comemoracao: {
-    paddingHorizontal: espaco.sm,
-    paddingVertical: espaco.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    gap: espaco.xs + 2,
+    paddingHorizontal: espaco.md - 4,
+    paddingVertical: espaco.xs + 2,
+    borderRadius: raio.total,
   },
   botoes: {
     flexDirection: 'row',
     gap: espaco.sm,
-    marginTop: espaco.xs,
+    marginTop: espaco.sm,
   },
-  botao: {
+  copo: {
     flex: 1,
+    minHeight: TAMANHO_BOTAO,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: raio.total,
   },
-  botaoIcone: {
-    width: 56,
+  desfazer: {
+    width: TAMANHO_BOTAO,
+    height: TAMANHO_BOTAO,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: raio.total,
   },
 });

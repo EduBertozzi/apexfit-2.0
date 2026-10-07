@@ -102,37 +102,37 @@ export type Etapa = {
 export const ETAPAS_ONBOARDING: Etapa[] = [
   {
     id: 'nome',
-    titulo: 'Como quer ser chamado?',
+    titulo: 'como quer ser chamado?',
     descricao: 'É assim que o app vai falar com você.',
     campos: ['nome'],
   },
   {
     id: 'basico',
-    titulo: 'Idade e sexo',
+    titulo: 'idade e sexo',
     descricao: 'Os dois entram no cálculo do seu metabolismo.',
     campos: ['idade', 'sexo'],
   },
   {
     id: 'corpo',
-    titulo: 'Seu corpo',
+    titulo: 'seu corpo',
     descricao: 'Para calcular sua água, suas calorias e seu IMC. Fica só no seu celular.',
     campos: ['alturaCm', 'pesoKg', 'percentualGordura'],
   },
   {
     id: 'atividade',
-    titulo: 'Quanto você treina?',
+    titulo: 'quanto você treina?',
     descricao: 'Conte academia, esporte e corrida. Seja sincero: isso muda suas calorias.',
     campos: ['nivelAtividade'],
   },
   {
     id: 'objetivo',
-    titulo: 'Qual seu objetivo?',
+    titulo: 'qual seu objetivo?',
     descricao: 'Dá para mudar depois, quando quiser.',
     campos: ['objetivo'],
   },
   {
     id: 'saude',
-    titulo: 'Algo que a gente deva saber?',
+    titulo: 'algo que a gente deva saber?',
     descricao: 'Lesões, alergias, intolerâncias ou doenças. A dieta com IA respeita isso.',
     campos: ['restricoes'],
   },
@@ -142,19 +142,19 @@ export const ETAPAS_ONBOARDING: Etapa[] = [
 export const SECOES_EDICAO: Etapa[] = [
   {
     id: 'voce',
-    titulo: 'Sobre você',
+    titulo: 'sobre você',
     descricao: '',
     campos: ['nome', 'idade', 'sexo'],
   },
   {
     id: 'corpo',
-    titulo: 'Seu corpo',
+    titulo: 'seu corpo',
     descricao: 'Usamos esses dados para calcular sua água, suas calorias e seu IMC.',
     campos: ['alturaCm', 'pesoKg', 'percentualGordura', 'restricoes'],
   },
   {
     id: 'rotina',
-    titulo: 'Sua rotina',
+    titulo: 'sua rotina',
     descricao: '',
     campos: ['nivelAtividade', 'objetivo'],
   },

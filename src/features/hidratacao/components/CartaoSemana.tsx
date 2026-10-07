@@ -1,13 +1,14 @@
 import { StyleSheet, View } from 'react-native';
 
-import { borda, espaco } from '@/shared/theme/tokens';
+import { espaco, raio } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
 import { Cartao, Texto } from '@/shared/ui';
 
 import { historicoDeDias, sequenciaAtual } from '../historico';
 import { useHidratacaoStore } from '../store';
 
-const ALTURA_GRAFICO = 88;
+const ALTURA_GRAFICO = 96;
+const TAMANHO_DIA = 32;
 
 function textoSequencia(dias: number): string {
   if (dias === 0) {
@@ -30,10 +31,10 @@ export function CartaoSemana({ metaMl }: { metaMl: number }) {
   const resumoAcessivel = `Últimos 7 dias: meta batida em ${diasBatidos} de 7. ${textoSequencia(sequencia)}`;
 
   return (
-    <Cartao titulo="Água na semana">
+    <Cartao titulo="água na semana">
       <View style={estilos.cabecalho}>
         <Texto variante="destaque">{sequencia}</Texto>
-        <Texto variante="rotulo" style={estilos.textoSequencia}>
+        <Texto variante="rotulo" secundario style={estilos.textoSequencia}>
           {sequencia === 1 ? 'dia seguido' : 'dias seguidos'}
         </Texto>
       </View>
@@ -47,30 +48,27 @@ export function CartaoSemana({ metaMl }: { metaMl: number }) {
         {dias.map((dia) => (
           <View key={dia.chave} style={estilos.coluna}>
             <View style={[estilos.trilho, { backgroundColor: c.superficieSecundaria }]}>
-              <View
-                style={[
-                  estilos.barra,
-                  {
-                    height: `${Math.max(dia.fracao * 100, dia.totalMl > 0 ? 6 : 0)}%`,
-                    backgroundColor: dia.bateu ? c.destaque : c.textoSecundario,
-                    borderColor: dia.bateu ? c.texto : 'transparent',
-                  },
-                ]}
-              />
+              {dia.totalMl > 0 ? (
+                <View
+                  style={[
+                    estilos.barra,
+                    {
+                      height: `${Math.max(dia.fracao * 100, 12)}%`,
+                      backgroundColor: dia.bateu ? c.agua : c.textoSecundario,
+                    },
+                  ]}
+                />
+              ) : null}
             </View>
-            <Texto
-              variante="rotulo"
-              secundario={!dia.hoje}
-              style={
-                dia.hoje && {
-                  backgroundColor: c.destaque,
-                  color: c.textoSobreDestaque,
-                  paddingHorizontal: 4,
-                }
-              }
-            >
-              {dia.inicial}
-            </Texto>
+            <View style={[estilos.dia, dia.hoje && { backgroundColor: c.texto }]}>
+              <Texto
+                variante="legenda"
+                secundario={!dia.hoje}
+                style={dia.hoje && { color: c.superficie }}
+              >
+                {dia.inicial}
+              </Texto>
+            </View>
           </View>
         ))}
       </View>
@@ -99,15 +97,25 @@ const estilos = StyleSheet.create({
   coluna: {
     flex: 1,
     alignItems: 'center',
-    gap: espaco.xs,
+    gap: espaco.sm,
   },
   trilho: {
     width: '100%',
+    maxWidth: 36,
     height: ALTURA_GRAFICO,
     justifyContent: 'flex-end',
+    borderRadius: raio.total,
+    overflow: 'hidden',
   },
   barra: {
     width: '100%',
-    borderWidth: borda.grossa,
+    borderRadius: raio.total,
+  },
+  dia: {
+    width: TAMANHO_DIA,
+    height: TAMANHO_DIA,
+    borderRadius: raio.total,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
