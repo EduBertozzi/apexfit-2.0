@@ -16,8 +16,8 @@ export function AjustesAgua({ pesoKg }: { pesoKg: number }) {
   return (
     <Secao titulo="água">
       <Interruptor
-        rotulo="Escolher minha meta"
-        descricao={`Automática: ${formatarNumero(automaticaMl)} ml (${ML_POR_KG} ml por kg)`}
+        rotulo="escolher minha meta"
+        descricao={`automática: ${formatarNumero(automaticaMl)} ml (${ML_POR_KG} ml por kg)`}
         valor={manualMl !== null}
         onMudar={(ligado) => definirMeta(ligado ? automaticaMl : null)}
         testID="ajuste-meta-manual"
@@ -34,14 +34,14 @@ export function AjustesAgua({ pesoKg }: { pesoKg: number }) {
             podeMais={manualMl < META_AGUA_MANUAL.max}
           />
           <Texto variante="legenda" secundario>
-            Ajuste de 250 em 250 ml, entre 1 e 6 litros. Se tiver orientação médica, siga ela.
+            ajuste de 250 em 250 ml, entre 1 e 6 litros. se tiver orientação médica, siga ela.
           </Texto>
         </>
       ) : null}
 
       <Interruptor
-        rotulo="Vibrar ao registrar"
-        descricao="Toque leve a cada copo e um mais forte ao bater a meta."
+        rotulo="vibrar ao registrar"
+        descricao="toque leve a cada copo e um mais forte ao bater a meta."
         valor={vibracao}
         onMudar={definirVibracao}
         testID="ajuste-vibracao"

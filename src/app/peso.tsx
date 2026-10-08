@@ -49,9 +49,9 @@ export default function PesoTela() {
 
   async function apagar(data: string) {
     const ok = await confirmar(
-      'Remover registro',
-      `Apagar o peso de ${rotuloDia(data, hoje).toLowerCase()}?`,
-      'Remover',
+      'remover registro',
+      `apagar o peso de ${rotuloDia(data, hoje).toLowerCase()}?`,
+      'remover',
     );
 
     if (ok) {
@@ -86,15 +86,15 @@ export default function PesoTela() {
         <Botao titulo="salvar peso de hoje" onPress={salvar} />
         {salvo ? (
           <Texto variante="legenda" accessibilityLiveRegion="polite">
-            Peso de hoje salvo. Suas metas de água e calorias já usam ele.
+            peso de hoje salvo. suas metas de água e calorias já usam ele.
           </Texto>
         ) : resumo.registrouHoje ? (
           <Texto variante="legenda" secundario>
-            Você já registrou hoje. Salvar de novo troca o valor.
+            você já registrou hoje. salvar de novo troca o valor.
           </Texto>
         ) : (
           <Texto variante="legenda" secundario>
-            Pese de manhã, em jejum, para comparar dias parecidos.
+            pese de manhã, em jejum, para comparar dias parecidos.
           </Texto>
         )}
       </Cartao>

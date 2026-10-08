@@ -21,7 +21,7 @@ const OPCOES_INTERVALO = INTERVALOS_MIN.map((minutos) => ({
 }));
 
 const AVISO_NEGADO =
-  'O celular não deixou o ApexFit mandar notificações. Para receber os lembretes, libere as notificações do app nos ajustes do celular e tente de novo.';
+  'o celular não deixou o ApexFit mandar notificações. para receber os lembretes, libere as notificações do app nos ajustes do celular e tente de novo.';
 
 export function AjustesLembretes() {
   const ativo = useLembretesStore((state) => state.ativo);
@@ -39,7 +39,7 @@ export function AjustesLembretes() {
     return (
       <Secao titulo="lembretes de água">
         <Texto variante="legenda" secundario>
-          Lembretes só funcionam no app do celular (Android ou iPhone). No navegador não dá para
+          lembretes só funcionam no app do celular (Android ou iPhone). no navegador não dá para
           agendar notificações.
         </Texto>
       </Secao>
@@ -61,7 +61,7 @@ export function AjustesLembretes() {
       resultado === 'negado'
         ? AVISO_NEGADO
         : resultado === 'indisponivel'
-          ? 'Não deu para ligar os lembretes neste aparelho.'
+          ? 'não deu para ligar os lembretes neste aparelho.'
           : null,
     );
   }
@@ -69,8 +69,8 @@ export function AjustesLembretes() {
   return (
     <Secao titulo="lembretes de água">
       <Interruptor
-        rotulo="Lembrar de beber água"
-        descricao="Uma notificação no intervalo escolhido, mesmo com o app fechado."
+        rotulo="lembrar de beber água"
+        descricao="uma notificação no intervalo escolhido, mesmo com o app fechado."
         valor={ativo}
         onMudar={alternar}
         testID="ajuste-lembretes"
@@ -84,7 +84,7 @@ export function AjustesLembretes() {
 
       {ativo ? (
         <Opcoes
-          rotulo="Intervalo"
+          rotulo="intervalo"
           opcoes={OPCOES_INTERVALO}
           valor={String(intervaloMin)}
           onMudar={(valor) => definirIntervalo(Number(valor))}
@@ -95,7 +95,7 @@ export function AjustesLembretes() {
       {ativo ? (
         <View style={estilos.horario}>
           <Texto variante="rotulo" secundario>
-            Começa às
+            começa às
           </Texto>
           <Contador
             rotulo="horário de início dos lembretes"
@@ -111,7 +111,7 @@ export function AjustesLembretes() {
       {ativo ? (
         <View style={estilos.horario}>
           <Texto variante="rotulo" secundario>
-            Termina às
+            termina às
           </Texto>
           <Contador
             rotulo="horário de fim dos lembretes"
@@ -122,7 +122,7 @@ export function AjustesLembretes() {
             podeMais={ajustarFim(config, 1) !== fim}
           />
           <Texto variante="legenda" secundario accessibilityLiveRegion="polite">
-            {resumoLembretes(config)}. Os lembretes tocam mesmo se você já bateu a meta do dia.
+            {resumoLembretes(config)}. os lembretes tocam mesmo se você já bateu a meta do dia.
           </Texto>
         </View>
       ) : null}

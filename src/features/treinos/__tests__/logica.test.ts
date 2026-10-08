@@ -465,7 +465,7 @@ describe('semana', () => {
 
 describe('textos', () => {
   it('treinos na semana', () => {
-    expect(textoTreinosNaSemana(0)).toBe('Nenhum treino nesta semana ainda');
+    expect(textoTreinosNaSemana(0)).toBe('nenhum treino nesta semana ainda');
     expect(textoTreinosNaSemana(1)).toBe('1 treino nesta semana');
     expect(textoTreinosNaSemana(3)).toBe('3 treinos nesta semana');
   });
@@ -485,7 +485,7 @@ describe('textos', () => {
   });
 
   it('resumo do treino', () => {
-    expect(resumoTreino({ ...A, foco: 'Peito' })).toBe('Peito, 2 exercícios');
+    expect(resumoTreino({ ...A, foco: 'peito' })).toBe('peito, 2 exercícios');
     expect(resumoTreino(B)).toBe('1 exercício');
   });
 });

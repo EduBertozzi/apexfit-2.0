@@ -88,7 +88,7 @@ export function validarConfig({ inicio, fim, intervaloMin }: ConfigLembretes): s
   const fimMin = paraMinutos(fim);
 
   if (inicioMin === null || fimMin === null) {
-    return 'Horário inválido. Use o formato 08:00.';
+    return 'horário inválido. use o formato 08:00.';
   }
 
   if (inicioMin >= fimMin) {
@@ -96,7 +96,7 @@ export function validarConfig({ inicio, fim, intervaloMin }: ConfigLembretes): s
   }
 
   if (!intervaloValido(intervaloMin)) {
-    return 'Escolha um intervalo de 1h, 1h30, 2h ou 3h.';
+    return 'escolha um intervalo de 1h, 1h30, 2h ou 3h.';
   }
 
   return null;
@@ -146,7 +146,7 @@ export function resumoLembretes(config: ConfigLembretes): string {
   const total = horariosDoDia(config).length;
 
   if (total === 0) {
-    return 'Nenhum lembrete com esses horários.';
+    return 'nenhum lembrete com esses horários.';
   }
 
   const quantidade = total === 1 ? '1 lembrete por dia' : `${total} lembretes por dia`;

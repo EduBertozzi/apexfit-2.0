@@ -20,8 +20,8 @@ type Props = {
   /** "linha" para pílulas curtas lado a lado; "coluna" para cartões com descrição. */
   direcao?: 'linha' | 'coluna';
   /**
-   * Só em linha: pílulas de largura igual, menores e sem o ícone de check,
-   * para caber tudo numa linha só (a partir de 320 px). A marcada fica só no menta.
+   * Só em linha: pílulas menores, do tamanho do texto e sem o ícone de check;
+   * quebram para a linha de baixo quando não cabem. A marcada fica só no menta.
    */
   compacto?: boolean;
   testID?: string;
@@ -84,10 +84,9 @@ export function Opcoes({
                 <Texto
                   variante={pilulaCompacta ? 'legenda' : emLinha ? 'rotulo' : 'corpo'}
                   style={[estilos.textoOpcao, { color: corTexto }]}
-                  // Compacta: uma linha só; se a fonte do sistema estiver enorme, encolhe para caber
+                  // Compacta: rótulo numa linha só; a pílula cresce com o texto e quebra a fileira
                   numberOfLines={pilulaCompacta ? 1 : undefined}
-                  adjustsFontSizeToFit={pilulaCompacta}
-                  maxFontSizeMultiplier={pilulaCompacta ? 1.3 : undefined}
+                  maxFontSizeMultiplier={pilulaCompacta ? 1.4 : undefined}
                 >
                   {opcao.rotulo}
                 </Texto>
@@ -139,7 +138,6 @@ const estilos = StyleSheet.create({
     gap: espaco.sm,
   },
   linhaCompacta: {
-    flexWrap: 'nowrap',
     gap: espaco.xs + 2,
   },
   coluna: {
@@ -160,10 +158,12 @@ const estilos = StyleSheet.create({
     borderRadius: raio.total,
   },
   opcaoCompacta: {
+    // Largura pelo conteúdo (nunca espremida); mínimo de 48 para o toque
     flexGrow: 0,
-    flex: 1,
-    minWidth: 0,
-    paddingHorizontal: espaco.xs,
+    flexShrink: 0,
+    minWidth: 48,
+    minHeight: 40,
+    paddingHorizontal: espaco.sm + 4,
   },
   opcaoColuna: {
     minHeight: 64,

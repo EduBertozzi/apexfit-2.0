@@ -129,11 +129,11 @@ export function validarNomeLivre(nome: string): { valido: boolean; erro?: string
   }
 
   if (limpo.length < min) {
-    return { valido: false, erro: `Use pelo menos ${min} letras` };
+    return { valido: false, erro: `use pelo menos ${min} letras` };
   }
 
   if (limpo.length > max) {
-    return { valido: false, erro: `Use no máximo ${max} caracteres` };
+    return { valido: false, erro: `use no máximo ${max} caracteres` };
   }
 
   return { valido: true };

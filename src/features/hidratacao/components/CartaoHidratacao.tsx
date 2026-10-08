@@ -105,8 +105,8 @@ export function CartaoHidratacao({ metaMl }: Props) {
       ) : (
         <Texto variante="legenda" secundario accessibilityLiveRegion="polite">
           {faltamMl > 0
-            ? `Faltam ${formatarNumero(faltamMl)} ml para a meta`
-            : 'Meta do dia concluída'}
+            ? `faltam ${formatarNumero(faltamMl)} ml para a meta`
+            : 'meta do dia concluída'}
         </Texto>
       )}
 

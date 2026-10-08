@@ -32,7 +32,7 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
         </Texto>
         {planoDesatualizado(plano.caloriasDia, necessidades?.metaCalorias ?? null) ? (
           <Texto variante="legenda" style={{ color: c.erro }}>
-            Seu perfil mudou e este plano não bate mais com sua meta. Gere um novo.
+            seu perfil mudou e este plano não bate mais com sua meta. gere um novo.
           </Texto>
         ) : (
           <Texto secundario numberOfLines={2}>
@@ -53,8 +53,8 @@ export function CartaoDieta({ perfil }: { perfil: Perfil }) {
     <Cartao titulo="dieta com IA">
       <Texto secundario>
         {liberada
-          ? 'Um plano de refeições feito com as suas calorias e macros, em segundos.'
-          : 'Complete seu perfil para liberar a dieta montada por IA.'}
+          ? 'um plano de refeições feito com as suas calorias e macros, em segundos.'
+          : 'complete seu perfil para liberar a dieta montada por IA.'}
       </Texto>
       {erro ? (
         <Texto variante="legenda" style={{ color: c.erro }} accessibilityLiveRegion="polite">

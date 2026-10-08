@@ -4,6 +4,7 @@ import { EditorExercicios } from '@/features/treinos/components/EditorExercicios
 import { FormularioTreino } from '@/features/treinos/components/FormularioTreino';
 import { useTreinosStore } from '@/features/treinos/store';
 import { confirmar } from '@/shared/lib/confirmar';
+import { minusculaInicial } from '@/shared/lib/texto';
 import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
 
 export default function EditarTreino() {
@@ -17,7 +18,7 @@ export default function EditarTreino() {
     return (
       <Tela bordas={['bottom']}>
         <Cartao titulo="treino não encontrado" variante="tracejado">
-          <Texto>Ele pode ter sido apagado.</Texto>
+          <Texto>ele pode ter sido apagado.</Texto>
           <Botao titulo="voltar" onPress={() => router.back()} />
         </Cartao>
       </Tela>
@@ -26,8 +27,8 @@ export default function EditarTreino() {
 
   async function apagar(treinoId: string, nome: string) {
     const confirmado = await confirmar(
-      `Apagar ${nome}?`,
-      'O treino e os exercícios dele somem. Os treinos já feitos continuam contando na semana.',
+      `apagar ${minusculaInicial(nome)}?`,
+      'o treino e os exercícios dele somem. os treinos já feitos continuam contando na semana.',
       'apagar',
     );
 

@@ -5,7 +5,7 @@ import {
   Lexend_700Bold,
 } from '@expo-google-fonts/lexend';
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -15,9 +15,10 @@ import { useAjustesStore } from '@/features/ajustes/store';
 import { configurarExibicaoComAppAberto } from '@/features/lembretes/notificacoes';
 import { usePerfilStore } from '@/features/perfil/store';
 import { useDadosCarregados } from '@/hooks/useDadosCarregados';
-import { familia, fonte, raio } from '@/shared/theme/tokens';
+import { raio } from '@/shared/theme/tokens';
 import { useCores, useEsquema } from '@/shared/theme/useCores';
-import { BotaoVoltar } from '@/shared/ui/BotaoVoltar';
+import { CabecalhoPilha } from '@/shared/ui/CabecalhoPilha';
+import { DialogoConfirmacao } from '@/shared/ui/DialogoConfirmacao';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -85,22 +86,13 @@ export default function RootLayout() {
     <ThemeProvider value={temaNavegacao}>
       <StatusBar style={esquema === 'escuro' ? 'light' : 'dark'} />
       <Stack
-        // Cabeçalho "transparente": mesma cor do fundo da tela, sem sombra nem linha
-        screenOptions={({ navigation }) => ({
+        screenOptions={{
           headerShown: false,
-          // Voltar redondo no lugar da seta nativa (some quando não há para onde voltar)
-          headerLeft: () =>
-            navigation.canGoBack() ? <BotaoVoltar onPress={() => router.back()} /> : null,
-          headerStyle: { backgroundColor: c.fundo },
-          headerShadowVisible: false,
-          headerTintColor: c.texto,
-          headerTitleStyle: {
-            fontFamily: familia.displayLeve,
-            fontSize: fonte.cabecalho,
-            color: c.texto,
-          },
+          // Cabeçalho próprio, igual nas 3 plataformas: voltar redondo e título
+          // centralizado com folga (o nativo do Android colava o título no botão)
+          header: (props) => <CabecalhoPilha {...props} />,
           contentStyle: { backgroundColor: c.fundo },
-        })}
+        }}
       >
         {/* Sem perfil: só o onboarding existe */}
         <Stack.Protected guard={!temPerfil}>
@@ -177,6 +169,7 @@ export default function RootLayout() {
           />
         </Stack.Protected>
       </Stack>
+      <DialogoConfirmacao />
     </ThemeProvider>
   );
 }

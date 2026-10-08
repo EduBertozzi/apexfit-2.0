@@ -37,7 +37,7 @@ describe('apagarTodosOsDados', () => {
     expect(usePerfilStore.getState().perfil).toBeNull();
     expect(useHidratacaoStore.getState().registros).toEqual({});
     expect(useDietaStore.getState().geradoEm).toBeNull();
-    expect(useAjustesStore.getState().tema).toBe('escuro');
+    expect(useAjustesStore.getState().tema).toBe('sistema');
     expect(useCoachStore.getState().mensagens).toEqual([]);
     expect(useLembretesStore.getState().ativo).toBe(false);
     await new Promise((resolver) => setTimeout(resolver, 0));

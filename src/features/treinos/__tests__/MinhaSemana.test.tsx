@@ -26,7 +26,7 @@ describe('<MinhaSemana />', () => {
     useTreinosStore.getState().novoTreino();
     await render(<MinhaSemana />);
 
-    expect(screen.getByText(/Agora o app usa o rodízio A, B, C/)).toBeTruthy();
+    expect(screen.getByText(/agora o app usa o rodízio A, B, C/)).toBeTruthy();
 
     await userEvent.setup().press(screen.getByRole('button', { name: 'distribuir automático' }));
 

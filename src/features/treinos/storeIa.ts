@@ -71,7 +71,7 @@ export const useTreinosIaStore = create<TreinosIaState>()(
           if (!(erro instanceof SemIa)) {
             set({
               gerando: false,
-              erro: erro instanceof Error ? erro.message : 'Erro inesperado.',
+              erro: erro instanceof Error ? erro.message : 'erro inesperado.',
             });
             return false;
           }
@@ -85,7 +85,7 @@ export const useTreinosIaStore = create<TreinosIaState>()(
         const dados = comDias(paraDadosTreino(resultado), diasDoTexto(preferencias.foco ?? ''));
 
         if (dados.length === 0) {
-          set({ gerando: false, erro: 'Os treinos vieram vazios. Tente de novo.' });
+          set({ gerando: false, erro: 'os treinos vieram vazios. tente de novo.' });
           return false;
         }
 

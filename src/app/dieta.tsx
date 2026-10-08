@@ -31,7 +31,7 @@ export default function Dieta() {
             <ActivityIndicator size="large" color={c.texto} />
             <Texto variante="subtitulo">montando seu plano</Texto>
             <Texto secundario style={estilos.centro}>
-              A IA está montando as refeições com as suas metas. Pode levar até 1 minuto.
+              a IA está montando as refeições com as suas metas. pode levar até 1 minuto.
             </Texto>
           </View>
         </Cartao>
@@ -47,7 +47,7 @@ export default function Dieta() {
       planoDesatualizado(plano.caloriasDia, calcularNecessidades(perfil)?.metaCalorias ?? null) ? (
         <Cartao titulo="plano desatualizado" variante="tracejado">
           <Texto>
-            Seu perfil mudou depois que este plano foi feito. Gere um novo para bater com a sua meta
+            seu perfil mudou depois que este plano foi feito. gere um novo para bater com a sua meta
             atual.
           </Texto>
         </Cartao>
@@ -59,7 +59,7 @@ export default function Dieta() {
             <Texto variante="legenda">modo demonstração</Texto>
           </View>
           <Texto variante="legenda" secundario>
-            Sem IA disponível, o próprio app montou este plano com as suas metas.
+            sem IA disponível, o próprio app montou este plano com as suas metas.
           </Texto>
         </View>
       ) : null}

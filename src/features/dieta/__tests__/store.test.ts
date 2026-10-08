@@ -82,7 +82,7 @@ describe('useDietaStore.gerar', () => {
     await useDietaStore.getState().gerar({ ...PERFIL, objetivo: undefined });
 
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(useDietaStore.getState().erro).toContain('Complete seu perfil');
+    expect(useDietaStore.getState().erro).toContain('complete seu perfil');
   });
 
   it('recusa resposta em formato inesperado', async () => {

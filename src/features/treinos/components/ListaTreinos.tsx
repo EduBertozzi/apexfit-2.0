@@ -32,7 +32,7 @@ export function ListaTreinos() {
         seus treinos
       </Texto>
       <Texto variante="legenda" secundario>
-        O app segue esta ordem: depois do último treino feito, vem o próximo da lista.
+        o app segue esta ordem: depois do último treino feito, vem o próximo da lista.
       </Texto>
 
       {treinos.map((treino, indice) => {

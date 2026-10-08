@@ -116,7 +116,7 @@ describe('resumoLembretes', () => {
   });
 
   it('avisa quando não há lembrete', () => {
-    expect(resumoLembretes({ ...PADRAO, intervaloMin: 10 })).toMatch(/Nenhum/);
+    expect(resumoLembretes({ ...PADRAO, intervaloMin: 10 })).toMatch(/nenhum/);
   });
 });
 

@@ -171,8 +171,8 @@ export function TreinoConcluido({
 
       {proximo ? (
         <Texto secundario>
-          Próximo: {minusculaInicial(proximo.nome)}
-          {proximo.foco ? `, ${proximo.foco}` : ''}. Descansa e volta com tudo.
+          próximo: {minusculaInicial(proximo.nome)}
+          {proximo.foco ? `, ${minusculaInicial(proximo.foco)}` : ''}. descansa e volta com tudo.
         </Texto>
       ) : null}
 

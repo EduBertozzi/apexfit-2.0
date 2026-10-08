@@ -37,7 +37,7 @@ export function CartaoPeso({ pesoPerfilKg }: { pesoPerfilKg: number }) {
         <GraficoPeso registros={registros} mini />
       ) : (
         <Texto variante="legenda" style={{ color: c.textoHeroiSecundario }}>
-          Peso do seu perfil. Registre toda semana para ver a evolução.
+          peso do seu perfil. registre toda semana para ver a evolução.
         </Texto>
       )}
 

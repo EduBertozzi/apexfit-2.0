@@ -28,53 +28,53 @@ export type ConfigCampo =
 
 /** Como cada campo do perfil aparece na tela. Usado pelo onboarding e pela edição. */
 export const CONFIG_CAMPOS: Record<NomeCampo, ConfigCampo> = {
-  nome: { tipo: 'texto', rotulo: 'Nome', placeholder: 'Como quer ser chamado?' },
+  nome: { tipo: 'texto', rotulo: 'nome', placeholder: 'como quer ser chamado?' },
   idade: {
     tipo: 'texto',
-    rotulo: 'Idade',
+    rotulo: 'idade',
     placeholder: '17',
     teclado: 'number-pad',
     sufixo: 'anos',
   },
   sexo: {
     tipo: 'escolha',
-    rotulo: 'Sexo biológico',
+    rotulo: 'sexo biológico',
     direcao: 'linha',
     opcoes: SEXOS.map((valor) => ({ valor, rotulo: NOME_SEXO[valor] })),
   },
   alturaCm: {
     tipo: 'texto',
-    rotulo: 'Altura',
+    rotulo: 'altura',
     placeholder: '175',
     teclado: 'decimal-pad',
     sufixo: 'cm',
   },
   pesoKg: {
     tipo: 'texto',
-    rotulo: 'Peso',
+    rotulo: 'peso',
     placeholder: '70,5',
     teclado: 'decimal-pad',
     sufixo: 'kg',
   },
   percentualGordura: {
     tipo: 'texto',
-    rotulo: 'Gordura corporal',
+    rotulo: 'gordura corporal',
     placeholder: '18',
     teclado: 'decimal-pad',
     sufixo: '%',
     opcional: true,
-    dica: 'Se não souber, deixe em branco.',
+    dica: 'se não souber, deixe em branco.',
   },
   restricoes: {
     tipo: 'texto',
-    rotulo: 'Saúde e restrições',
-    placeholder: 'Ex: intolerância à lactose, lesão no joelho, hipertensão',
+    rotulo: 'saúde e restrições',
+    placeholder: 'ex: intolerância à lactose, lesão no joelho, hipertensão',
     opcional: true,
     multilinha: true,
   },
   nivelAtividade: {
     tipo: 'escolha',
-    rotulo: 'Nível de atividade',
+    rotulo: 'nível de atividade',
     direcao: 'coluna',
     opcoes: NIVEIS_ATIVIDADE.map((valor) => {
       // "Moderado (3 a 4 treinos/semana)" vira rótulo + descrição
@@ -85,7 +85,7 @@ export const CONFIG_CAMPOS: Record<NomeCampo, ConfigCampo> = {
   },
   objetivo: {
     tipo: 'escolha',
-    rotulo: 'Objetivo',
+    rotulo: 'objetivo',
     direcao: 'coluna',
     opcoes: OBJETIVOS.map((valor) => ({ valor, rotulo: NOME_OBJETIVO[valor] })),
   },
@@ -109,31 +109,31 @@ export const ETAPAS_ONBOARDING: Etapa[] = [
   {
     id: 'basico',
     titulo: 'idade e sexo',
-    descricao: 'Os dois entram no cálculo do seu metabolismo.',
+    descricao: 'os dois entram no cálculo do seu metabolismo.',
     campos: ['idade', 'sexo'],
   },
   {
     id: 'corpo',
     titulo: 'seu corpo',
-    descricao: 'Para calcular sua água, suas calorias e seu IMC. Fica só no seu celular.',
+    descricao: 'para calcular sua água, suas calorias e seu IMC. fica só no seu celular.',
     campos: ['alturaCm', 'pesoKg', 'percentualGordura'],
   },
   {
     id: 'atividade',
     titulo: 'quanto você treina?',
-    descricao: 'Conte academia, esporte e corrida. Seja sincero: isso muda suas calorias.',
+    descricao: 'conte academia, esporte e corrida. seja sincero: isso muda suas calorias.',
     campos: ['nivelAtividade'],
   },
   {
     id: 'objetivo',
     titulo: 'qual seu objetivo?',
-    descricao: 'Dá para mudar depois, quando quiser.',
+    descricao: 'dá para mudar depois, quando quiser.',
     campos: ['objetivo'],
   },
   {
     id: 'saude',
     titulo: 'algo que a gente deva saber?',
-    descricao: 'Lesões, alergias, intolerâncias ou doenças. A dieta com IA respeita isso.',
+    descricao: 'lesões, alergias, intolerâncias ou doenças. a dieta com IA respeita isso.',
     campos: ['restricoes'],
   },
 ];
@@ -149,7 +149,7 @@ export const SECOES_EDICAO: Etapa[] = [
   {
     id: 'corpo',
     titulo: 'seu corpo',
-    descricao: 'Usamos esses dados para calcular sua água, suas calorias e seu IMC.',
+    descricao: 'usamos esses dados para calcular sua água, suas calorias e seu IMC.',
     campos: ['alturaCm', 'pesoKg', 'percentualGordura', 'restricoes'],
   },
   {

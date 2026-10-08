@@ -41,7 +41,7 @@ export const MODELOS: readonly ModeloTreino[] = [
   {
     id: 'abc-iniciante',
     nome: 'ABC iniciante',
-    descricao: 'Divide o corpo em três treinos. Clássico de academia para quem está começando.',
+    descricao: 'divide o corpo em três treinos. clássico de academia para quem está começando.',
     frequencia: '3x por semana',
     treinos: [
       {
@@ -91,7 +91,7 @@ export const MODELOS: readonly ModeloTreino[] = [
   {
     id: 'full-body-3x',
     nome: 'Full body 3x',
-    descricao: 'Corpo todo em cada treino. Ótimo para quem treina dia sim, dia não.',
+    descricao: 'corpo todo em cada treino. ótimo para quem treina dia sim, dia não.',
     frequencia: '3x por semana',
     treinos: [
       {
@@ -138,7 +138,7 @@ export const MODELOS: readonly ModeloTreino[] = [
   {
     id: 'superior-inferior',
     nome: 'Superior e inferior',
-    descricao: 'Alterna parte de cima e pernas. Bom para quem já treina e quer 4 dias.',
+    descricao: 'alterna parte de cima e pernas. bom para quem já treina e quer 4 dias.',
     frequencia: '4x por semana',
     treinos: [
       {

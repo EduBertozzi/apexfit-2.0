@@ -52,7 +52,7 @@ export function FormularioTreino({ treino, onSalvar }: Props) {
               salvar();
             }}
             erro={errors.nome?.message}
-            placeholder="Treino A"
+            placeholder="treino A"
             returnKeyType="next"
             onSubmitEditing={() => setFocus('foco')}
             testID="treino-nome"

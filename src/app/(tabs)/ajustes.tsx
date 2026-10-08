@@ -25,9 +25,9 @@ export default function Ajustes() {
 
   async function apagarDados() {
     const confirmado = await confirmar(
-      'Apagar meus dados?',
-      'Seu perfil, água, peso, dieta, treinos, conversa com o coach, ajustes e lembretes serão apagados deste aparelho. Não dá para desfazer.',
-      'Apagar',
+      'apagar meus dados?',
+      'seu perfil, água, peso, dieta, treinos, conversa com o coach, ajustes e lembretes serão apagados deste aparelho. não dá para desfazer.',
+      'apagar',
     );
 
     if (confirmado) {
@@ -43,10 +43,10 @@ export default function Ajustes() {
 
       <Secao
         titulo="aparência"
-        rodape="No automático, o app segue o modo claro ou escuro do celular."
+        rodape="no automático, o app segue o modo claro ou escuro do celular."
       >
         <Opcoes
-          rotulo="Tema"
+          rotulo="tema"
           opcoes={OPCOES_TEMA}
           valor={tema}
           onMudar={(valor) => definirTema(valor as PreferenciaTema)}
@@ -60,14 +60,14 @@ export default function Ajustes() {
 
       <Secao
         titulo="privacidade"
-        rodape="Seus dados ficam salvos neste aparelho. Quando você pede a dieta ou conversa com o coach, seu perfil e suas metas vão para o servidor do ApexFit e para a Anthropic (empresa da IA) só para responder."
+        rodape="seus dados ficam salvos neste aparelho. quando você pede a dieta ou conversa com o coach, seu perfil e suas metas vão para o servidor do ApexFit e para a Anthropic (empresa da IA) só para responder."
       >
         <Botao titulo="apagar meus dados" variante="perigo" onPress={apagarDados} />
       </Secao>
 
       <Secao
         titulo="sobre"
-        rodape="O ApexFit ajuda a organizar sua rotina, mas não substitui médico, nutricionista ou educador físico."
+        rodape="o ApexFit ajuda a organizar sua rotina, mas não substitui médico, nutricionista ou educador físico."
       >
         <View style={estilos.sobre}>
           <Logo tamanho={48} />

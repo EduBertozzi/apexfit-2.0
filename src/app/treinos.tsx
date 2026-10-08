@@ -19,7 +19,7 @@ export default function Treinos() {
   }
 
   return (
-    <Tela>
+    <Tela bordas={['bottom']}>
       <Texto variante="titulo" style={estilos.titulo} accessibilityRole="header">
         treinos
       </Texto>
@@ -47,7 +47,7 @@ export default function Treinos() {
           <Cartao titulo="nenhum treino ainda" variante="tracejado">
             <Texto variante="subtitulo">bora montar sua ficha</Texto>
             <Texto secundario>
-              Comece com um modelo pronto e ajuste as cargas, ou crie do zero.
+              comece com um modelo pronto e ajuste as cargas, ou crie do zero.
             </Texto>
             <Botao titulo="criar do zero" variante="secundario" onPress={criarTreino} />
           </Cartao>

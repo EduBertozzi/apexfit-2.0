@@ -22,7 +22,7 @@ function textoOpcional(max: number) {
   return z
     .string()
     .trim()
-    .max(max, `Use no máximo ${max} caracteres`)
+    .max(max, `use no máximo ${max} caracteres`)
     .transform((texto) => (texto === '' ? undefined : texto));
 }
 
@@ -40,7 +40,7 @@ const campoRepeticoes = z.string().transform((texto, ctx) => {
   const limpo = texto.trim();
 
   if (limpo === '') {
-    ctx.addIssue({ code: 'custom', message: 'Informe as repetições' });
+    ctx.addIssue({ code: 'custom', message: 'informe as repetições' });
     return z.NEVER;
   }
 
@@ -51,7 +51,7 @@ const campoRepeticoes = z.string().transform((texto, ctx) => {
     const { min, max } = LIMITES.minutos;
 
     if (valor < min || valor > max) {
-      ctx.addIssue({ code: 'custom', message: `Deve estar entre ${min} e ${max} minutos` });
+      ctx.addIssue({ code: 'custom', message: `deve estar entre ${min} e ${max} minutos` });
       return z.NEVER;
     }
 
@@ -61,7 +61,7 @@ const campoRepeticoes = z.string().transform((texto, ctx) => {
   const partes = PADRAO_REPETICOES.exec(limpo);
 
   if (!partes) {
-    ctx.addIssue({ code: 'custom', message: 'Use um número ou uma faixa, ex: 10 ou 8 a 12' });
+    ctx.addIssue({ code: 'custom', message: 'use um número ou uma faixa, ex: 10 ou 8 a 12' });
     return z.NEVER;
   }
 
@@ -70,12 +70,12 @@ const campoRepeticoes = z.string().transform((texto, ctx) => {
   const { min, max } = LIMITES.repeticoes;
 
   if ([minimo, maximo ?? minimo].some((valor) => valor < min || valor > max)) {
-    ctx.addIssue({ code: 'custom', message: `Deve estar entre ${min} e ${max} repetições` });
+    ctx.addIssue({ code: 'custom', message: `deve estar entre ${min} e ${max} repetições` });
     return z.NEVER;
   }
 
   if (maximo !== undefined && maximo <= minimo) {
-    ctx.addIssue({ code: 'custom', message: 'Na faixa, o segundo número é o maior, ex: 8 a 12' });
+    ctx.addIssue({ code: 'custom', message: 'na faixa, o segundo número é o maior, ex: 8 a 12' });
     return z.NEVER;
   }
 
@@ -84,21 +84,21 @@ const campoRepeticoes = z.string().transform((texto, ctx) => {
 
 const campoSeries = z.string().transform((texto, ctx) => {
   if (texto.trim() === '') {
-    ctx.addIssue({ code: 'custom', message: 'Informe as séries' });
+    ctx.addIssue({ code: 'custom', message: 'informe as séries' });
     return z.NEVER;
   }
 
   const valor = paraInteiro(texto);
 
   if (valor === null) {
-    ctx.addIssue({ code: 'custom', message: 'Digite um número inteiro, ex: 3' });
+    ctx.addIssue({ code: 'custom', message: 'digite um número inteiro, ex: 3' });
     return z.NEVER;
   }
 
   const { min, max } = LIMITES.series;
 
   if (valor < min || valor > max) {
-    ctx.addIssue({ code: 'custom', message: `Deve estar entre ${min} e ${max} séries` });
+    ctx.addIssue({ code: 'custom', message: `deve estar entre ${min} e ${max} séries` });
     return z.NEVER;
   }
 
@@ -112,7 +112,7 @@ const campoGrupo = z.string().transform((texto, ctx) => {
   }
 
   if (!(ORDEM_GRUPOS as string[]).includes(texto)) {
-    ctx.addIssue({ code: 'custom', message: 'Escolha um grupo da lista' });
+    ctx.addIssue({ code: 'custom', message: 'escolha um grupo da lista' });
     return z.NEVER;
   }
 
@@ -128,14 +128,14 @@ const campoCarga = z.string().transform((texto, ctx) => {
   const valor = paraDecimal(texto);
 
   if (valor === null) {
-    ctx.addIssue({ code: 'custom', message: 'Digite um número, ex: 22,5' });
+    ctx.addIssue({ code: 'custom', message: 'digite um número, ex: 22,5' });
     return z.NEVER;
   }
 
   const { min, max } = LIMITES.cargaKg;
 
   if (valor < min || valor > max) {
-    ctx.addIssue({ code: 'custom', message: `Deve estar entre ${min} e ${max} kg` });
+    ctx.addIssue({ code: 'custom', message: `deve estar entre ${min} e ${max} kg` });
     return z.NEVER;
   }
 
@@ -150,8 +150,8 @@ export const treinoSchema = z.object({
   nome: z
     .string()
     .trim()
-    .min(1, 'Dê um nome ao treino, ex: Treino A')
-    .max(LIMITES.nomeTreino.max, `Use no máximo ${LIMITES.nomeTreino.max} caracteres`),
+    .min(1, 'dê um nome ao treino, ex: treino A')
+    .max(LIMITES.nomeTreino.max, `use no máximo ${LIMITES.nomeTreino.max} caracteres`),
   foco: textoOpcional(LIMITES.foco.max),
 }) satisfies z.ZodType<Pick<Treino, 'nome' | 'foco'>, FormularioTreinoValores>;
 
@@ -174,8 +174,8 @@ export const exercicioSchema = z.object({
   nome: z
     .string()
     .trim()
-    .min(LIMITES.nomeExercicio.min, 'Informe o nome do exercício')
-    .max(LIMITES.nomeExercicio.max, `Use no máximo ${LIMITES.nomeExercicio.max} caracteres`),
+    .min(LIMITES.nomeExercicio.min, 'informe o nome do exercício')
+    .max(LIMITES.nomeExercicio.max, `use no máximo ${LIMITES.nomeExercicio.max} caracteres`),
   grupo: campoGrupo,
   series: campoSeries,
   repeticoes: campoRepeticoes,

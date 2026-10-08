@@ -68,7 +68,7 @@ export const useDietaStore = create<DietaState>()(
             return;
           }
 
-          const mensagem = erro instanceof Error ? erro.message : 'Erro inesperado.';
+          const mensagem = erro instanceof Error ? erro.message : 'erro inesperado.';
 
           // Mantém o plano anterior, se houver: melhor que tela vazia
           set({ gerando: false, erro: mensagem });

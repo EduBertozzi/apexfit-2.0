@@ -21,7 +21,7 @@ export function CartaoMetas({ perfil }: { perfil: Perfil }) {
       <Cartao titulo="calorias do dia" variante="tracejado">
         <Texto variante="subtitulo">falta pouco</Texto>
         <Texto secundario>
-          Diga seu sexo, nível de atividade e objetivo para o app calcular suas calorias e liberar a
+          diga seu sexo, nível de atividade e objetivo para o app calcular suas calorias e liberar a
           dieta com IA.
         </Texto>
         <Botao titulo="completar perfil" onPress={() => router.push('/editar-perfil')} />
@@ -50,7 +50,7 @@ export function CartaoMetas({ perfil }: { perfil: Perfil }) {
         </Texto>
       </View>
       <Texto variante="legenda" secundario>
-        Gasto diário {formatarNumero(gastoDiario)} kcal, metabolismo basal {formatarNumero(tmb)}{' '}
+        gasto diário {formatarNumero(gastoDiario)} kcal, metabolismo basal {formatarNumero(tmb)}{' '}
         kcal.
       </Texto>
       <View style={estilos.chips}>

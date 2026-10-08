@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 import { armazenamento } from '@/shared/lib/armazenamento';
 
-import type { PreferenciaTema } from './logica';
+import { migrarAjustes, type PreferenciaTema } from './logica';
 
 type AjustesState = {
   tema: PreferenciaTema;
@@ -17,8 +17,8 @@ type AjustesState = {
 };
 
 const PADRAO = {
-  // O visual foi desenhado no escuro; quem preferir troca em Ajustes
-  tema: 'escuro' as PreferenciaTema,
+  // Primeira abertura segue o modo do celular; quem preferir fixa em Ajustes
+  tema: 'sistema' as PreferenciaTema,
   vibracao: true,
   metaAguaManualMl: null as number | null,
 };
@@ -35,7 +35,8 @@ export const useAjustesStore = create<AjustesState>()(
     {
       name: 'apexfit/ajustes',
       storage: armazenamento,
-      version: 1,
+      version: 2,
+      migrate: (salvo, versao) => migrarAjustes(salvo, versao) as AjustesState,
       partialize: ({ tema, vibracao, metaAguaManualMl }) => ({ tema, vibracao, metaAguaManualMl }),
     },
   ),

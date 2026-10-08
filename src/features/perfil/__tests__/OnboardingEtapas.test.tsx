@@ -29,7 +29,7 @@ describe('<OnboardingEtapas />', () => {
     await tocar('começar');
     await tocar('continuar');
 
-    expect(await screen.findByText('Informe seu nome')).toBeOnTheScreen();
+    expect(await screen.findByText('informe seu nome')).toBeOnTheScreen();
     expect(screen.getByText('etapa 1 de 6')).toBeOnTheScreen();
   });
 
@@ -37,35 +37,35 @@ describe('<OnboardingEtapas />', () => {
     const { usuario, tocar } = await renderizar();
 
     await tocar('começar');
-    await usuario.type(screen.getByLabelText('Nome'), 'Luiz');
+    await usuario.type(screen.getByLabelText('nome'), 'Luiz');
     await tocar('continuar');
     expect(await screen.findByText('etapa 2 de 6')).toBeOnTheScreen();
 
     await tocar('voltar');
 
     expect(screen.getByText('etapa 1 de 6')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Nome')).toHaveDisplayValue('Luiz');
+    expect(screen.getByLabelText('nome')).toHaveDisplayValue('Luiz');
   });
 
   it('percorre todas as etapas e salva o perfil completo', async () => {
     const { onSalvar, usuario, tocar } = await renderizar();
 
     await tocar('começar');
-    await usuario.type(screen.getByLabelText('Nome'), 'Luiz');
+    await usuario.type(screen.getByLabelText('nome'), 'Luiz');
     await tocar('continuar');
 
-    await usuario.type(await screen.findByLabelText('Idade'), '17');
-    await usuario.press(screen.getByRole('radio', { name: 'Masculino' }));
+    await usuario.type(await screen.findByLabelText('idade'), '17');
+    await usuario.press(screen.getByRole('radio', { name: 'masculino' }));
     await tocar('continuar');
 
-    await usuario.type(await screen.findByLabelText('Altura'), '175');
-    await usuario.type(screen.getByLabelText('Peso'), '70,5');
+    await usuario.type(await screen.findByLabelText('altura'), '175');
+    await usuario.type(screen.getByLabelText('peso'), '70,5');
     await tocar('continuar');
 
-    await usuario.press(await screen.findByRole('radio', { name: 'Moderado' }));
+    await usuario.press(await screen.findByRole('radio', { name: 'moderado' }));
     await tocar('continuar');
 
-    await usuario.press(await screen.findByRole('radio', { name: 'Ganhar massa' }));
+    await usuario.press(await screen.findByRole('radio', { name: 'ganhar massa' }));
     await tocar('continuar');
 
     expect(await screen.findByText('etapa 6 de 6')).toBeOnTheScreen();

@@ -12,7 +12,7 @@ const TAMANHO_DIA = 32;
 
 function textoSequencia(dias: number): string {
   if (dias === 0) {
-    return 'Bata a meta hoje para começar uma sequência.';
+    return 'bata a meta hoje para começar uma sequência.';
   }
 
   return dias === 1 ? '1 dia seguido batendo a meta.' : `${dias} dias seguidos batendo a meta.`;

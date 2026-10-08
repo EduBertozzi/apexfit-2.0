@@ -102,7 +102,7 @@ export function GraficoPeso({ registros, mini = false, periodoInicial = 30 }: Pr
         {dados.pontos.length === 0 ? (
           <View style={[estilos.vazio, { borderColor: c.trilhoHeroi }]}>
             <Texto variante="legenda" style={{ color: c.textoHeroiSecundario }}>
-              Sem registros neste período.
+              sem registros neste período.
             </Texto>
           </View>
         ) : largura > 0 ? (
