@@ -6,13 +6,12 @@ import {
 } from '@/shared/servidor/openai';
 
 import type { EventoCoach, PedidoCoach } from '../contrato';
-import { pedeMudancaDeDieta, pedeMudancaDeTreino } from '../intencao';
 import { SISTEMA_COACH_PEDIDOS } from '../prompt';
 import {
+  acaoPorIntencao,
   ehFerramentaCoach,
+  executarFerramenta,
   FERRAMENTAS_COACH,
-  montarDietaEConfirmar,
-  montarTreinosEConfirmar,
   pedidoDosArgumentos,
 } from './acoes';
 
@@ -55,16 +54,11 @@ function primeiraFerramenta(chamadas: FerramentaPedida[]) {
 }
 
 export async function* conversarOpenAI(pedido: PedidoCoach): AsyncGenerator<EventoCoach> {
-  const ultima = pedido.mensagens[pedido.mensagens.length - 1].texto;
-
   // Pedido claro: monta direto, sem gastar uma chamada só para decidir
-  if (pedeMudancaDeDieta(ultima)) {
-    yield* montarDietaEConfirmar('openai', pedido, ultima, '');
-    return;
-  }
+  const atalho = acaoPorIntencao('openai', pedido);
 
-  if (pedeMudancaDeTreino(ultima)) {
-    yield* montarTreinosEConfirmar('openai', pedido, ultima, '');
+  if (atalho) {
+    yield* atalho;
     return;
   }
 
@@ -98,9 +92,7 @@ export async function* conversarOpenAI(pedido: PedidoCoach): AsyncGenerator<Even
 
   const ferramenta = primeiraFerramenta(chamadas);
 
-  if (ferramenta?.nome === 'atualizar_dieta') {
-    yield* montarDietaEConfirmar('openai', pedido, ferramenta.pedido, textoAntes);
-  } else if (ferramenta?.nome === 'atualizar_treinos') {
-    yield* montarTreinosEConfirmar('openai', pedido, ferramenta.pedido, textoAntes);
+  if (ferramenta && ehFerramentaCoach(ferramenta.nome)) {
+    yield* executarFerramenta('openai', pedido, ferramenta.nome, ferramenta.pedido, textoAntes);
   }
 }

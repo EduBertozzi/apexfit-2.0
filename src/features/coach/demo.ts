@@ -9,6 +9,8 @@ import {
   type Restricoes,
 } from '@/features/dieta/restricoes';
 import { primeiroNome } from '@/features/perfil/calculos';
+import type { LocalTreino } from '@/features/treinos/contratoIa';
+import { diasDoTexto } from '@/features/treinos/diasIa';
 import { formatarNumero } from '@/shared/lib/numero';
 
 import type { DadosContexto } from './contexto';
@@ -23,7 +25,13 @@ export type DadosDemo = DadosContexto & {
   peso?: { variacao30Dias: number | null; ultimoKg?: number };
 };
 
-export type AcaoDemo = { tipo: 'dieta'; trocarRefeicao?: SlotTrocavel; novo?: boolean };
+/**
+ * O que a resposta pede para o app montar (vira uma proposta no chat, que a
+ * pessoa aplica ou não). `diasPedidos`: dias citados ("segunda, quarta e sexta").
+ */
+export type AcaoDemo =
+  | { tipo: 'dieta'; trocarRefeicao?: SlotTrocavel; novo?: boolean }
+  | { tipo: 'treinos'; diasPorSemana: number; local: LocalTreino; diasPedidos: number[] };
 
 export type RespostaDemo = { texto: string; acao?: AcaoDemo };
 
@@ -40,6 +48,7 @@ export type Intencao =
   | 'calorias'
   | 'peso'
   | 'motivacao'
+  | 'montarTreino'
   | 'treino'
   | 'saudacao'
   | 'desconhecida';
@@ -72,6 +81,8 @@ const PADROES = {
   motivacao:
     /\b(motiva\w*|cansad[oa]|cansaco|preguica|desanim\w*|sem vontade|desist\w*|nao consigo|triste|foco)\b/,
   treino: /\b(treino\w*|treinar|academia|exercicio\w*|malhar|musculacao|cardio|serie\w*)\b/,
+  montarTreino:
+    /\b(mont\w*|cri(a|e|ar)|refa\w*|ger(a|e|ar)|nov[oa]s?|outr[ao]s?)\b.*\b(treinos?|ficha|divisao)\b|\b(treinos?|ficha|divisao)\b.*\bnov[oa]s?\b/,
   saudacao: /^\s*(oi+|ola|e ai|eai|bom dia|boa tarde|boa noite|fala|salve|hey|opa|tudo bem)\b/,
 };
 
@@ -130,6 +141,7 @@ export function detectarIntencao(pergunta: string): Intencao {
     /dieta|plano|cardapio/.test(normal)
   )
     return 'montarDieta';
+  if (PADROES.montarTreino.test(normal)) return 'montarTreino';
   if (PADROES.pre.test(normal)) return 'preTreino';
   if (PADROES.pos.test(normal)) return 'posTreino';
   if (PADROES.agua.test(normal)) return 'agua';
@@ -266,6 +278,8 @@ type Contexto = {
   pergunta: string;
 };
 
+const APLICAR = 'Confira a proposta aqui embaixo e toque em aplicar para salvar.';
+
 const COMPLETAR_PERFIL =
   'Para eu calcular suas metas, complete o perfil com sexo, nível de atividade e objetivo. É rapidinho, na aba Perfil.';
 
@@ -322,8 +336,8 @@ function responderMontarDieta({ dados, nome, semente }: Contexto): RespostaDemo 
     texto: frases(
       escolher([`Bora${vocativo(nome)}!`, `Fechado${vocativo(nome)}!`, 'Partiu!'], semente),
       `Vou montar um plano de ${kcal(necessidades.metaCalorias)} com ${necessidades.macros.proteinaG} g de proteína, dividido em ${refeicoes} refeições.`,
-      dados.plano ? 'O plano novo substitui o atual.' : null,
-      'Ele aparece na tela de dieta em instantes.',
+      dados.plano ? 'Se você aplicar, ele substitui o atual.' : null,
+      APLICAR,
     ),
     acao: { tipo: 'dieta', novo: true },
   };
@@ -361,6 +375,7 @@ function responderTrocar(ctx: Contexto, slot: SlotTrocavel): RespostaDemo {
       `Hoje ele tem ${alimentosDaRefeicao(refeicao)}, com ${kcal(refeicao.calorias)}.`,
       `Vou montar outra opção com calorias parecidas${evitado ? `, sem ${evitado}` : ''}.`,
       'O resto do plano continua igual.',
+      APLICAR,
     ),
     acao: { tipo: 'dieta', trocarRefeicao: slot },
   };
@@ -381,6 +396,7 @@ function responderEvitar(ctx: Contexto): RespostaDemo {
         semente,
       ),
       `Vou montar um plano novo de ${kcal(dados.necessidades.metaCalorias)} trocando por opções equivalentes.`,
+      APLICAR,
       'Se for alergia ou intolerância, escreva em Perfil, no campo de restrições, para eu levar em conta sempre.',
     ),
     acao: { tipo: 'dieta', novo: true },
@@ -627,6 +643,28 @@ function responderMotivacao({ dados, nome, semente }: Contexto): RespostaDemo {
   };
 }
 
+function responderMontarTreino({ nome, semente, pergunta }: Contexto): RespostaDemo {
+  const normal = normalizarAlinhado(pergunta);
+  const diasPedidos = diasDoTexto(pergunta);
+  const numero = /\b([2-6]) ?(dias|x|vezes)\b/.exec(normal);
+  const diasPorSemana = numero
+    ? Number(numero[1])
+    : Math.min(6, Math.max(2, diasPedidos.length || 3));
+  const local: LocalTreino = /\b(casa|sem aparelho\w*|sem academia)\b/.test(normal)
+    ? 'casa'
+    : 'academia';
+
+  return {
+    texto: frases(
+      escolher([`Bora${vocativo(nome)}!`, `Fechado${vocativo(nome)}!`], semente),
+      `Montei uma divisão de ${diasPorSemana} treinos ${local === 'casa' ? 'em casa, sem aparelhos' : 'na academia'}, de 60 minutos, cada um no seu dia da semana.`,
+      'Se você aplicar, eles substituem os treinos atuais. O histórico fica.',
+      APLICAR,
+    ),
+    acao: { tipo: 'treinos', diasPorSemana, local, diasPedidos },
+  };
+}
+
 function responderTreino({ dados, nome, semente }: Contexto): RespostaDemo {
   const treinos = dados.treinos;
 
@@ -672,7 +710,7 @@ function responderSaudacao({ dados, nome, semente }: Contexto): RespostaDemo {
         semente,
       ),
       `Hoje você está com ${ml(hojeMl)} de ${ml(metaMl)} de água${proximo ? ` e o próximo treino é o ${proximo}` : ''}.`,
-      'Posso montar sua dieta, trocar uma refeição ou falar de treino.',
+      'Posso montar sua dieta, trocar uma refeição, montar seus treinos ou falar de treino.',
     ),
   };
 }
@@ -737,6 +775,8 @@ export function responderModoDemo(
       return responderPeso(ctx);
     case 'motivacao':
       return responderMotivacao(ctx);
+    case 'montarTreino':
+      return responderMontarTreino(ctx);
     case 'treino':
       return responderTreino(ctx);
     case 'saudacao':

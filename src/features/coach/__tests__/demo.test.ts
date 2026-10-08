@@ -71,6 +71,9 @@ const PERGUNTAS: [string, Intencao][] = [
   ['Quero emagrecer', 'peso'],
   ['Como faço pra ganhar massa?', 'peso'],
   ['Qual meu próximo treino?', 'treino'],
+  ['Monta meu treino', 'montarTreino'],
+  ['quero uma ficha nova', 'montarTreino'],
+  ['refaz meus treinos pra 4 dias', 'montarTreino'],
   ['Tô com preguiça hoje', 'motivacao'],
   ['Estou muito cansado', 'motivacao'],
   ['Meu joelho dói quando agacho', 'dor'],
@@ -388,5 +391,34 @@ describe('responderModoDemo', () => {
       expect(texto).not.toMatch(/[—–]/);
       expect(texto).not.toMatch(/\p{Extended_Pictographic}/u);
     }
+  });
+});
+
+describe('montar treino no modo demonstração', () => {
+  it('pede a ação de treinos com os dias citados e o local', () => {
+    const { texto, acao } = responderModoDemo(
+      'monta meu treino em casa pra segunda, quarta e sexta',
+      DADOS,
+    );
+
+    expect(acao).toEqual({
+      tipo: 'treinos',
+      diasPorSemana: 3,
+      local: 'casa',
+      diasPedidos: [1, 3, 5],
+    });
+    expect(texto).toContain('aplicar');
+    expect(texto).not.toMatch(/[—–]/);
+  });
+
+  it('número de dias no texto manda; sem nada, 3 dias na academia', () => {
+    expect(responderModoDemo('refaz minha ficha pra 5 dias', DADOS).acao).toMatchObject({
+      diasPorSemana: 5,
+      local: 'academia',
+    });
+    expect(responderModoDemo('monta meu treino', DADOS).acao).toMatchObject({
+      diasPorSemana: 3,
+      diasPedidos: [],
+    });
   });
 });

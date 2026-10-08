@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 import { planoDietaSchema } from '@/features/dieta/contrato';
-import { respostaTreinosIaSchema } from '@/features/treinos/contratoIa';
+import { SLOTS_REFEICAO } from '@/features/dieta/mesclar';
+import { GRUPOS_MUSCULARES, respostaTreinosIaSchema } from '@/features/treinos/contratoIa';
 
 /**
  * Contrato entre o app e a rota /api/coach.
@@ -14,6 +15,8 @@ export const LIMITES_COACH = {
   historico: 30,
   texto: 2000,
   contexto: 8000,
+  treinos: 12,
+  exercicios: 40,
 } as const;
 
 export const mensagemCoachSchema = z.object({
@@ -26,6 +29,31 @@ export const mensagemCoachSchema = z.object({
 
 export type MensagemCoach = z.infer<typeof mensagemCoachSchema>;
 
+const diaSchema = z.number().int().min(0).max(6);
+
+/** Treino como está salvo no aparelho (com ids), para o servidor ajustar só o pedido. */
+export const treinoAtualSchema = z.object({
+  id: z.string().min(1).max(64),
+  nome: z.string().min(1).max(60),
+  foco: z.string().max(120).optional(),
+  dias: z.array(diaSchema).max(7).optional(),
+  exercicios: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(64),
+        nome: z.string().min(1).max(80),
+        grupo: z.enum(GRUPOS_MUSCULARES).optional(),
+        series: z.number().int().min(1).max(50),
+        repeticoes: z.string().min(1).max(30),
+        cargaKg: z.number().min(0).max(1000).optional(),
+        observacao: z.string().max(200).optional(),
+      }),
+    )
+    .max(LIMITES_COACH.exercicios),
+});
+
+export type TreinoAtual = z.infer<typeof treinoAtualSchema>;
+
 export const pedidoCoachSchema = z.object({
   mensagens: z
     .array(mensagemCoachSchema)
@@ -35,15 +63,38 @@ export const pedidoCoachSchema = z.object({
       message: 'A última mensagem precisa ser do usuário.',
     }),
   contexto: z.string().max(LIMITES_COACH.contexto),
+  /** Plano salvo hoje: o servidor muda só a refeição pedida ("troca o café da manhã"). */
+  planoAtual: planoDietaSchema.optional(),
+  /** Treinos salvos hoje: o servidor muda só o exercício ou treino pedido. */
+  treinosAtuais: z.array(treinoAtualSchema).max(LIMITES_COACH.treinos).optional(),
 });
 
 export type PedidoCoach = z.infer<typeof pedidoCoachSchema>;
 
+const modoSchema = z.enum(['novo', 'ajuste']);
+
 export const eventoCoachSchema = z.discriminatedUnion('tipo', [
   z.object({ tipo: z.literal('texto'), texto: z.string() }),
-  z.object({ tipo: z.literal('dieta'), plano: planoDietaSchema }),
-  /** O coach montou treinos novos: o app troca os treinos salvos. */
-  z.object({ tipo: z.literal('treinos'), resultado: respostaTreinosIaSchema }),
+  /**
+   * O coach montou uma dieta: o app mostra a proposta e só salva se a pessoa
+   * aplicar. `refeicoes`: num ajuste, as únicas refeições que podem mudar.
+   */
+  z.object({
+    tipo: z.literal('dieta'),
+    plano: planoDietaSchema,
+    modo: modoSchema.optional(),
+    refeicoes: z.array(z.enum(SLOTS_REFEICAO)).optional(),
+  }),
+  /**
+   * O coach montou ou ajustou treinos: o app mostra a proposta. `diasPedidos`:
+   * dias da semana citados no pedido (num conjunto novo).
+   */
+  z.object({
+    tipo: z.literal('treinos'),
+    resultado: respostaTreinosIaSchema,
+    modo: modoSchema.optional(),
+    diasPedidos: z.array(diaSchema).max(7).optional(),
+  }),
   z.object({ tipo: z.literal('erro'), mensagem: z.string() }),
   z.object({ tipo: z.literal('fim') }),
 ]);

@@ -6,7 +6,7 @@ import { lerJson } from '@/shared/servidor/esquemaEstrito';
 import { responderJson } from '@/shared/servidor/json';
 
 import { respostaTreinosIaSchema, type RespostaTreinosIa } from '../contratoIa';
-import { SISTEMA_TREINOS } from '../promptIa';
+import { SISTEMA_AJUSTE_TREINOS, SISTEMA_TREINOS } from '../promptIa';
 
 /** Roda SÓ no servidor (rotas /api/treino e /api/coach). Nunca importe isto de uma tela. */
 
@@ -21,13 +21,16 @@ export function treinosValidos(resposta: RespostaTreinosIa | null): resposta is 
   );
 }
 
-async function tentarClaude(instrucoes: string): Promise<RespostaTreinosIa | null> {
+async function tentarClaude(
+  sistema: string,
+  instrucoes: string,
+): Promise<RespostaTreinosIa | null> {
   const resposta = await obterCliente().beta.messages.parse({
     model: MODELO_CLAUDE,
     max_tokens: 16000,
     ...FALLBACK,
     betas: [...FALLBACK.betas],
-    system: SISTEMA_TREINOS,
+    system: sistema,
     messages: [{ role: 'user', content: instrucoes }],
     output_config: {
       effort: 'low',
@@ -45,21 +48,26 @@ async function tentarClaude(instrucoes: string): Promise<RespostaTreinosIa | nul
 /**
  * Gera os treinos com a IA escolhida, valida com o zod e tenta mais uma vez
  * se vier incompleto. `instrucoes`: dados do usuário e o pedido, em texto.
+ * `modo`: "ajuste" edita os treinos atuais (vão nas instruções) em vez de montar outros.
  */
 export async function gerarTreinos(
   provedor: ProvedorIa,
   instrucoes: string,
+  modo: 'novo' | 'ajuste' = 'novo',
 ): Promise<RespostaTreinosIa> {
+  const sistema =
+    modo === 'ajuste' ? `${SISTEMA_TREINOS}\n\n${SISTEMA_AJUSTE_TREINOS}` : SISTEMA_TREINOS;
+
   for (let tentativa = 1; tentativa <= TENTATIVAS; tentativa++) {
     const resposta =
       provedor === 'claude'
-        ? await tentarClaude(instrucoes)
+        ? await tentarClaude(sistema, instrucoes)
         : lerJson(
             await responderJson(provedor, {
               mensagens: [
                 {
                   role: 'system',
-                  content: `${SISTEMA_TREINOS}\nResponda apenas com o JSON dos treinos, sem nenhum texto fora dele.`,
+                  content: `${sistema}\nResponda apenas com o JSON dos treinos, sem nenhum texto fora dele.`,
                 },
                 { role: 'user', content: instrucoes },
               ],

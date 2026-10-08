@@ -6,13 +6,12 @@ import {
 } from '@/shared/servidor/ollama';
 
 import type { EventoCoach, PedidoCoach } from '../contrato';
-import { pedeMudancaDeDieta, pedeMudancaDeTreino } from '../intencao';
 import { SISTEMA_COACH_PEDIDOS } from '../prompt';
 import {
+  acaoPorIntencao,
   ehFerramentaCoach,
+  executarFerramenta,
   FERRAMENTAS_COACH,
-  montarDietaEConfirmar,
-  montarTreinosEConfirmar,
   pedidoDosArgumentos,
 } from './acoes';
 
@@ -68,16 +67,11 @@ export async function* conversarLocal(pedido: PedidoCoach): AsyncGenerator<Event
     })),
   ];
 
-  const ultima = pedido.mensagens[pedido.mensagens.length - 1].texto;
-
   // Pedido claro: monta direto, sem depender do modelo chamar a ferramenta
-  if (pedeMudancaDeDieta(ultima)) {
-    yield* montarDietaEConfirmar('local', pedido, ultima, '');
-    return;
-  }
+  const atalho = acaoPorIntencao('local', pedido);
 
-  if (pedeMudancaDeTreino(ultima)) {
-    yield* montarTreinosEConfirmar('local', pedido, ultima, '');
+  if (atalho) {
+    yield* atalho;
     return;
   }
 
@@ -95,9 +89,7 @@ export async function* conversarLocal(pedido: PedidoCoach): AsyncGenerator<Event
 
   const ferramenta = primeiraFerramenta(chamadas);
 
-  if (ferramenta?.nome === 'atualizar_dieta') {
-    yield* montarDietaEConfirmar('local', pedido, ferramenta.pedido, textoAntes);
-  } else if (ferramenta?.nome === 'atualizar_treinos') {
-    yield* montarTreinosEConfirmar('local', pedido, ferramenta.pedido, textoAntes);
+  if (ferramenta && ehFerramentaCoach(ferramenta.nome)) {
+    yield* executarFerramenta('local', pedido, ferramenta.nome, ferramenta.pedido, textoAntes);
   }
 }

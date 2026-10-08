@@ -1,3 +1,4 @@
+import { distribuirDias } from './diasIa';
 import { inferirGrupo } from './grupos';
 import { criarTreino, novoId } from './logica';
 import type { RespostaTreinosIa } from './contratoIa';
@@ -104,4 +105,19 @@ export function substituirTreinos(
     treinos: dados.map((treino) => criarTreino(treino, gerarId)),
     sessoes: sessoes.filter((sessao) => sessao.finalizada),
   };
+}
+
+/**
+ * Dá dias da semana a um conjunto NOVO de treinos: os dias pedidos no texto
+ * ("segunda, quarta e sexta") ou, sem eles, espalhados pela semana (`diasPadrao`).
+ */
+export function comDias(
+  dados: readonly DadosTreino[],
+  diasPedidos: readonly number[] = [],
+): DadosTreino[] {
+  const dias = distribuirDias(dados.length, diasPedidos);
+
+  return dados.map((treino, indice) =>
+    dias[indice].length > 0 ? { ...treino, dias: dias[indice] } : treino,
+  );
 }

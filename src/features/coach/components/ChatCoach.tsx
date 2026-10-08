@@ -23,10 +23,12 @@ import { Texto } from '@/shared/ui';
 import { LIMITES_COACH } from '../contrato';
 import { dadosAtuais } from '../contextoAtual';
 import { useCoachStore, type MensagemChat } from '../store';
+import { CartaoProposta } from './CartaoProposta';
 
 const SUGESTOES = [
   'Monta minha dieta',
   'Troca o café da manhã',
+  'Monta meu treino',
   'O que comer antes do treino?',
   'Como estou na água hoje?',
 ];
@@ -64,10 +66,14 @@ function BotaoRedondo({
 function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boolean }) {
   const c = useCores();
   const doUsuario = mensagem.papel === 'usuario';
+  const aplicarProposta = useCoachStore((state) => state.aplicarProposta);
+  const recusarProposta = useCoachStore((state) => state.recusarProposta);
+  const desfazerProposta = useCoachStore((state) => state.desfazerProposta);
 
   return (
     <View
-      accessible
+      // Com proposta, os botões dentro da bolha precisam ser alcançáveis pelo leitor de tela
+      accessible={!mensagem.proposta}
       accessibilityLabel={`${doUsuario ? 'Você' : 'Coach'}: ${mensagem.texto || 'digitando'}`}
       style={[
         estilos.bolha,
@@ -88,6 +94,15 @@ function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boo
       >
         {mensagem.texto || (digitando ? 'Pensando...' : '')}
       </Texto>
+      {mensagem.proposta ? (
+        <CartaoProposta
+          proposta={mensagem.proposta}
+          bloqueada={digitando}
+          onAplicar={() => aplicarProposta(mensagem.id)}
+          onRecusar={() => recusarProposta(mensagem.id)}
+          onDesfazer={() => desfazerProposta(mensagem.id)}
+        />
+      ) : null}
       {mensagem.dietaAtualizada ? (
         <Pressable
           onPress={() => router.push('/dieta')}
@@ -113,7 +128,7 @@ function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boo
           style={[estilos.chipDieta, { backgroundColor: c.destaque }]}
         >
           <Texto variante="rotulo" style={{ color: c.textoSobreDestaque }}>
-            Treinos atualizados: ver
+            ver treinos atualizados
           </Texto>
         </Pressable>
       ) : null}
@@ -195,8 +210,9 @@ export function ChatCoach() {
             <View style={estilos.vazio}>
               <Texto variante="titulo">fala, {nome}!</Texto>
               <Texto secundario>
-                Sou seu coach. Sei suas metas, sua água e sua dieta. Pergunte o que quiser ou peça
-                para eu montar ou mudar seu plano alimentar.
+                Sou seu coach. Sei suas metas, sua água, sua dieta e seus treinos. Pergunte o que
+                quiser ou peça para eu montar ou mudar a dieta e os treinos: eu mostro a proposta e
+                você decide se aplica.
               </Texto>
               <View style={estilos.sugestoes}>
                 {SUGESTOES.map((sugestao) => (

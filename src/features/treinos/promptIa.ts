@@ -25,6 +25,18 @@ export const SISTEMA_TREINOS = [
   'Nunca use emoji. Nunca use travessão; use vírgula, ponto ou dois-pontos.',
 ].join('\n');
 
+/**
+ * Para ajustar treinos que já existem ("troca o leg press por agachamento"):
+ * vai junto com `SISTEMA_TREINOS`. A IA devolve uma cópia editada.
+ */
+export const SISTEMA_AJUSTE_TREINOS = [
+  'Agora você vai AJUSTAR treinos que já existem, não montar outros.',
+  'Devolva todos os treinos atuais, na mesma ordem e com os mesmos nomes.',
+  'Mude SOMENTE o exercício ou o treino que a pessoa pediu. Todo o resto fica exatamente igual: mesmos exercícios, com o mesmo nome escrito do mesmo jeito, mesma ordem, séries, repetições e observações.',
+  'Ao trocar um exercício, coloque o novo na mesma posição do antigo e, se a pessoa não disser, use um do mesmo grupo muscular.',
+  'No resumo, diga em uma frase o que mudou.',
+].join('\n');
+
 /** Quantos exercícios de força cabem numa sessão, além do aquecimento e do cardio. */
 export function exerciciosPorTempo(minutos: MinutosTreino): number {
   return { 30: 3, 45: 4, 60: 5, 90: 7 }[minutos];
