@@ -249,6 +249,36 @@ export function nomeDoDia(dia: number): string {
 }
 
 /** Texto do botão principal: "gerar 3 treinos". */
+/**
+ * Uma linha com as escolhas, para o montador fechado:
+ * "seg, qua e sex · iniciante · academia completa · com aquecimento".
+ */
+export function resumoEscolhas(escolhas: EscolhasSemana): string {
+  const dias =
+    escolhas.dias.length === 0
+      ? 'nenhum dia marcado'
+      : juntarComE(ordemDaSemana(escolhas.dias.map((dia) => dia.dia)).map(siglaDoDia));
+  const aquecimento = escolhas.aquecimento.ativo ? 'com aquecimento' : 'sem aquecimento';
+
+  return [
+    dias,
+    NOME_NIVEL[escolhas.nivel],
+    NOME_EQUIPAMENTO[escolhas.equipamento],
+    aquecimento,
+  ].join(' · ');
+}
+
+/** Segunda primeiro e domingo no fim, como no montador. */
+function ordemDaSemana(dias: readonly number[]): number[] {
+  return [...dias].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
+}
+
+function juntarComE(partes: readonly string[]): string {
+  return partes.length <= 1
+    ? (partes[0] ?? '')
+    : `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`;
+}
+
 export function textoBotaoGerar(escolhas: EscolhasSemana): string {
   const total = escolhas.dias.length;
 

@@ -16,6 +16,7 @@ import {
   nomeTreinoDoDia,
   prepararSemana,
   resumoDoDia,
+  resumoEscolhas,
   rotuloDoDia,
   textoBotaoGerar,
 } from '../montadorIa';
@@ -252,5 +253,25 @@ describe('prepararSemana', () => {
     expect(semana).toHaveLength(2);
     expect(semana[0].exercicios?.at(-1)?.nome).toBe('Supino reto');
     expect(semana[1].exercicios?.at(-1)?.nome).toBe('Leg press');
+  });
+});
+
+describe('resumoEscolhas', () => {
+  it('resume dias (segunda primeiro), nível, equipamento e aquecimento numa linha', () => {
+    const escolhas = {
+      ...ESCOLHAS_PADRAO,
+      dias: [...ESCOLHAS_PADRAO.dias, { dia: 0, areas: [] }],
+    };
+
+    expect(resumoEscolhas(escolhas)).toBe(
+      `seg, qua, sex e dom · ${resumoEscolhas(ESCOLHAS_PADRAO).split(' · ').slice(1).join(' · ')}`,
+    );
+    expect(resumoEscolhas({ ...ESCOLHAS_PADRAO, dias: [] })).toMatch(/^nenhum dia marcado · /);
+    expect(
+      resumoEscolhas({
+        ...ESCOLHAS_PADRAO,
+        aquecimento: { ...ESCOLHAS_PADRAO.aquecimento, ativo: false },
+      }),
+    ).toMatch(/sem aquecimento$/);
   });
 });

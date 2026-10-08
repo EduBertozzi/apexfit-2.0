@@ -1,7 +1,8 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDietaStore } from '@/features/dieta/store';
 import {
@@ -12,7 +13,7 @@ import {
 } from '@/features/ia/textos';
 import { usePerfilStore } from '@/features/perfil/store';
 import { MontadorSemana } from '@/features/treinos/components/MontadorSemana';
-import { textoBotaoGerar } from '@/features/treinos/montadorIa';
+import { resumoEscolhas, textoBotaoGerar } from '@/features/treinos/montadorIa';
 import { useTreinosIaStore } from '@/features/treinos/storeIa';
 import { espaco, raio } from '@/shared/theme/tokens';
 import { useCategorias, useCores } from '@/shared/theme/useCores';
@@ -48,6 +49,8 @@ export default function Ia() {
   const ultima = useTreinosIaStore((state) => state.ultima);
   // "pronto" só aparece depois de gerar nesta visita à tela
   const [pronto, setPronto] = useState(false);
+  // O montador é grande: abre no primeiro uso e começa fechado depois de já ter gerado
+  const [montadorAberto, setMontadorAberto] = useState(() => !ultima);
 
   const plano = useDietaStore((state) => state.plano);
   const origemDieta = useDietaStore((state) => state.origem);
@@ -76,12 +79,33 @@ export default function Ia() {
 
       <Cartao>
         <Selo icone="brain" texto="treino com IA" cor={categorias.fundo.aquecimento} />
-        <Texto variante="subtitulo" accessibilityRole="header">
-          monte sua semana
-        </Texto>
-        <Texto secundario>escolha os dias e o que treinar em cada um.</Texto>
+        <Pressable
+          onPress={() => setMontadorAberto((aberto) => !aberto)}
+          accessibilityRole="button"
+          accessibilityLabel="monte sua semana"
+          accessibilityHint={montadorAberto ? 'fecha as escolhas' : 'abre as escolhas'}
+          accessibilityState={{ expanded: montadorAberto }}
+          hitSlop={4}
+          style={({ pressed }) => [estilos.cabecalhoMontador, pressed && { opacity: 0.75 }]}
+        >
+          <View style={estilos.textosMontador}>
+            <Texto variante="subtitulo">monte sua semana</Texto>
+            <Texto secundario>
+              {montadorAberto
+                ? 'escolha os dias e o que treinar em cada um.'
+                : resumoEscolhas(escolhas)}
+            </Texto>
+          </View>
+          <View style={[estilos.seta, { backgroundColor: c.superficieSecundaria }]}>
+            <Ionicons
+              name={montadorAberto ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={c.texto}
+            />
+          </View>
+        </Pressable>
 
-        <MontadorSemana />
+        {montadorAberto ? <MontadorSemana /> : null}
 
         <Botao
           titulo={textoBotaoGerar(escolhas)}
@@ -170,6 +194,22 @@ export default function Ia() {
 }
 
 const estilos = StyleSheet.create({
+  cabecalhoMontador: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.md,
+  },
+  textosMontador: {
+    flex: 1,
+    gap: espaco.xs,
+  },
+  seta: {
+    width: 40,
+    height: 40,
+    borderRadius: raio.total,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   selo: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
