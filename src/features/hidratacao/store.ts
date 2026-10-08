@@ -9,6 +9,7 @@ import {
   desfazerUltimaPorcao,
   limparHistoricoAntigo,
   totalDoDia,
+  ultimaPorcao,
   type RegistrosPorDia,
 } from './logica';
 
@@ -16,7 +17,8 @@ type HidratacaoState = {
   registros: RegistrosPorDia;
   /** Adiciona uma porção no dia informado (padrão: hoje). Retorna o total antes e depois. */
   adicionar: (ml: number, data?: Date) => { antesMl: number; depoisMl: number };
-  desfazer: (data?: Date) => void;
+  /** Tira a última porção do dia. Retorna quanto saiu (`null` se não tinha nada) e o total depois. */
+  desfazer: (data?: Date) => { removidoMl: number | null; depoisMl: number };
   apagarTudo: () => void;
 };
 
@@ -38,8 +40,12 @@ export const useHidratacaoStore = create<HidratacaoState>()(
 
       desfazer: (data = new Date()) => {
         const dia = chaveDoDia(data);
+        const removidoMl = ultimaPorcao(get().registros[dia]);
+        const registros = desfazerUltimaPorcao(get().registros, dia);
 
-        set({ registros: desfazerUltimaPorcao(get().registros, dia) });
+        set({ registros });
+
+        return { removidoMl, depoisMl: totalDoDia(registros[dia]) };
       },
 
       apagarTudo: () => set({ registros: {} }),
@@ -53,7 +59,7 @@ export const useHidratacaoStore = create<HidratacaoState>()(
   ),
 );
 
-/** Hook para a tela: total de hoje e se dá para desfazer. */
+/** Hook para a tela: total de hoje, se dá para desfazer e quanto o desfazer tira. */
 export function useAguaDoDia(data: Date = new Date()) {
   const dia = chaveDoDia(data);
   const porcoes = useHidratacaoStore((state) => state.registros[dia]);
@@ -61,5 +67,6 @@ export function useAguaDoDia(data: Date = new Date()) {
   return {
     totalMl: totalDoDia(porcoes),
     podeDesfazer: (porcoes?.length ?? 0) > 0,
+    ultimaPorcaoMl: ultimaPorcao(porcoes),
   };
 }

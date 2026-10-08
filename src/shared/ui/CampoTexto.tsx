@@ -1,8 +1,8 @@
 import { forwardRef, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
-import { espaco, fonte, raio } from '../theme/tokens';
-import { useCores } from '../theme/useCores';
+import { borda, espaco, familia, fonte, raio } from '../theme/tokens';
+import { useCores, useEsquema } from '../theme/useCores';
 import { Texto } from './Texto';
 
 type Props = Omit<TextInputProps, 'style'> & {
@@ -15,24 +15,29 @@ type Props = Omit<TextInputProps, 'style'> & {
 };
 
 /**
- * Campo com rótulo SEMPRE visível (na v1 o texto sumia ao digitar porque era só placeholder),
- * mensagem de erro embaixo do próprio campo e borda que muda no foco.
+ * Campo preenchido e arredondado, com rótulo SEMPRE visível em cima
+ * (na v1 o texto sumia ao digitar porque era só placeholder).
+ * O fundo é `superficieSecundaria` com um contorno discreto, para o campo
+ * aparecer tanto sobre o card quanto sobre o fundo da tela. No foco ganha um
+ * anel (menta no escuro, texto no claro) e, com erro, anel vermelho e a
+ * mensagem logo embaixo.
  */
 export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
   { rotulo, erro, dica, sufixo, opcional = false, onFocus, onBlur, multiline, ...props },
   ref,
 ) {
   const c = useCores();
+  const escuro = useEsquema() === 'escuro';
   const [focado, setFocado] = useState(false);
 
-  const corBorda = erro ? c.erro : focado ? c.primaria : c.borda;
+  const corAnel = erro ? c.erro : focado ? (escuro ? c.destaque : c.texto) : c.bordaCampo;
 
   return (
     <View style={estilos.container}>
-      <Texto variante="legenda" style={estilos.rotulo}>
+      <Texto variante="rotulo" secundario style={estilos.rotulo}>
         {rotulo}
         {opcional ? (
-          <Texto variante="legenda" secundario>
+          <Texto variante="rotulo" secundario>
             {'  (opcional)'}
           </Texto>
         ) : null}
@@ -41,8 +46,7 @@ export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
       <View
         style={[
           estilos.caixa,
-          { borderColor: corBorda, backgroundColor: c.superficie },
-          focado && estilos.caixaFocada,
+          { borderColor: corAnel, backgroundColor: c.superficieSecundaria },
           multiline && estilos.caixaMultilinha,
         ]}
       >
@@ -51,6 +55,8 @@ export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
           accessibilityLabel={rotulo}
           accessibilityHint={erro ?? dica}
           placeholderTextColor={c.textoSecundario}
+          selectionColor={escuro ? c.destaque : c.texto}
+          cursorColor={escuro ? c.destaque : c.texto}
           multiline={multiline}
           style={[estilos.input, { color: c.texto }, multiline && estilos.inputMultilinha]}
           onFocus={(evento) => {
@@ -71,11 +77,15 @@ export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
       </View>
 
       {erro ? (
-        <Texto variante="legenda" style={{ color: c.erro }} accessibilityLiveRegion="polite">
+        <Texto
+          variante="legenda"
+          style={[estilos.mensagem, { color: c.erro }]}
+          accessibilityLiveRegion="polite"
+        >
           {erro}
         </Texto>
       ) : dica ? (
-        <Texto variante="legenda" secundario>
+        <Texto variante="legenda" secundario style={estilos.mensagem}>
           {dica}
         </Texto>
       ) : null}
@@ -85,22 +95,20 @@ export const CampoTexto = forwardRef<TextInput, Props>(function CampoTexto(
 
 const estilos = StyleSheet.create({
   container: {
-    gap: espaco.xs,
+    gap: espaco.sm,
   },
   rotulo: {
-    fontWeight: '600',
+    paddingHorizontal: espaco.xs,
   },
   caixa: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 48,
-    borderWidth: 1,
+    minHeight: 56,
+    // Borda sempre com a mesma largura (discreta no repouso) para o campo não "pular" no foco
+    borderWidth: borda.grossa,
     borderRadius: raio.md,
-    paddingHorizontal: espaco.md,
-  },
-  caixaFocada: {
-    borderWidth: 2,
-    paddingHorizontal: espaco.md - 1,
+    borderCurve: 'continuous',
+    paddingHorizontal: espaco.md + 2,
   },
   caixaMultilinha: {
     alignItems: 'flex-start',
@@ -108,16 +116,20 @@ const estilos = StyleSheet.create({
   },
   input: {
     flex: 1,
+    fontFamily: familia.corpo,
     fontSize: fonte.corpo,
     paddingVertical: espaco.sm,
-    // No navegador, tira o contorno padrão: o foco já aparece na borda da caixa
+    // No navegador, tira o contorno padrão: o foco já aparece no anel da caixa
     ...Platform.select({ web: { outlineWidth: 0 } }),
   },
   inputMultilinha: {
-    minHeight: 88,
+    minHeight: 96,
     textAlignVertical: 'top',
   },
   sufixo: {
     marginLeft: espaco.sm,
+  },
+  mensagem: {
+    paddingHorizontal: espaco.xs,
   },
 });

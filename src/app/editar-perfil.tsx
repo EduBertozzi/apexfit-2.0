@@ -23,7 +23,7 @@ export default function EditarPerfil() {
     <Tela bordas={['bottom']}>
       <FormularioPerfil
         valoresIniciais={perfilParaFormulario(perfil)}
-        textoBotao="Salvar alterações"
+        textoBotao="salvar alterações"
         onSalvar={salvar}
       />
     </Tela>

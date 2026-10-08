@@ -1,10 +1,27 @@
 import { useColorScheme } from 'react-native';
 
-import { cores, type Cores } from './tokens';
+import { resolverEsquema, type Esquema } from '@/features/ajustes/logica';
+import { useAjustesStore } from '@/features/ajustes/store';
 
-/** Devolve a paleta certa para o modo claro ou escuro do aparelho. */
+import { categorias, cores, type Cores, type CorCategoria } from './tokens';
+
+/** "claro" ou "escuro": a escolha em Ajustes, ou o modo do celular se for automático. */
+export function useEsquema(): Esquema {
+  const sistema = useColorScheme();
+  const preferencia = useAjustesStore((state) => state.tema);
+
+  return resolverEsquema(preferencia, sistema);
+}
+
+/** Devolve a paleta certa para o tema atual. */
 export function useCores(): Cores {
-  const esquema = useColorScheme();
+  return useEsquema() === 'escuro' ? cores.escuro : cores.claro;
+}
 
-  return esquema === 'dark' ? cores.escuro : cores.claro;
+/** Cores por grupo muscular: `texto` para rótulos e ícones, `fundo` para pílulas com texto escuro. */
+export function useCategorias(): {
+  texto: Record<CorCategoria, string>;
+  fundo: Record<CorCategoria, string>;
+} {
+  return useEsquema() === 'escuro' ? categorias.escuro : categorias.claro;
 }

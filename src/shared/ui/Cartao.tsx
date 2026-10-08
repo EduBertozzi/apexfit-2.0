@@ -1,23 +1,48 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { espaco, raio } from '../theme/tokens';
+import { borda, espaco, raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
 import { Texto } from './Texto';
+
+/**
+ * Card "bento": sem borda, cantos bem arredondados.
+ * - padrao: fundo de superfície
+ * - tracejado: para o que ainda não existe ("em breve")
+ * - heroi: bloco escuro de destaque (escuro nos dois temas). Dentro dele, use `textoHeroi*`
+ */
+type Variante = 'padrao' | 'tracejado' | 'heroi';
 
 type Props = {
   titulo?: string;
   children: ReactNode;
-  style?: ViewStyle;
+  variante?: Variante;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function Cartao({ titulo, children, style }: Props) {
+export function Cartao({ titulo, children, variante = 'padrao', style }: Props) {
   const c = useCores();
 
+  const aparencia = {
+    padrao: { backgroundColor: c.superficie },
+    tracejado: {
+      backgroundColor: 'transparent',
+      borderColor: c.textoSecundario,
+      borderStyle: 'dashed',
+      borderWidth: borda.grossa,
+    },
+    heroi: { backgroundColor: c.heroi },
+  }[variante] as ViewStyle;
+
   return (
-    <View style={[estilos.cartao, { backgroundColor: c.superficie, borderColor: c.borda }, style]}>
+    <View style={[estilos.cartao, aparencia, style]}>
       {titulo ? (
-        <Texto variante="subtitulo" accessibilityRole="header">
+        <Texto
+          variante="rotulo"
+          secundario={variante !== 'heroi'}
+          style={variante === 'heroi' && { color: c.textoHeroi }}
+          accessibilityRole="header"
+        >
           {titulo}
         </Texto>
       ) : null}
@@ -29,8 +54,8 @@ export function Cartao({ titulo, children, style }: Props) {
 const estilos = StyleSheet.create({
   cartao: {
     borderRadius: raio.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: espaco.md,
+    borderCurve: 'continuous',
+    padding: espaco.lg - 4,
     gap: espaco.sm,
   },
 });

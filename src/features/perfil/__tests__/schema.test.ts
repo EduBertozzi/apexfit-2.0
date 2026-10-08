@@ -12,6 +12,9 @@ const VALIDO: FormularioPerfilValores = {
   pesoKg: '70,5',
   percentualGordura: '',
   restricoes: '',
+  sexo: 'masculino',
+  nivelAtividade: 'moderado',
+  objetivo: 'ganhar',
 };
 
 // Atalho: valida e devolve a mensagem de erro de um campo (ou undefined)
@@ -36,6 +39,9 @@ describe('perfilSchema', () => {
       pesoKg: 70.5,
       percentualGordura: undefined,
       restricoes: undefined,
+      sexo: 'masculino',
+      nivelAtividade: 'moderado',
+      objetivo: 'ganhar',
     });
   });
 
@@ -46,32 +52,40 @@ describe('perfilSchema', () => {
 
     const camposComErro = resultado.error?.issues.map((issue) => issue.path[0]);
 
-    expect(camposComErro).toEqual(['nome', 'idade', 'alturaCm', 'pesoKg']);
+    expect(camposComErro).toEqual([
+      'nome',
+      'idade',
+      'sexo',
+      'alturaCm',
+      'pesoKg',
+      'nivelAtividade',
+      'objetivo',
+    ]);
   });
 
   describe('nome', () => {
     it('recusa só espaços', () => {
-      expect(erroDe('nome', '   ')).toBe('Informe seu nome');
+      expect(erroDe('nome', '   ')).toBe('informe seu nome');
     });
   });
 
   describe('idade', () => {
     it('recusa decimal', () => {
-      expect(erroDe('idade', '17,5')).toBe('Digite um número inteiro, ex: 17');
+      expect(erroDe('idade', '17,5')).toBe('digite um número inteiro, ex: 17');
     });
 
     it('recusa fora da faixa', () => {
-      expect(erroDe('idade', '8')).toBe('Deve estar entre 13 e 100 anos');
+      expect(erroDe('idade', '8')).toBe('deve estar entre 13 e 100 anos');
     });
   });
 
   describe('altura', () => {
     it('avisa quando a pessoa digita em metros', () => {
-      expect(erroDe('alturaCm', '1,75')).toBe('Deve estar entre 100 e 250 cm');
+      expect(erroDe('alturaCm', '1,75')).toBe('deve estar entre 100 e 250 cm');
     });
 
     it('recusa texto', () => {
-      expect(erroDe('alturaCm', 'alto')).toBe('Digite um número, ex: 175');
+      expect(erroDe('alturaCm', 'alto')).toBe('digite um número, ex: 175');
     });
 
     it('aceita os limites exatos', () => {
@@ -82,7 +96,7 @@ describe('perfilSchema', () => {
 
   describe('peso', () => {
     it('recusa ponto sozinho (fechava o app na v1)', () => {
-      expect(erroDe('pesoKg', '.')).toBe('Digite um número, ex: 70,5');
+      expect(erroDe('pesoKg', '.')).toBe('digite um número, ex: 70,5');
     });
   });
 
@@ -92,7 +106,7 @@ describe('perfilSchema', () => {
     });
 
     it('valida quando preenchido', () => {
-      expect(erroDe('percentualGordura', '90')).toBe('Deve estar entre 3 e 60 %');
+      expect(erroDe('percentualGordura', '90')).toBe('deve estar entre 3 e 60 %');
     });
 
     it('converte quando válido', () => {

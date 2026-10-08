@@ -35,7 +35,8 @@ const estilos = StyleSheet.create({
   },
   conteudo: {
     padding: espaco.md,
-    paddingBottom: espaco.xl,
+    // Espaço para a barra de abas flutuante não cobrir o fim da tela
+    paddingBottom: 120,
   },
   limiteLargura: {
     width: '100%',

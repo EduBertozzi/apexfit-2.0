@@ -3,6 +3,9 @@ import { diasEntre } from '@/shared/lib/data';
 /** Copos rápidos mostrados na tela. */
 export const PORCOES_ML = [250, 500] as const;
 
+/** Um toque no card de água da tela inicial soma um copo deste tamanho. */
+export const PORCAO_RAPIDA_ML = 250;
+
 /** Quantos dias de histórico guardamos no aparelho. */
 export const DIAS_DE_HISTORICO = 90;
 
@@ -11,6 +14,11 @@ export const DIAS_DE_HISTORICO = 90;
  * Guardamos cada porção (e não só o total) para o "desfazer" saber o que remover.
  */
 export type RegistrosPorDia = Record<string, number[]>;
+
+/** A última porção do dia (a que o "desfazer" tira), ou `null` se não tem nenhuma. */
+export function ultimaPorcao(porcoes: readonly number[] | undefined): number | null {
+  return porcoes && porcoes.length > 0 ? porcoes[porcoes.length - 1] : null;
+}
 
 export function totalDoDia(porcoes: readonly number[] | undefined): number {
   if (!porcoes) {

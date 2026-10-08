@@ -1,20 +1,62 @@
+import {
+  Lexend_400Regular,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 
+import { useAjustesStore } from '@/features/ajustes/store';
+import { configurarExibicaoComAppAberto } from '@/features/lembretes/notificacoes';
 import { usePerfilStore } from '@/features/perfil/store';
 import { useDadosCarregados } from '@/hooks/useDadosCarregados';
-import { useCores } from '@/shared/theme/useCores';
+import { raio } from '@/shared/theme/tokens';
+import { useCores, useEsquema } from '@/shared/theme/useCores';
+import { CabecalhoPilha } from '@/shared/ui/CabecalhoPilha';
+import { DialogoConfirmacao } from '@/shared/ui/DialogoConfirmacao';
 
 SplashScreen.preventAutoHideAsync();
 
+// Lembrete de água que chega com o app aberto também aparece na tela
+configurarExibicaoComAppAberto();
+
+// Os nomes das chaves viram o fontFamily (ver `familia` em theme/tokens.ts)
+const FONTES = {
+  Lexend_400Regular,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_700Bold,
+};
+
 export default function RootLayout() {
-  const carregado = useDadosCarregados();
+  const dadosCarregados = useDadosCarregados();
+  const [fontesCarregadas, erroFontes] = useFonts(FONTES);
+  // Se a fonte falhar, o app abre com a fonte do sistema em vez de travar na splash
+  const carregado = dadosCarregados && (fontesCarregadas || erroFontes !== null);
   const temPerfil = usePerfilStore((state) => state.perfil !== null);
-  const esquema = useColorScheme();
+  const preferenciaTema = useAjustesStore((state) => state.tema);
+  const esquema = useEsquema();
   const c = useCores();
+
+  // Faz teclado, alertas e seletores nativos seguirem o tema escolhido em Ajustes
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+
+    Appearance.setColorScheme(
+      preferenciaTema === 'sistema'
+        ? 'unspecified'
+        : preferenciaTema === 'claro'
+          ? 'light'
+          : 'dark',
+    );
+  }, [preferenciaTema]);
 
   useEffect(() => {
     if (carregado) {
@@ -27,7 +69,7 @@ export default function RootLayout() {
   }
 
   // Cores da navegação (header, abas) vindas dos nossos tokens
-  const base = esquema === 'dark' ? DarkTheme : DefaultTheme;
+  const base = esquema === 'escuro' ? DarkTheme : DefaultTheme;
   const temaNavegacao = {
     ...base,
     colors: {
@@ -42,8 +84,16 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={temaNavegacao}>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <StatusBar style={esquema === 'escuro' ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          // Cabeçalho próprio, igual nas 3 plataformas: voltar redondo e título
+          // centralizado com folga (o nativo do Android colava o título no botão)
+          header: (props) => <CabecalhoPilha {...props} />,
+          contentStyle: { backgroundColor: c.fundo },
+        }}
+      >
         {/* Sem perfil: só o onboarding existe */}
         <Stack.Protected guard={!temPerfil}>
           <Stack.Screen name="onboarding" />
@@ -54,10 +104,72 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
             name="editar-perfil"
-            options={{ presentation: 'modal', headerShown: true, title: 'Editar perfil' }}
+            options={{ presentation: 'modal', headerShown: true, title: 'editar perfil' }}
+          />
+          <Stack.Screen
+            name="treinos"
+            options={{ headerShown: true, title: 'treinos', headerBackTitle: 'voltar' }}
+          />
+          <Stack.Screen
+            name="perfil"
+            options={{ headerShown: true, title: 'perfil', headerBackTitle: 'início' }}
+          />
+          <Stack.Screen name="coach" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="dieta"
+            options={{ headerShown: true, title: 'sua dieta', headerBackTitle: 'início' }}
+          />
+          <Stack.Screen
+            name="agua"
+            options={{ headerShown: true, title: 'água', headerBackTitle: 'início' }}
+          />
+          <Stack.Screen
+            name="sequencia"
+            options={{ headerShown: true, title: 'sequência', headerBackTitle: 'início' }}
+          />
+          <Stack.Screen
+            name="peso"
+            options={{ headerShown: true, title: 'peso', headerBackTitle: 'perfil' }}
+          />
+          <Stack.Screen
+            name="treino/[id]"
+            options={{ headerShown: true, title: 'editar treino', headerBackTitle: 'treinos' }}
+          />
+          <Stack.Screen
+            name="treino/adicionar"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+              sheetAllowedDetents: [0.75, 1],
+              sheetCornerRadius: raio.lg,
+              contentStyle: { backgroundColor: c.superficie },
+            }}
+          />
+          <Stack.Screen
+            name="treino/semana"
+            options={{ headerShown: true, title: 'minha semana', headerBackTitle: 'voltar' }}
+          />
+          <Stack.Screen
+            name="treino/escolher-dia"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+              sheetAllowedDetents: [0.6, 1],
+              sheetCornerRadius: raio.lg,
+              contentStyle: { backgroundColor: c.superficie },
+            }}
+          />
+          <Stack.Screen
+            name="treino/sessao"
+            options={{ headerShown: true, title: 'treino de hoje', headerBackTitle: 'voltar' }}
+          />
+          <Stack.Screen
+            name="treino/modelos"
+            options={{ headerShown: true, title: 'modelos prontos', headerBackTitle: 'treinos' }}
           />
         </Stack.Protected>
       </Stack>
+      <DialogoConfirmacao />
     </ThemeProvider>
   );
 }

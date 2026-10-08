@@ -1,6 +1,14 @@
+export { AnelProgresso } from './AnelProgresso';
 export { BarraProgresso } from './BarraProgresso';
 export { Botao } from './Botao';
 export { CampoTexto } from './CampoTexto';
 export { Cartao } from './Cartao';
+export { Contador } from './Contador';
+export { DialogoConfirmacao } from './DialogoConfirmacao';
+export { Interruptor } from './Interruptor';
+export { Logo } from './Logo';
+export { Marcado } from './Marcado';
+export { Opcoes, type Opcao } from './Opcoes';
+export { Secao } from './Secao';
 export { Tela } from './Tela';
 export { Texto } from './Texto';

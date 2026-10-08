@@ -1,9 +1,16 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import type { ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
-import { espaco, fonte, raio } from '../theme/tokens';
+import { borda, espaco, familia, raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
 
-type Variante = 'primario' | 'secundario' | 'perigo' | 'texto';
+/**
+ * - primario: ação principal da tela
+ * - destaque: fundo menta (ações rápidas, ex: +250 ml)
+ * - heroi: contorno claro, para usar dentro do cartão herói (fundo escuro)
+ */
+type Variante = 'primario' | 'destaque' | 'secundario' | 'heroi' | 'perigo' | 'texto';
 
 type Props = {
   titulo: string;
@@ -13,6 +20,8 @@ type Props = {
   carregando?: boolean;
   /** Texto lido pelo leitor de tela, quando o título sozinho não explica (ex: "+250 ml"). */
   descricaoAcessivel?: string;
+  /** Mostra só este ícone; o `titulo` vira o texto do leitor de tela. */
+  icone?: ComponentProps<typeof Ionicons>['name'];
 };
 
 export function Botao({
@@ -22,23 +31,30 @@ export function Botao({
   desabilitado = false,
   carregando = false,
   descricaoAcessivel,
+  icone,
 }: Props) {
   const c = useCores();
   const inativo = desabilitado || carregando;
 
   const fundo = {
     primario: c.primaria,
+    destaque: c.destaque,
     secundario: c.primariaSuave,
+    heroi: 'transparent',
     perigo: 'transparent',
     texto: 'transparent',
   }[variante];
 
   const corTexto = {
     primario: c.textoSobrePrimaria,
-    secundario: c.primaria,
+    destaque: c.textoSobreDestaque,
+    secundario: c.texto,
+    heroi: c.textoHeroi,
     perigo: c.erro,
-    texto: c.primaria,
+    texto: c.texto,
   }[variante];
+
+  const corBorda = { heroi: c.bordaHeroi, perigo: c.erro }[variante as 'heroi' | 'perigo'];
 
   return (
     <Pressable
@@ -50,15 +66,25 @@ export function Botao({
       style={({ pressed }) => [
         estilos.base,
         { backgroundColor: fundo },
-        variante === 'perigo' && { borderWidth: 1, borderColor: c.erro },
+        corBorda && { borderWidth: borda.grossa, borderColor: corBorda },
         pressed && { opacity: 0.75 },
         inativo && { opacity: 0.45 },
       ]}
     >
       {carregando ? (
         <ActivityIndicator color={corTexto} />
+      ) : icone ? (
+        <Ionicons name={icone} size={24} color={corTexto} />
       ) : (
-        <Text style={[estilos.titulo, { color: corTexto }]}>{titulo}</Text>
+        <Text
+          style={[
+            estilos.titulo,
+            variante === 'texto' && estilos.tituloSublinhado,
+            { color: corTexto },
+          ]}
+        >
+          {titulo}
+        </Text>
       )}
     </Pressable>
   );
@@ -66,14 +92,17 @@ export function Botao({
 
 const estilos = StyleSheet.create({
   base: {
-    minHeight: 48,
+    minHeight: 52,
     paddingHorizontal: espaco.lg,
-    borderRadius: raio.md,
+    borderRadius: raio.total,
     alignItems: 'center',
     justifyContent: 'center',
   },
   titulo: {
-    fontSize: fonte.corpo,
-    fontWeight: '700',
+    fontFamily: familia.displayLeve,
+    fontSize: 17,
+  },
+  tituloSublinhado: {
+    textDecorationLine: 'underline',
   },
 });

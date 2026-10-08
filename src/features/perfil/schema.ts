@@ -2,7 +2,17 @@ import { z } from 'zod';
 
 import { paraDecimal, paraInteiro } from '@/shared/lib/numero';
 
-import type { Perfil } from './types';
+import type { NivelAtividade, Objetivo, Perfil, Sexo } from './types';
+
+export const SEXOS = ['masculino', 'feminino'] as const satisfies readonly Sexo[];
+export const NIVEIS_ATIVIDADE = [
+  'sedentario',
+  'leve',
+  'moderado',
+  'alto',
+  'atleta',
+] as const satisfies readonly NivelAtividade[];
+export const OBJETIVOS = ['perder', 'manter', 'ganhar'] as const satisfies readonly Objetivo[];
 
 // Limites aceitos. Ficam exportados para os testes e as telas usarem os mesmos números.
 export const LIMITES = {
@@ -30,7 +40,7 @@ type OpcoesNumero = {
 function campoNumerico(opcoes: OpcoesNumero) {
   return z.string().transform((texto, ctx) => {
     if (texto.trim() === '') {
-      ctx.addIssue({ code: 'custom', message: `Informe ${opcoes.rotulo}` });
+      ctx.addIssue({ code: 'custom', message: `informe ${opcoes.rotulo}` });
       return z.NEVER;
     }
 
@@ -38,14 +48,14 @@ function campoNumerico(opcoes: OpcoesNumero) {
 
     if (valor === null) {
       const formato = opcoes.inteiro ? 'um número inteiro' : 'um número';
-      ctx.addIssue({ code: 'custom', message: `Digite ${formato}, ex: ${opcoes.exemplo}` });
+      ctx.addIssue({ code: 'custom', message: `digite ${formato}, ex: ${opcoes.exemplo}` });
       return z.NEVER;
     }
 
     if (valor < opcoes.min || valor > opcoes.max) {
       ctx.addIssue({
         code: 'custom',
-        message: `Deve estar entre ${opcoes.min} e ${opcoes.max} ${opcoes.unidade}`,
+        message: `deve estar entre ${opcoes.min} e ${opcoes.max} ${opcoes.unidade}`,
       });
       return z.NEVER;
     }
@@ -74,6 +84,18 @@ function campoNumericoOpcional(opcoes: OpcoesNumero) {
   });
 }
 
+/** Campo de múltipla escolha: o formulário guarda '' até o usuário tocar numa opção. */
+function campoEscolha<T extends string>(valores: readonly T[], mensagem: string) {
+  return z.string().transform((texto, ctx) => {
+    if (!(valores as readonly string[]).includes(texto)) {
+      ctx.addIssue({ code: 'custom', message: mensagem });
+      return z.NEVER;
+    }
+
+    return texto as T;
+  });
+}
+
 /**
  * Regras do formulário de perfil.
  * Entrada: textos digitados. Saída: um `Perfil` com números de verdade.
@@ -82,8 +104,8 @@ export const perfilSchema = z.object({
   nome: z
     .string()
     .trim()
-    .min(LIMITES.nome.min, 'Informe seu nome')
-    .max(LIMITES.nome.max, `Use no máximo ${LIMITES.nome.max} caracteres`),
+    .min(LIMITES.nome.min, 'informe seu nome')
+    .max(LIMITES.nome.max, `use no máximo ${LIMITES.nome.max} caracteres`),
 
   idade: campoNumerico({
     rotulo: 'sua idade',
@@ -92,6 +114,8 @@ export const perfilSchema = z.object({
     inteiro: true,
     exemplo: '17',
   }),
+
+  sexo: campoEscolha(SEXOS, 'escolha uma opção'),
 
   alturaCm: campoNumerico({
     rotulo: 'sua altura',
@@ -117,8 +141,12 @@ export const perfilSchema = z.object({
   restricoes: z
     .string()
     .trim()
-    .max(LIMITES.restricoes.max, `Use no máximo ${LIMITES.restricoes.max} caracteres`)
+    .max(LIMITES.restricoes.max, `use no máximo ${LIMITES.restricoes.max} caracteres`)
     .transform((texto) => (texto === '' ? undefined : texto)),
+
+  nivelAtividade: campoEscolha(NIVEIS_ATIVIDADE, 'escolha seu nível de atividade'),
+
+  objetivo: campoEscolha(OBJETIVOS, 'escolha seu objetivo'),
 }) satisfies z.ZodType<Perfil, FormularioPerfilValores>;
 
 /** O que o formulário guarda enquanto o usuário digita (tudo texto). */
@@ -129,6 +157,9 @@ export type FormularioPerfilValores = {
   pesoKg: string;
   percentualGordura: string;
   restricoes: string;
+  sexo: string;
+  nivelAtividade: string;
+  objetivo: string;
 };
 
 export const FORMULARIO_VAZIO: FormularioPerfilValores = {
@@ -138,6 +169,9 @@ export const FORMULARIO_VAZIO: FormularioPerfilValores = {
   pesoKg: '',
   percentualGordura: '',
   restricoes: '',
+  sexo: '',
+  nivelAtividade: '',
+  objetivo: '',
 };
 
 /** Caminho inverso: transforma um perfil salvo em textos para preencher o formulário de edição. */
@@ -152,5 +186,8 @@ export function perfilParaFormulario(perfil: Perfil): FormularioPerfilValores {
     pesoKg: texto(perfil.pesoKg),
     percentualGordura: texto(perfil.percentualGordura),
     restricoes: perfil.restricoes ?? '',
+    sexo: perfil.sexo ?? '',
+    nivelAtividade: perfil.nivelAtividade ?? '',
+    objetivo: perfil.objetivo ?? '',
   };
 }
