@@ -38,7 +38,7 @@ export function SeletorDias({ dias, selecionado, onSelecionar }: Props) {
             onPress={() => onSelecionar(dia.dia)}
             accessibilityRole="tab"
             accessibilityState={{ selected: marcado }}
-            accessibilityLabel={`${dia.nome}${dia.hoje ? ', hoje' : ''}${dia.proprio ? ', plano só deste dia' : ''}`}
+            accessibilityLabel={`${dia.nome}${dia.hoje ? ', hoje' : ''}${dia.descanso ? ', dia de descanso' : dia.proprio ? ', plano só deste dia' : ''}`}
             testID={`dia-dieta-${dia.dia}`}
             style={({ pressed }) => [
               estilos.pilula,

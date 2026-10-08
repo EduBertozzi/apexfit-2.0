@@ -30,6 +30,8 @@ export const pedidoDietaSchema = z.object({
   dia: z.number().int().min(0).max(6).optional(),
   /** Treino marcado para o dia, se houver (ex: "Treino A, pernas"). Ajuda a IA a ajustar o dia. */
   treinoDoDia: z.string().max(120).optional(),
+  /** Plano para os dias de treino ou para os dias de descanso da semana. */
+  tipoDia: z.enum(['treino', 'descanso']).optional(),
   /** Opções da central de IA: refeições, estilo, o que tirar, orçamento, preparo e observações. */
   preferencias: preferenciasDietaSchema.optional(),
 });

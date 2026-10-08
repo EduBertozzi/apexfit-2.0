@@ -11,6 +11,7 @@ export async function gerarDieta({
   dia,
   treinoDoDia,
   preferencias,
+  tipoDia,
 }: PedidoDieta): Promise<PlanoDieta> {
   const resposta = await obterCliente().beta.messages.parse({
     model: MODELO_CLAUDE,
@@ -19,7 +20,10 @@ export async function gerarDieta({
     betas: [...FALLBACK.betas],
     system: SISTEMA_DIETA,
     messages: [
-      { role: 'user', content: montarPromptDieta(perfil, { dia, treinoDoDia, preferencias }) },
+      {
+        role: 'user',
+        content: montarPromptDieta(perfil, { dia, treinoDoDia, preferencias, tipoDia }),
+      },
     ],
     output_config: {
       effort: 'medium',

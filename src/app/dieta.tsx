@@ -27,6 +27,7 @@ export default function Dieta() {
   const perfil = usePerfilStore((state) => state.perfil);
   const padrao = useDietaStore((state) => state.plano);
   const porDia = useDietaStore((state) => state.porDia);
+  const diasDescanso = useDietaStore((state) => state.diasDescanso);
   const origem = useDietaStore((state) => state.origem);
   const gerandoAlgo = useDietaStore((state) => state.gerando);
   const diaGerando = useDietaStore((state) => state.diaGerando);
@@ -52,9 +53,13 @@ export default function Dieta() {
     <Tela bordas={['bottom']}>
       {padrao ? (
         <View style={estilos.semana}>
-          <SeletorDias dias={diasDoSeletor(semana, hoje)} selecionado={dia} onSelecionar={setDia} />
+          <SeletorDias
+            dias={diasDoSeletor(semana, hoje, diasDescanso)}
+            selecionado={dia}
+            onSelecionar={setDia}
+          />
           <Texto variante="legenda" secundario style={estilos.legenda}>
-            {legendaDoDia(semana, dia, hoje)}
+            {legendaDoDia(semana, dia, hoje, diasDescanso)}
           </Texto>
         </View>
       ) : null}

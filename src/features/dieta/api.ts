@@ -10,6 +10,7 @@ export type OpcoesPedidoDieta = {
   dia?: number;
   treinoDoDia?: string;
   preferencias?: PreferenciasDieta;
+  tipoDia?: 'treino' | 'descanso';
 };
 
 /**
@@ -30,6 +31,7 @@ export async function pedirDietaComProvedor(
     ...(opcoes.dia === undefined ? {} : { dia: opcoes.dia }),
     ...(opcoes.treinoDoDia ? { treinoDoDia: opcoes.treinoDoDia.slice(0, 120) } : {}),
     ...(opcoes.preferencias ? { preferencias: opcoes.preferencias } : {}),
+    ...(opcoes.tipoDia ? { tipoDia: opcoes.tipoDia } : {}),
   });
 
   if (!pedido.success) {

@@ -1,4 +1,5 @@
 import type { Perfil } from '@/features/perfil/types';
+import { useTreinosStore } from '@/features/treinos/store';
 
 import type { PlanoDieta } from '../contrato';
 import { PREFERENCIAS_DIETA_PADRAO } from '../preferencias';
@@ -46,6 +47,7 @@ beforeEach(() => {
     geradoEm: null,
     gerando: false,
     erro: null,
+    diasDescanso: [],
     preferencias: PREFERENCIAS_DIETA_PADRAO,
   });
 });
@@ -212,5 +214,73 @@ describe('opções da dieta', () => {
       sem: ['gluten'],
       observacoes: 'treino de manhã',
     });
+  });
+});
+
+describe('dia de treino e dia de descanso', () => {
+  const DESCANSO: PlanoDieta = { ...PLANO, resumo: 'Plano do descanso.' };
+
+  afterEach(() => {
+    useTreinosStore.setState({ treinos: [] });
+  });
+
+  it('com treinos em dias fixos, gera dois planos: o de descanso vai nos dias sem treino', async () => {
+    useTreinosStore.setState({
+      treinos: [
+        { id: 'a', nome: 'treino de segunda', exercicios: [], dias: [1] },
+        { id: 'b', nome: 'treino de quarta', exercicios: [], dias: [3, 5] },
+      ],
+    });
+    global.fetch = jest.fn().mockImplementation((_url: string, opcoes: { body: string }) => {
+      const { tipoDia } = JSON.parse(opcoes.body);
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ plano: tipoDia === 'descanso' ? DESCANSO : PLANO }),
+      });
+    });
+
+    await useDietaStore.getState().gerar(PERFIL);
+
+    const estado = useDietaStore.getState();
+    const tipos = (global.fetch as jest.Mock).mock.calls.map(
+      ([, opcoes]) => JSON.parse(opcoes.body).tipoDia,
+    );
+
+    expect(tipos.sort()).toEqual(['descanso', 'treino']);
+    expect(estado.plano?.resumo).toBe('Plano de manutenção.');
+    expect(Object.keys(estado.porDia).map(Number).sort()).toEqual([0, 2, 4, 6]);
+    expect(estado.porDia[2]?.resumo).toBe('Plano do descanso.');
+    expect(estado.diasDescanso.sort()).toEqual([0, 2, 4, 6]);
+  });
+
+  it('sem dias fixos (rodízio), um plano só para a semana', async () => {
+    useTreinosStore.setState({ treinos: [{ id: 'a', nome: 'treino A', exercicios: [] }] });
+    responder(200, { plano: PLANO });
+
+    await useDietaStore.getState().gerar(PERFIL);
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(useDietaStore.getState().porDia).toEqual({});
+    expect(useDietaStore.getState().diasDescanso).toEqual([]);
+  });
+
+  it('se só o de descanso falha, a semana fica com o de treino', async () => {
+    useTreinosStore.setState({
+      treinos: [{ id: 'a', nome: 'treino de segunda', exercicios: [], dias: [1] }],
+    });
+    global.fetch = jest
+      .fn()
+      .mockImplementation((_url: string, opcoes: { body: string }) =>
+        JSON.parse(opcoes.body).tipoDia === 'descanso'
+          ? Promise.resolve({ ok: false, status: 502, json: async () => ({ erro: 'falhou' }) })
+          : Promise.resolve({ ok: true, json: async () => ({ plano: PLANO }) }),
+      );
+
+    await useDietaStore.getState().gerar(PERFIL);
+
+    expect(useDietaStore.getState().plano).toEqual(PLANO);
+    expect(useDietaStore.getState().porDia).toEqual({});
+    expect(useDietaStore.getState().erro).toBeNull();
   });
 });

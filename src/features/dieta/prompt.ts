@@ -77,7 +77,16 @@ export type OpcoesPromptDieta = {
   treinoDoDia?: string;
   /** Opções escolhidas na central de IA (refeições, estilo, observações...). */
   preferencias?: PreferenciasDieta;
+  /** Plano dos dias de treino ou dos dias de descanso. */
+  tipoDia?: 'treino' | 'descanso';
 };
+
+const LINHA_TIPO_DIA = {
+  treino:
+    'Este é o plano dos meus dias de treino: concentre mais carboidrato nas refeições antes e depois do treino.',
+  descanso:
+    'Este é o plano dos meus dias de descanso: mantenha a proteína, tire carboidrato de perto do treino e use mais verduras e legumes. Use refeições diferentes das de um dia de treino.',
+} as const;
 
 /** Dados do usuário + metas calculadas. Vai como mensagem do usuário. */
 export function montarPromptDieta(perfil: Perfil, opcoes: OpcoesPromptDieta = {}): string {
@@ -94,7 +103,9 @@ export function montarPromptDieta(perfil: Perfil, opcoes: OpcoesPromptDieta = {}
   const linhas = [
     nomeDia
       ? `Monte meu plano alimentar de ${nomeDia} com base nestes dados. Ele vale só para esse dia da semana.`
-      : 'Monte meu plano alimentar com base nestes dados. Ele vale para todos os dias da semana.',
+      : opcoes.tipoDia
+        ? LINHA_TIPO_DIA[opcoes.tipoDia]
+        : 'Monte meu plano alimentar com base nestes dados. Ele vale para todos os dias da semana.',
     nomeDia && opcoes.treinoDoDia
       ? `Neste dia eu treino: ${opcoes.treinoDoDia}. Pense nas refeições antes e depois do treino.`
       : nomeDia

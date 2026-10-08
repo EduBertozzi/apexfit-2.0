@@ -135,26 +135,82 @@ export type DiaDoSeletor = {
   hoje: boolean;
   /** Tem plano próprio, diferente do padrão. */
   proprio: boolean;
+  /** O plano próprio é o do dia de descanso. */
+  descanso: boolean;
 };
 
 /** Os 7 botões do seletor de dias da tela de dieta, de segunda a domingo. */
-export function diasDoSeletor(semana: DietaSemana, hoje: number): DiaDoSeletor[] {
+export function diasDoSeletor(
+  semana: DietaSemana,
+  hoje: number,
+  diasDescanso: readonly number[] = [],
+): DiaDoSeletor[] {
   return ORDEM_DIAS.map((dia) => ({
     dia,
     sigla: SIGLAS[dia],
     nome: NOMES[dia],
     hoje: dia === hoje,
     proprio: temPlanoProprio(semana, dia),
+    descanso: temPlanoProprio(semana, dia) && diasDescanso.includes(dia),
   }));
 }
 
 /** Legenda do dia escolhido: "dieta de sexta, só deste dia" ou "dieta de sexta, igual à semana". */
-export function legendaDoDia(semana: DietaSemana, dia: number, hoje: number): string {
+export function legendaDoDia(
+  semana: DietaSemana,
+  dia: number,
+  hoje: number,
+  diasDescanso: readonly number[] = [],
+): string {
   const nome = dia === hoje ? `hoje, ${nomeDoDiaSemana(dia)}` : nomeDoDiaSemana(dia);
 
-  return temPlanoProprio(semana, dia)
-    ? `${nome}: plano só deste dia`
+  if (temPlanoProprio(semana, dia)) {
+    return diasDescanso.includes(dia)
+      ? `${nome}: plano do dia de descanso`
+      : `${nome}: plano só deste dia`;
+  }
+
+  return diasDescanso.length > 0
+    ? `${nome}: plano do dia de treino`
     : `${nome}: mesmo plano da semana`;
+}
+
+/**
+ * Dias sem treino marcado na semana (0 = domingo). Sem nenhum treino com dia
+ * fixo (rodízio), não dá para saber: nenhum dia é de descanso.
+ */
+export function diasDeDescanso(
+  diasDosTreinos: readonly (readonly number[] | undefined)[],
+): DiaSemana[] {
+  const comTreino = new Set(diasDosTreinos.flatMap((dias) => dias ?? []));
+
+  if (comTreino.size === 0) {
+    return [];
+  }
+
+  return ORDEM_DIAS.filter((dia) => !comTreino.has(dia));
+}
+
+/**
+ * Semana com dois planos: o de treino vale como padrão e o de descanso entra
+ * nos dias sem treino. Sem plano de descanso, é a semana toda com um plano só.
+ */
+export function semanaTreinoEDescanso(
+  treino: PlanoDieta,
+  descanso: PlanoDieta | null,
+  diasDescanso: readonly number[],
+): DietaSemana {
+  if (!descanso || diasDescanso.length === 0) {
+    return planoDaSemanaToda(treino);
+  }
+
+  const porDia: DietaPorDia = {};
+
+  for (const dia of diasDescanso.filter(ehDia)) {
+    porDia[dia] = descanso;
+  }
+
+  return { plano: treino, porDia };
 }
 
 type TreinoComDias = { nome: string; foco?: string; dias?: readonly number[] };

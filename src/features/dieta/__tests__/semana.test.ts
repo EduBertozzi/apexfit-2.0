@@ -2,12 +2,14 @@ import type { PlanoDieta } from '../contrato';
 import {
   aplicarNaSemana,
   definirDias,
+  diasDeDescanso,
   diasDoSeletor,
   diasPersonalizados,
   legendaDoDia,
   migrarDieta,
   planoDaSemanaToda,
   planoDoDia,
+  semanaTreinoEDescanso,
   tituloPlanoDoDia,
   treinoNoDia,
   voltarAoPadrao,
@@ -196,5 +198,29 @@ describe('migrarDieta', () => {
     const salvo = { plano: BASE, porDia: { 5: SEXTA } };
 
     expect(migrarDieta(salvo, 2)).toBe(salvo);
+  });
+});
+
+describe('treino e descanso', () => {
+  const PLANO_TREINO = plano('Arroz');
+
+  it('dias de descanso são os sem treino marcado; no rodízio, nenhum', () => {
+    expect(diasDeDescanso([[1, 3], [5], undefined])).toEqual([2, 4, 6, 0]);
+    expect(diasDeDescanso([undefined, []])).toEqual([]);
+  });
+
+  it('legenda diz se o dia segue o plano de treino ou o de descanso', () => {
+    const semana = { plano: PLANO_TREINO, porDia: { 0: PLANO_TREINO } };
+
+    expect(legendaDoDia(semana, 1, 3, [0])).toBe('segunda: plano do dia de treino');
+    expect(legendaDoDia(semana, 0, 0, [0])).toBe('hoje, domingo: plano do dia de descanso');
+    expect(legendaDoDia(semana, 1, 3)).toBe('segunda: mesmo plano da semana');
+  });
+
+  it('sem plano de descanso, a semana toda fica com o de treino', () => {
+    expect(semanaTreinoEDescanso(PLANO_TREINO, null, [0, 6])).toEqual({
+      plano: PLANO_TREINO,
+      porDia: {},
+    });
   });
 });
