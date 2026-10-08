@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { primeiroNome } from '@/features/perfil/calculos';
 import { usePerfilStore } from '@/features/perfil/store';
 import { confirmar } from '@/shared/lib/confirmar';
+import { useEspacoBarraAbas } from '@/shared/ui/BarraAbas';
 import { espaco, familia, fonte, raio } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
 import { Texto } from '@/shared/ui';
@@ -137,8 +138,12 @@ function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boo
   );
 }
 
-/** Tela do coach: barra própria com voltar, conversa em bolhas e campo em pílula. */
-export function ChatCoach() {
+/**
+ * Tela do coach: barra própria, conversa em bolhas e campo em pílula. Na aba
+ * (`naAba`) não tem voltar e o campo fica acima da barra de abas flutuante.
+ */
+export function ChatCoach({ naAba = false }: { naAba?: boolean }) {
+  const espacoBarra = useEspacoBarraAbas();
   const c = useCores();
   const perfil = usePerfilStore((state) => state.perfil);
   const mensagens = useCoachStore((state) => state.mensagens);
@@ -182,14 +187,22 @@ export function ChatCoach() {
   const podeEnviar = texto.trim() !== '' && !respondendo;
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={[estilos.raiz, { backgroundColor: c.fundo }]}>
+    <SafeAreaView
+      edges={naAba ? ['top'] : ['top', 'bottom']}
+      style={[estilos.raiz, { backgroundColor: c.fundo }]}
+    >
       <KeyboardAvoidingView
         style={estilos.raiz}
         // Android de ponta a ponta não encolhe a tela sozinho: o padding vale nos dois
         behavior="padding"
       >
         <View style={estilos.topo}>
-          <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={voltar} />
+          {naAba ? (
+            // Sem voltar na aba: o espaço mantém o título no centro
+            <View style={estilos.botaoRedondo} />
+          ) : (
+            <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={voltar} />
+          )}
           <Texto variante="subtitulo" accessibilityRole="header" style={estilos.tituloTopo}>
             coach
           </Texto>
@@ -250,7 +263,7 @@ export function ChatCoach() {
           ) : null}
         </ScrollView>
 
-        <View style={estilos.compositor}>
+        <View style={[estilos.compositor, naAba && { paddingBottom: espacoBarra || espaco.sm }]}>
           <View style={[estilos.pilula, { backgroundColor: c.superficie }]}>
             <TextInput
               value={texto}

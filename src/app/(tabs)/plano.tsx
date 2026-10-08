@@ -38,7 +38,7 @@ function Selo({ icone, texto, cor }: { icone: Icone; texto: string; cor: string 
   );
 }
 
-/** Central de IA (botão do cérebro): treinos montados pela IA, dieta e coach. */
+/** Aba "plano": a semana de treinos montada pela IA e a dieta. O coach tem a própria aba. */
 export default function Ia() {
   const c = useCores();
   const categorias = useCategorias();
@@ -78,7 +78,7 @@ export default function Ia() {
   return (
     <Tela>
       <Texto variante="titulo" accessibilityRole="header">
-        sua IA
+        seu plano
       </Texto>
 
       <Cartao>
@@ -211,16 +211,6 @@ export default function Ia() {
             onPress={() => void gerarDieta(perfil)}
           />
         </View>
-      </Cartao>
-
-      <Cartao>
-        <Selo icone="chat-processing" texto="coach" cor={categorias.fundo.costas} />
-        <Texto variante="subtitulo">converse sobre treino, dieta e rotina</Texto>
-        <Texto secundario>
-          peça para trocar um exercício ou uma refeição: o coach mostra a mudança e você decide se
-          aplica.
-        </Texto>
-        <Botao titulo="conversar" variante="secundario" onPress={() => router.push('/coach')} />
       </Cartao>
     </Tela>
   );

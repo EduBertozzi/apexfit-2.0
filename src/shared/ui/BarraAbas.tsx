@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { useKeyboardState } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
@@ -20,6 +21,20 @@ import { usePop } from './animacao';
 type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 export type IconeDaAba = (props: { cor: string; tamanho: number }) => ReactNode;
+
+/** Altura da pílula da barra: aba de 60 mais o respiro de cima e de baixo. */
+const ALTURA_PILULA = 60 + 6 * 2;
+
+/**
+ * Quanto uma tela de aba precisa reservar embaixo para o conteúdo não ficar
+ * atrás da barra flutuante (com o teclado aberto a barra some: nada a reservar).
+ */
+export function useEspacoBarraAbas(): number {
+  const { bottom } = useSafeAreaInsets();
+  const tecladoAberto = useKeyboardState((estado) => estado.isVisible);
+
+  return tecladoAberto ? 0 : ALTURA_PILULA + Math.max(bottom, espaco.md) + espaco.sm;
+}
 
 /** Altura do degradê acima da base da barra: o conteúdo some aos poucos antes de chegar nela. */
 const ALTURA_DEGRADE = 90;
@@ -120,6 +135,12 @@ export function BarraAbas({
   const vibrar = useVibrar();
   const [larguraBarra, setLarguraBarra] = useState(0);
   const medida = larguraBarra > 0;
+  // Com o teclado aberto (ex: chat do coach) a barra sai do caminho
+  const tecladoAberto = useKeyboardState((estado) => estado.isVisible);
+
+  if (tecladoAberto) {
+    return null;
+  }
 
   return (
     <View style={[estilos.envoltorio, { paddingBottom: respiroBaixo, pointerEvents: 'box-none' }]}>

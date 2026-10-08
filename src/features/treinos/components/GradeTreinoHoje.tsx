@@ -25,7 +25,7 @@ function ConviteTreino() {
       <CartaoToque
         rotuloAcessivel="pedir para a IA montar seu treino"
         dica="Abre a aba da IA"
-        onPress={() => router.push('/ia')}
+        onPress={() => router.push('/plano')}
         style={estilos.metade}
       >
         <MaterialCommunityIcons name="brain" size={28} color={c.texto} />

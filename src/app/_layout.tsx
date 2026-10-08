@@ -117,7 +117,6 @@ export default function RootLayout() {
               name="perfil"
               options={{ headerShown: true, title: 'perfil', headerBackTitle: 'início' }}
             />
-            <Stack.Screen name="coach" options={{ headerShown: false }} />
             <Stack.Screen
               name="dieta"
               options={{ headerShown: true, title: 'sua dieta', headerBackTitle: 'início' }}
