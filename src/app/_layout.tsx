@@ -150,6 +150,20 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="treino/semana"
+            options={{ headerShown: true, title: 'minha semana', headerBackTitle: 'voltar' }}
+          />
+          <Stack.Screen
+            name="treino/escolher-dia"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+              sheetAllowedDetents: [0.6, 1],
+              sheetCornerRadius: raio.lg,
+              contentStyle: { backgroundColor: c.superficie },
+            }}
+          />
+          <Stack.Screen
             name="treino/sessao"
             options={{ headerShown: true, title: 'treino de hoje', headerBackTitle: 'voltar' }}
           />

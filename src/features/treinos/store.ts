@@ -32,6 +32,13 @@ import {
 import { substituirTreinos } from './ia';
 import { moverExercicioNoGrupo, reordenarExercicioNoGrupo } from './montagem';
 import type { ModeloTreino } from './modelos';
+import {
+  atribuirDia,
+  distribuirAutomatico,
+  planoDaSemana,
+  resumoDoPlano,
+  semPlano,
+} from './planoSemana';
 import { diasDaFaixa, diasDaSemana, nomeDoDia, resumoDaSemana, sequenciaDeDias } from './semana';
 import type { DadosExercicio, DadosTreino, Sessao, Treino } from './types';
 import { visaoDoDia } from './visaoDoDia';
@@ -48,6 +55,10 @@ type TreinosState = {
   moverTreino: (id: string, direcao: Direcao) => void;
   /** Plano semanal: dias em que o treino acontece (0 = domingo). Vazio volta para o rodízio. */
   definirDias: (id: string, dias: number[]) => void;
+  /** Minha semana: dá o dia a um treino e tira dos outros (null = descanso). */
+  atribuirDia: (dia: number, treinoId: string | null) => void;
+  /** Minha semana: espalha os treinos pela semana no padrão (troca os dias atuais). */
+  distribuirAutomatico: () => void;
 
   adicionarExercicio: (treinoId: string, dados: DadosExercicio) => void;
   adicionarExercicios: (treinoId: string, dados: DadosExercicio[]) => void;
@@ -100,6 +111,10 @@ export const useTreinosStore = create<TreinosState>()(
       moverTreino: (id, direcao) => set({ treinos: moverTreino(get().treinos, id, direcao) }),
 
       definirDias: (id, dias) => set({ treinos: definirDias(get().treinos, id, dias) }),
+
+      atribuirDia: (dia, treinoId) => set({ treinos: atribuirDia(get().treinos, dia, treinoId) }),
+
+      distribuirAutomatico: () => set({ treinos: distribuirAutomatico(get().treinos) }),
 
       adicionarExercicio: (treinoId, dados) =>
         set({ treinos: adicionarExercicio(get().treinos, treinoId, dados) }),
@@ -207,5 +222,18 @@ export function useTreinoDoDia(data: Date = new Date()) {
   return {
     situacao: situacaoDoDia(treinos, sessoes, hoje),
     naSemana: treinosNaSemana(sessoes, hoje),
+  };
+}
+
+/** Tela "minha semana": as 7 linhas, o resumo e se ainda está no rodízio. */
+export function usePlanoDaSemana() {
+  const treinos = useTreinosStore((state) => state.treinos);
+  const plano = planoDaSemana(treinos);
+
+  return {
+    plano,
+    resumo: resumoDoPlano(plano),
+    semPlano: semPlano(treinos),
+    temTreinos: treinos.length > 0,
   };
 }

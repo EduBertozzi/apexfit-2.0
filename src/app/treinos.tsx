@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { CartaoMinhaSemana } from '@/features/treinos/components/CartaoMinhaSemana';
 import { HeroiTreinoHoje } from '@/features/treinos/components/HeroiTreinoHoje';
 import { ListaModelos } from '@/features/treinos/components/ListaModelos';
 import { ListaTreinos } from '@/features/treinos/components/ListaTreinos';
@@ -25,6 +26,7 @@ export default function Treinos() {
 
       {temTreinos ? (
         <>
+          <CartaoMinhaSemana />
           <HeroiTreinoHoje />
           <ListaTreinos />
           <View style={estilos.linha}>

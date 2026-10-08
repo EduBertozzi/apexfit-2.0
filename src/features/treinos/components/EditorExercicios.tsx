@@ -77,28 +77,41 @@ function PlanoSemanal({ treino }: { treino: Treino }) {
   const c = useCores();
 
   return (
-    <Pressable
-      onPress={() => abrirFolha(treino.id, { aba: 'plano' })}
-      accessibilityRole="button"
-      accessibilityLabel={`plano semanal: ${textoDiasAcessivel(treino.dias)}`}
-      accessibilityHint="Escolhe os dias da semana deste treino"
-      style={({ pressed }) => [
-        estilos.plano,
-        { backgroundColor: c.superficie },
-        pressed && { opacity: 0.75 },
-      ]}
-    >
-      <Ionicons name="calendar-outline" size={22} color={c.texto} />
-      <View style={estilos.textoPlano}>
-        <Texto variante="rotulo" secundario>
-          plano semanal
+    <View style={estilos.planoBloco}>
+      <Pressable
+        onPress={() => abrirFolha(treino.id, { aba: 'plano' })}
+        accessibilityRole="button"
+        accessibilityLabel={`plano semanal: ${textoDiasAcessivel(treino.dias)}`}
+        accessibilityHint="Escolhe os dias da semana deste treino"
+        style={({ pressed }) => [
+          estilos.plano,
+          { backgroundColor: c.superficie },
+          pressed && { opacity: 0.75 },
+        ]}
+      >
+        <Ionicons name="calendar-outline" size={22} color={c.texto} />
+        <View style={estilos.textoPlano}>
+          <Texto variante="rotulo" secundario>
+            plano semanal
+          </Texto>
+          <Texto variante="corpo" style={estilos.nome}>
+            {textoDias(treino.dias)}
+          </Texto>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={c.textoSecundario} />
+      </Pressable>
+      <Pressable
+        onPress={() => router.push('/treino/semana')}
+        accessibilityRole="link"
+        accessibilityHint="Abre o plano com o treino de cada dia"
+        hitSlop={espaco.sm}
+        style={({ pressed }) => [estilos.linkSemana, pressed && { opacity: 0.75 }]}
+      >
+        <Texto variante="rotulo" style={estilos.textoLink}>
+          ver a semana toda
         </Texto>
-        <Texto variante="corpo" style={estilos.nome}>
-          {textoDias(treino.dias)}
-        </Texto>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={c.textoSecundario} />
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
@@ -325,6 +338,19 @@ const estilos = StyleSheet.create({
   },
   textoPlano: {
     flex: 1,
+  },
+  planoBloco: {
+    gap: espaco.xs,
+  },
+  linkSemana: {
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: espaco.lg - 4,
+  },
+  textoLink: {
+    fontFamily: familia.corpoMedio,
+    textDecorationLine: 'underline',
   },
   bloco: {
     borderRadius: raio.lg,
