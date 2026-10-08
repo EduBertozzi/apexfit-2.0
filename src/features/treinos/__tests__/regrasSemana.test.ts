@@ -57,7 +57,7 @@ describe('montarSemanaPorRegras (modo offline)', () => {
     // Cardio fica no fim
     expect(segunda.exercicios.at(-1)?.grupo).toBe('cardio');
     // Dia só de cardio: 3 aparelhos diferentes, dividindo o tempo (nunca menos de 10 min)
-    const cardioDaSexta = exerciciosSemAquecimento(sexta);
+    const cardioDaSexta = sexta.exercicios.filter((e) => e.grupo !== 'aquecimento');
     expect(cardioDaSexta).toHaveLength(3);
     expect(cardioDaSexta.every((e) => e.grupo === 'cardio' && e.repeticoes === '10 min')).toBe(
       true,
