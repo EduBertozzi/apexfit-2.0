@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware';
 import type { PlanoDieta } from '@/features/dieta/contrato';
 import type { SlotRefeicao } from '@/features/dieta/mesclar';
 import { montarDietaPorRegras } from '@/features/dieta/regras';
+import { aplicarNaSemana, planoDoDia, type DietaSemana } from '@/features/dieta/semana';
+import { limparPlano } from '@/features/dieta/texto';
 import { useDietaStore, type OrigemPlano } from '@/features/dieta/store';
 import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
 import { diasDoTexto } from '@/features/treinos/diasIa';
@@ -11,7 +13,7 @@ import { paraDadosTreino } from '@/features/treinos/ia';
 import { sessoesValidas } from '@/features/treinos/mesclar';
 import { montarTreinosPorRegras } from '@/features/treinos/regrasIa';
 import { useTreinosStore } from '@/features/treinos/store';
-import type { Treino } from '@/features/treinos/types';
+import type { DadosTreino, Treino } from '@/features/treinos/types';
 import { armazenamento } from '@/shared/lib/armazenamento';
 import { SemIa } from '@/shared/lib/semIa';
 
@@ -19,7 +21,14 @@ import { conversarComCoach } from './api';
 import { montarContextoCoach } from './contexto';
 import { LIMITES_COACH, type EventoCoach, type MensagemCoach, type PedidoCoach } from './contrato';
 import { responderModoDemo, type DadosDemo } from './demo';
-import { modoDaDieta, modoDoTreino, refeicoesPedidas, type ModoMudanca } from './intencao';
+import {
+  diasCitados,
+  diasDoAjusteDeTreino,
+  modoDaDieta,
+  modoDoTreino,
+  refeicoesPedidas,
+  type ModoMudanca,
+} from './intencao';
 import {
   aplicarProposta as marcarAplicada,
   desfazerProposta as marcarDesfeita,
@@ -90,8 +99,22 @@ function treinosParaPedido(treinos: readonly Treino[]): NonNullable<PedidoCoach[
   }));
 }
 
-type DicaDieta = { modo?: ModoMudanca; refeicoes?: SlotRefeicao[] };
-type DicaTreinos = { modo?: ModoMudanca; diasPedidos?: number[] };
+/** Dieta da semana salva hoje (plano padrão e dias com plano próprio). */
+function semanaAtual(): DietaSemana {
+  const { plano, porDia } = useDietaStore.getState();
+
+  return { plano, porDia: porDia ?? {} };
+}
+
+/** Dias com plano próprio, no formato do pedido. */
+function dietaPorDiaParaPedido(semana: DietaSemana): NonNullable<PedidoCoach['dietaPorDia']> {
+  return Object.entries(semana.porDia).flatMap(([dia, plano]) =>
+    plano ? [{ dia: Number(dia), plano }] : [],
+  );
+}
+
+type DicaDieta = { modo?: ModoMudanca; refeicoes?: SlotRefeicao[]; dias?: number[] };
+type DicaTreinos = { modo?: ModoMudanca; diasPedidos?: number[]; diasAlvo?: number[] };
 
 export const useCoachStore = create<CoachState>()(
   persist(
@@ -112,12 +135,16 @@ export const useCoachStore = create<CoachState>()(
         pergunta: string,
         dica: DicaDieta = {},
       ) {
-        const atual = useDietaStore.getState().plano;
+        // "muda o almoço de quarta": o alvo é o plano de quarta
+        const dias = dica.dias ?? diasCitados(pergunta);
+        const semana = semanaAtual();
+        const atual = dias.length > 0 ? planoDoDia(semana, dias[0]) : semana.plano;
         const modo = dica.modo ?? modoDaDieta(pergunta, atual !== null);
-        const proposta = propostaDeDieta(atual, plano, {
+        const proposta = propostaDeDieta(atual, limparPlano(plano), {
           modo,
           alvos: dica.refeicoes ?? (modo === 'ajuste' ? refeicoesPedidas(pergunta) : []),
           origem,
+          dias,
         });
 
         if (proposta) {
@@ -125,16 +152,22 @@ export const useCoachStore = create<CoachState>()(
         }
       }
 
-      /** Treinos novos ou ajustados: vira proposta, com os dias e os ids preservados. */
+      /**
+       * Treinos novos ou ajustados: vira proposta, com os dias e os ids
+       * preservados. Ajuste com dia ("o supino da sexta"): só o treino daquele dia muda.
+       */
       function proporTreinos(
-        resultado: RespostaTreinosIa,
+        resultado: RespostaTreinosIa | DadosTreino[],
         pergunta: string,
         dica: DicaTreinos = {},
       ) {
         const atuais = useTreinosStore.getState().treinos;
-        const proposta = propostaDeTreinos(atuais, paraDadosTreino(resultado), {
-          modo: dica.modo ?? modoDoTreino(pergunta, atuais.length > 0),
+        const modo = dica.modo ?? modoDoTreino(pergunta, atuais.length > 0);
+        const dados = Array.isArray(resultado) ? resultado : paraDadosTreino(resultado);
+        const proposta = propostaDeTreinos(atuais, dados, {
+          modo,
           diasPedidos: dica.diasPedidos ?? diasDoTexto(pergunta),
+          diasAlvo: dica.diasAlvo ?? (modo === 'ajuste' ? diasDoAjusteDeTreino(pergunta) : []),
         });
 
         if (proposta) {
@@ -184,15 +217,23 @@ export const useCoachStore = create<CoachState>()(
           const plano = montarDietaPorRegras(dados.perfil, {
             semente,
             trocarRefeicao: resposta.acao.trocarRefeicao,
-            planoAtual: resposta.acao.novo ? undefined : (dados.plano ?? undefined),
+            planoAtual: resposta.acao.novo
+              ? undefined
+              : (planoDoDia(semanaAtual(), resposta.acao.dias?.[0] ?? -1) ?? undefined),
           });
 
           if (plano) {
             proporDieta(plano, 'demo', pergunta, {
               modo: resposta.acao.novo ? 'novo' : 'ajuste',
               refeicoes: resposta.acao.trocarRefeicao ? [resposta.acao.trocarRefeicao] : [],
+              dias: resposta.acao.dias ?? [],
             });
           }
+        } else if (resposta.acao?.tipo === 'ajusteTreino') {
+          proporTreinos(resposta.acao.treinos, pergunta, {
+            modo: 'ajuste',
+            diasAlvo: resposta.acao.diasAlvo,
+          });
         } else if (resposta.acao?.tipo === 'treinos') {
           const resultado = montarTreinosPorRegras(dados.perfil, {
             diasPorSemana: resposta.acao.diasPorSemana,
@@ -237,11 +278,18 @@ export const useCoachStore = create<CoachState>()(
             erro: null,
           }));
 
+          // Todo pedido leva a dieta (todos os dias) e os treinos (com dias) de agora
           const treinosAtuais = useTreinosStore.getState().treinos;
+          const semana: DietaSemana = {
+            plano: dados.plano,
+            porDia: dados.porDia ?? semanaAtual().porDia,
+          };
+          const dietaPorDia = dietaPorDiaParaPedido(semana);
           const pedido: PedidoCoach = {
             mensagens: historico,
             contexto: montarContextoCoach(dados),
-            ...(dados.plano ? { planoAtual: dados.plano } : {}),
+            ...(semana.plano ? { planoAtual: semana.plano } : {}),
+            ...(dietaPorDia.length > 0 ? { dietaPorDia } : {}),
             ...(treinosAtuais.length > 0
               ? { treinosAtuais: treinosParaPedido(treinosAtuais) }
               : {}),
@@ -280,16 +328,29 @@ export const useCoachStore = create<CoachState>()(
           }
 
           if (proposta.tipo === 'dieta') {
-            const { plano, origem, geradoEm } = useDietaStore.getState();
+            const { origem, geradoEm } = useDietaStore.getState();
+            const antes = semanaAtual();
 
             useDietaStore.setState({
-              plano: proposta.plano,
+              ...aplicarNaSemana(antes, proposta.plano, {
+                dias: proposta.dias,
+                alvos: proposta.alvos,
+                modo: proposta.modo,
+              }),
               origem: proposta.origem,
               provedor: null,
               geradoEm: new Date().toISOString(),
               erro: null,
             });
-            trocarProposta(mensagemId, marcarAplicada(proposta, { plano, origem, geradoEm }));
+            trocarProposta(
+              mensagemId,
+              marcarAplicada(proposta, {
+                plano: antes.plano,
+                porDia: antes.porDia,
+                origem,
+                geradoEm,
+              }),
+            );
           } else {
             const anterior = { treinos: useTreinosStore.getState().treinos };
 
@@ -321,6 +382,7 @@ export const useCoachStore = create<CoachState>()(
           if (proposta.tipo === 'dieta' && proposta.anterior) {
             useDietaStore.setState({
               plano: proposta.anterior.plano,
+              porDia: proposta.anterior.porDia ?? useDietaStore.getState().porDia,
               origem: proposta.anterior.origem,
               geradoEm: proposta.anterior.geradoEm,
               provedor: null,

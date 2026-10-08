@@ -1,4 +1,6 @@
 import type { PlanoDieta } from '@/features/dieta/contrato';
+import { slotDaRefeicao } from '@/features/dieta/mesclar';
+import { nomeDoDiaSemana, ORDEM_DIAS, type DietaPorDia } from '@/features/dieta/semana';
 import {
   NOME_NIVEL_ATIVIDADE,
   NOME_OBJETIVO,
@@ -15,21 +17,66 @@ export type DadosContexto = {
   perfil: Perfil;
   necessidades: Necessidades | null;
   agua: { hojeMl: number; metaMl: number; diasBatidosNaSemana: number; sequencia: number };
+  /** Plano da semana: vale em todo dia sem plano próprio. */
   plano: PlanoDieta | null;
+  /** Dias com plano próprio ("dieta de sexta"), 0 = domingo. */
+  porDia?: DietaPorDia;
   /** Data por extenso, ex: "Sábado, 3 de outubro". */
   hoje: string;
   /** Blocos extras de outras features (treinos, peso...), já em texto. */
   extras?: string[];
 };
 
-function linhasPlano(plano: PlanoDieta): string[] {
-  const linhas = [
-    `Calorias do plano: ${formatarNumero(plano.caloriasDia)} kcal (P ${plano.macros.proteinaG} g, C ${plano.macros.carboidratoG} g, G ${plano.macros.gorduraG} g)`,
-  ];
+type Refeicao = PlanoDieta['refeicoes'][number];
 
-  for (const refeicao of plano.refeicoes) {
-    const itens = refeicao.itens.map((item) => `${item.alimento} (${item.quantidade})`).join('; ');
-    linhas.push(`${refeicao.horario} ${refeicao.nome}, ${refeicao.calorias} kcal: ${itens}`);
+function linhaRefeicao(refeicao: Refeicao): string {
+  const itens = refeicao.itens.map((item) => `${item.alimento} (${item.quantidade})`).join('; ');
+
+  return `${refeicao.horario} ${refeicao.nome}, ${refeicao.calorias} kcal: ${itens}`;
+}
+
+function linhasPlano(plano: PlanoDieta): string[] {
+  return [
+    `Calorias do plano: ${formatarNumero(plano.caloriasDia)} kcal (P ${plano.macros.proteinaG} g, C ${plano.macros.carboidratoG} g, G ${plano.macros.gorduraG} g)`,
+    ...plano.refeicoes.map(linhaRefeicao),
+  ];
+}
+
+function chaveRefeicao(refeicao: Refeicao): string {
+  return slotDaRefeicao(refeicao.nome) ?? refeicao.nome.toLowerCase();
+}
+
+/**
+ * Dias com plano próprio, compactos: só as refeições que mudam em relação ao
+ * plano da semana (o resto do dia é igual e não precisa ir de novo).
+ */
+export function linhasDietaPorDia(plano: PlanoDieta | null, porDia: DietaPorDia = {}): string[] {
+  const linhas: string[] = [];
+
+  for (const dia of ORDEM_DIAS) {
+    const doDia = porDia[dia];
+
+    if (!doDia) {
+      continue;
+    }
+
+    const diferentes = doDia.refeicoes.filter((refeicao) => {
+      const igual = plano?.refeicoes.find(
+        (item) => chaveRefeicao(item) === chaveRefeicao(refeicao),
+      );
+
+      return !igual || JSON.stringify(igual) !== JSON.stringify(refeicao);
+    });
+    const removidas = (plano?.refeicoes ?? []).filter(
+      (refeicao) =>
+        !doDia.refeicoes.some((item) => chaveRefeicao(item) === chaveRefeicao(refeicao)),
+    );
+
+    linhas.push(
+      `${nomeDoDiaSemana(dia)} (${formatarNumero(doDia.caloriasDia)} kcal), diferente do plano da semana em:`,
+      ...diferentes.map((refeicao) => `- ${linhaRefeicao(refeicao)}`),
+      ...removidas.map((refeicao) => `- sem ${refeicao.nome}`),
+    );
   }
 
   return linhas;
@@ -75,9 +122,13 @@ export function montarContextoCoach(dados: DadosContexto): string {
     `Hoje: ${formatarNumero(agua.hojeMl)} de ${formatarNumero(agua.metaMl)} ml`,
     `Meta batida em ${agua.diasBatidosNaSemana} dos últimos 7 dias; sequência atual de ${agua.sequencia} dias`,
     '',
-    '## Dieta atual',
+    '## Dieta atual (plano da semana, vale em todos os dias sem plano próprio)',
     ...(plano ? linhasPlano(plano) : ['Nenhum plano salvo ainda.']),
     ...(dados.extras ?? []).flatMap((bloco) => ['', bloco]),
+    // Por último: se o texto passar do limite, o corte pega só os dias (que vão também em JSON)
+    ...(dados.porDia && Object.keys(dados.porDia).length > 0
+      ? ['', '## Dieta por dia (dias com plano próprio)', ...linhasDietaPorDia(plano, dados.porDia)]
+      : []),
   ];
 
   const texto = linhas.filter((linha) => linha !== null).join('\n');

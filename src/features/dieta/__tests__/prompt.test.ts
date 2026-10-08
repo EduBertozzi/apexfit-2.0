@@ -12,6 +12,22 @@ const COMPLETO: Perfil = {
 };
 
 describe('montarPromptDieta', () => {
+  it('sem dia, o plano vale para a semana toda', () => {
+    expect(montarPromptDieta(ADULTO)).toContain('vale para todos os dias da semana');
+  });
+
+  it('com dia, pede o plano só daquele dia e cita o treino', () => {
+    const prompt = montarPromptDieta(ADULTO, { dia: 5, treinoDoDia: 'Treino B, pernas' });
+
+    expect(prompt).toContain('plano alimentar de sexta');
+    expect(prompt).toContain('Treino B, pernas');
+    expect(montarPromptDieta(ADULTO, { dia: 0 })).toContain('não tenho treino marcado');
+  });
+
+  it('pede texto puro, sem markdown', () => {
+    expect(SISTEMA_DIETA).toContain('nada de markdown');
+  });
+
   it('inclui os dados formatados em pt-BR', () => {
     const prompt = montarPromptDieta(ADULTO);
 

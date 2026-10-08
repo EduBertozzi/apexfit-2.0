@@ -19,6 +19,8 @@ export const SISTEMA_DIETA = [
   'Dê as quantidades em gramas e em medida caseira (colher, xícara, unidade, fatia).',
   'Respeite todas as restrições de saúde e alimentares. Se alguma restrição pedir acompanhamento médico, diga isso no resumo.',
   'Escreva em português do Brasil, frases curtas e diretas, tratando o usuário por "você".',
+  'Texto puro: nada de markdown, negrito, asteriscos, títulos com # ou listas com hífen dentro dos campos.',
+  'Nome do alimento curto (ex: "Arroz branco"); a quantidade vai só no campo quantidade, começando pelos gramas: "150 g, 3 colheres de sopa".',
   'Nunca use emoji. Nunca use travessão; use vírgula, ponto ou dois-pontos.',
   'Não recomende suplementos, remédios ou jejum prolongado.',
   'O resumo explica a estratégia do plano usando as metas (não repita o aviso no resumo).',
@@ -52,8 +54,17 @@ export function distribuirRefeicoes(
   }));
 }
 
+const NOMES_DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+export type OpcoesPromptDieta = {
+  /** Plano só deste dia (0 = domingo). Sem o campo, vale para a semana toda. */
+  dia?: number;
+  /** Treino marcado para o dia. */
+  treinoDoDia?: string;
+};
+
 /** Dados do usuário + metas calculadas. Vai como mensagem do usuário. */
-export function montarPromptDieta(perfil: Perfil): string {
+export function montarPromptDieta(perfil: Perfil, opcoes: OpcoesPromptDieta = {}): string {
   const naoInformado = 'não informado';
   const necessidades = calcularNecessidades(perfil);
 
@@ -62,8 +73,17 @@ export function montarPromptDieta(perfil: Perfil): string {
       ? naoInformado
       : `${formatarNumero(perfil.percentualGordura, 1)}%`;
 
+  const nomeDia = opcoes.dia === undefined ? undefined : NOMES_DIAS[opcoes.dia];
+
   const linhas = [
-    'Monte meu plano alimentar com base nestes dados.',
+    nomeDia
+      ? `Monte meu plano alimentar de ${nomeDia} com base nestes dados. Ele vale só para esse dia da semana.`
+      : 'Monte meu plano alimentar com base nestes dados. Ele vale para todos os dias da semana.',
+    nomeDia && opcoes.treinoDoDia
+      ? `Neste dia eu treino: ${opcoes.treinoDoDia}. Pense nas refeições antes e depois do treino.`
+      : nomeDia
+        ? 'Neste dia não tenho treino marcado.'
+        : null,
     perfil.idade < 18
       ? 'Atenção: o usuário é menor de idade. Nada de déficit agressivo nem suplementos.'
       : null,

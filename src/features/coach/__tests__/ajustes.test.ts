@@ -231,3 +231,118 @@ describe('ajuste de dieta', () => {
     expect(eventos.find((evento) => evento.tipo === 'dieta')).toMatchObject({ modo: 'novo' });
   });
 });
+
+describe('pedido com dia da semana', () => {
+  const SEMANA: NonNullable<PedidoCoach['treinosAtuais']> = [
+    { ...ATUAIS[0], dias: [1, 3] },
+    { ...ATUAIS[1], dias: [5] },
+  ];
+
+  it('"troque o supino da sexta" muda só o treino de sexta', async () => {
+    // A IA trocou o supino e, sem pedir, mexeu no leg press do treino A
+    iaResponde({
+      resumo: 'Troquei.',
+      treinos: [
+        EDITADO.treinos[0],
+        {
+          nome: 'Treino B',
+          foco: 'Peito',
+          exercicios: [{ nome: 'Supino inclinado', grupo: 'peito', series: 3, repeticoes: '10' }],
+        },
+      ],
+    });
+
+    const eventos = await coletar(
+      conversarOpenAI(
+        pedido('troque o supino da sexta por supino inclinado', { treinosAtuais: SEMANA }),
+      ),
+    );
+
+    const instrucoes = corpoDaChamada(0).messages[1].content as string;
+    expect(instrucoes).toContain('Mude SOMENTE o Treino B (o treino de sexta)');
+    expect(instrucoes).toContain('"dias":"sexta"');
+    expect(eventos.find((evento) => evento.tipo === 'treinos')).toMatchObject({
+      modo: 'ajuste',
+      diasAlvo: [5],
+    });
+    expect(textoDos(eventos)).toContain(
+      'sexta: supino reto com barra trocado por supino inclinado',
+    );
+    expect(textoDos(eventos)).not.toContain('afundo');
+  });
+
+  it('dia sem treino marcado: avisa e não chama a IA', async () => {
+    iaResponde(EDITADO);
+
+    const eventos = await coletar(
+      conversarOpenAI(pedido('tira o cardio de domingo', { treinosAtuais: SEMANA })),
+    );
+
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(eventos.some((evento) => evento.tipo === 'treinos')).toBe(false);
+    expect(textoDos(eventos)).toContain('não tem treino marcado no domingo');
+  });
+
+  it('"muda o almoço de quarta" parte do plano de quarta e só ele muda', async () => {
+    const QUARTA: PlanoDieta = {
+      ...PLANO_ATUAL,
+      refeicoes: [
+        PLANO_ATUAL.refeicoes[0],
+        { ...PLANO_ATUAL.refeicoes[1], itens: [{ alimento: 'Peixe', quantidade: '150 g' }] },
+      ],
+    };
+
+    iaResponde({
+      ...QUARTA,
+      refeicoes: [
+        { ...QUARTA.refeicoes[0], itens: [{ alimento: 'Bolo', quantidade: '1 fatia' }] },
+        { ...QUARTA.refeicoes[1], itens: [{ alimento: 'Escondidinho', quantidade: '250 g' }] },
+      ],
+    });
+
+    const eventos = await coletar(
+      conversarOpenAI(
+        pedido('muda o almoço de quarta', {
+          planoAtual: PLANO_ATUAL,
+          dietaPorDia: [{ dia: 3, plano: QUARTA }],
+        }),
+      ),
+    );
+
+    const instrucoes = corpoDaChamada(0).messages[1].content as string;
+    expect(instrucoes).toContain('Dieta atual de quarta (JSON)');
+    expect(instrucoes).toContain('Peixe');
+
+    const dieta = eventos.find((evento) => evento.tipo === 'dieta') as {
+      plano: PlanoDieta;
+      dias?: number[];
+    };
+    expect(dieta).toMatchObject({ modo: 'ajuste', refeicoes: ['almoco'], dias: [3] });
+    // O café de quarta fica igual (a IA tinha mexido)
+    expect(dieta.plano.refeicoes[0]).toEqual(QUARTA.refeicoes[0]);
+    expect(dieta.plano.refeicoes[1].itens[0].alimento).toBe('Escondidinho');
+    expect(textoDos(eventos)).toContain('quarta: almoço trocado');
+  });
+
+  it('"monta a dieta de sábado" pede um plano só para aquele dia', async () => {
+    iaResponde(PLANO_ATUAL);
+
+    const eventos = await coletar(
+      conversarOpenAI(
+        pedido('monta uma dieta nova para sábado', {
+          planoAtual: PLANO_ATUAL,
+          treinosAtuais: [{ ...ATUAIS[0], dias: [6] }],
+        }),
+      ),
+    );
+
+    const instrucoes = corpoDaChamada(0).messages[1].content as string;
+    expect(instrucoes).toContain('Este plano vale só para sábado');
+    expect(instrucoes).toContain('Treino A, Perna');
+    expect(eventos.find((evento) => evento.tipo === 'dieta')).toMatchObject({
+      modo: 'novo',
+      dias: [6],
+    });
+    expect(textoDos(eventos)).toContain('sábado: plano novo só para esse dia');
+  });
+});

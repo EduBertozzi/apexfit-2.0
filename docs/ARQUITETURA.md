@@ -61,7 +61,9 @@ src/
 │   │   ├── prompt.ts         ← instruções e dados enviados para a IA
 │   │   ├── servidor/         ← SÓ servidor: chamada à IA (nunca importe numa tela)
 │   │   ├── api.ts            ← o app chamando /api/dieta
-│   │   ├── store.ts          ← plano salvo no aparelho
+│   │   ├── store.ts          ← plano salvo no aparelho (da semana + dias com plano próprio)
+│   │   ├── semana.ts         ← dieta da semana: plano do dia, seletor de dias, migração
+│   │   ├── texto.ts          ← limpa markdown da IA e separa "250 g" da medida caseira
 │   │   └── __tests__/
 │   ├── coach/
 │   │   ├── contexto.ts       ← resumo do usuário (perfil, metas, água, peso, treinos, dieta) para a IA
@@ -161,6 +163,12 @@ A chama da tela inicial e a página `/sequencia` usam uma regra só, em `treinos
 - **Dias congelados ficam salvos** em `useTreinosStore.congelados` (persist versão 2, `migrarTreinos`). Um dia salvo continua congelado mesmo que o plano mude depois, então a sequência nunca quebra para trás. Quem salva é o efeito de `useUltimaChance`.
 - **Última chance**: com sequência em jogo e risco `quebra` ou `ultimo-congelador`, aparece o aviso "última chance" na tela inicial (acima da faixa da semana) e na página de sequência, e uma notificação local é agendada para as 20:00 de hoje, só se a permissão já foi dada (o app não pede só por isso). O plano é puro (`treinos/ultimaChance.ts`, `planejarAvisoUltimaChance`); o efeito fino é `treinos/useUltimaChance.ts`, que cancela o aviso quando o treino de hoje é feito. A conversa com o expo-notifications continua toda em `lembretes/notificacoes.ts` (`agendarAvisoUnico`, `cancelarAviso`, `podeNotificar`).
 - **Calendários**: na faixa da semana e no calendário da sequência, um anel (`shared/ui/AnelProgresso`, react-native-svg) em volta do número mostra quanto do treino foi feito (cheio = 100%), com as cores da regra do calendário (arco na versão forte `semana.anel`). Hoje fica em branco e o futuro só com o trilho cinza. O calendário da sequência é um mês por página, deslizando para o lado (ou pelas setas), sempre com 6 linhas.
+
+### Dieta da semana e pedidos com dia
+
+A dieta tem um **plano da semana** (`plano`) e, se a pessoa quiser, **dias com plano próprio** (`porDia`, 0 = domingo, igual a `Treino.dias`). `dieta/semana.ts` decide o plano de cada dia (`planoDoDia`) e aplica propostas (`aplicarNaSemana`); a store migrou da versão 1 (um plano só) para a 2. A tela de dieta abre no dia de hoje, com um seletor de dias; `/api/dieta` aceita `dia` para montar o plano de um dia só.
+
+Todo pedido ao coach leva a dieta de todos os dias (`planoAtual` + `dietaPorDia`) e os treinos com dias (`treinosAtuais`). Dia citado no pedido (`intencao.diasCitados`) delimita a mudança: "muda o almoço de quarta" muda só a dieta de quarta; "troca o supino da sexta" muda só o treino marcado na sexta (`treinos/mesclar.restringirAosDias`), e o resumo começa pelo dia ("sexta: supino reto trocado por supino inclinado"). O modo demonstração resolve trocas simples de exercício sem IA (`coach/trocaExercicio.ts`).
 
 ### Design system "Bento"
 

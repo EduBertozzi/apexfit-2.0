@@ -39,7 +39,7 @@ function responder(status: number, corpo: unknown) {
 }
 
 beforeEach(() => {
-  useDietaStore.setState({ plano: null, geradoEm: null, gerando: false, erro: null });
+  useDietaStore.setState({ plano: null, porDia: {}, geradoEm: null, gerando: false, erro: null });
 });
 
 describe('useDietaStore.gerar', () => {
@@ -121,5 +121,58 @@ describe('useDietaStore.gerar sem IA', () => {
     await useDietaStore.getState().gerar(PERFIL);
 
     expect(useDietaStore.getState().origem).toBe('ia');
+  });
+});
+
+describe('dieta da semana', () => {
+  const SEXTA: PlanoDieta = {
+    ...PLANO,
+    refeicoes: [
+      { ...PLANO.refeicoes[0], itens: [{ alimento: 'Tapioca', quantidade: '1 unidade' }] },
+    ],
+  };
+
+  it('plano de um dia só muda aquele dia e manda o dia para o servidor', async () => {
+    useDietaStore.setState({ plano: PLANO });
+    responder(200, { plano: SEXTA });
+
+    await useDietaStore.getState().gerar(PERFIL, { dia: 5, treinoDoDia: 'Treino B' });
+
+    const [, opcoes] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(JSON.parse(opcoes.body)).toEqual({ perfil: PERFIL, dia: 5, treinoDoDia: 'Treino B' });
+    expect(useDietaStore.getState().plano).toEqual(PLANO);
+    expect(useDietaStore.getState().porDia[5]).toEqual(SEXTA);
+  });
+
+  it('plano da semana toda apaga os dias próprios', async () => {
+    useDietaStore.setState({ plano: PLANO, porDia: { 5: SEXTA } });
+    responder(200, { plano: PLANO });
+
+    await useDietaStore.getState().gerar(PERFIL);
+
+    expect(useDietaStore.getState().porDia).toEqual({});
+  });
+
+  it('usar o plano da semana tira o plano próprio do dia', () => {
+    useDietaStore.setState({ plano: PLANO, porDia: { 5: SEXTA } });
+
+    useDietaStore.getState().usarPlanoDaSemana(5);
+
+    expect(useDietaStore.getState().porDia).toEqual({});
+  });
+
+  it('limpa markdown que a IA mandou', async () => {
+    responder(200, {
+      plano: {
+        ...PLANO,
+        refeicoes: [
+          { ...PLANO.refeicoes[0], itens: [{ alimento: '**Ovos**', quantidade: '3 unidades' }] },
+        ],
+      },
+    });
+
+    await useDietaStore.getState().gerar(PERFIL);
+
+    expect(useDietaStore.getState().plano?.refeicoes[0].itens[0].alimento).toBe('Ovos');
   });
 });

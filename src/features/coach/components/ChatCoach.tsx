@@ -29,6 +29,7 @@ const SUGESTOES = [
   'monta minha dieta',
   'troca o café da manhã',
   'monta meu treino',
+  'troca o supino da sexta',
   'o que comer antes do treino?',
   'como estou na água hoje?',
 ];

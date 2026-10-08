@@ -317,7 +317,7 @@ describe('responderModoDemo', () => {
 
     expect(texto).toContain('modo demonstração');
     expect(texto).toContain('água');
-    expect(texto).toContain('troca meu almoço');
+    expect(texto).toContain('troca o almoço de quarta');
     expect(acao).toBeUndefined();
   });
 

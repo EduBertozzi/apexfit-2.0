@@ -21,6 +21,13 @@ export const pedidoDietaSchema = z.object({
     nivelAtividade: z.enum(NIVEIS_ATIVIDADE),
     objetivo: z.enum(OBJETIVOS),
   }),
+  /**
+   * Sem o campo, o plano vale para a semana toda. Com ele (0 = domingo a
+   * 6 = sábado), é o plano só daquele dia ("dieta de sexta").
+   */
+  dia: z.number().int().min(0).max(6).optional(),
+  /** Treino marcado para o dia, se houver (ex: "Treino A, pernas"). Ajuda a IA a ajustar o dia. */
+  treinoDoDia: z.string().max(120).optional(),
 });
 
 export type PedidoDieta = z.infer<typeof pedidoDietaSchema>;

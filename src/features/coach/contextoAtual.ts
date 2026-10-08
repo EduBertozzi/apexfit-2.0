@@ -23,6 +23,7 @@ import {
   treinosNaSemana,
 } from '@/features/treinos/logica';
 import { useTreinosStore } from '@/features/treinos/store';
+import { textoDosDias } from '@/features/treinos/diasIa';
 import { chaveDoDia, dataPorExtenso } from '@/shared/lib/data';
 
 import { montarContextoCoach } from './contexto';
@@ -59,6 +60,8 @@ export function dadosAtuais(agora: Date = new Date()): DadosDemo | null {
       sequencia: sequenciaAtual(registros, agora, metaMl),
     },
     plano: useDietaStore.getState().plano,
+    porDia: useDietaStore.getState().porDia,
+    listaTreinos: treinos,
     hoje: dataPorExtenso(agora),
     extras: [blocoPeso(hoje), blocoTreinos(hoje)],
     treinos: {
@@ -108,7 +111,11 @@ function blocoTreinos(hoje: string): string {
   const proximo = proximoTreino(treinos, sessoes, hoje);
   const linhas = treinos.map(
     (treino) =>
-      `${treino.nome} (${resumoTreino(treino)}): ` +
+      `${treino.nome}` +
+      (treino.dias && treino.dias.length > 0
+        ? ` [${textoDosDias(treino.dias)}]`
+        : ' [sem dia fixo, rodízio]') +
+      ` (${resumoTreino(treino)}): ` +
       treino.exercicios.map((ex) => `${ex.nome} ${resumoExercicio(ex)}`).join('; '),
   );
 

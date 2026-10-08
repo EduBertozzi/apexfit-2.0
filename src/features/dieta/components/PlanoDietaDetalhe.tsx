@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ChipsMacros } from '@/features/nutricao/components/ChipsMacros';
@@ -9,13 +10,53 @@ import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { Cartao, Texto } from '@/shared/ui';
 
 import type { PlanoDieta } from '../contrato';
+import { limparPlano, separarQuantidade } from '../texto';
 
 /** Cada refeição ganha uma cor pastel, na ordem do dia, só para separar visualmente. */
 const CORES_REFEICAO: CorCategoria[] = ['peito', 'aquecimento', 'braco', 'abdominal', 'perna'];
 
-export function PlanoDietaDetalhe({ plano }: { plano: PlanoDieta }) {
+type Item = PlanoDieta['refeicoes'][number]['itens'][number];
+
+/**
+ * Linha de um alimento. O nome ocupa a largura que sobra (e quebra em
+ * palavras, nunca letra por letra); a medida curta ("250 g") fica na
+ * direita com largura limitada e a medida caseira vai embaixo do nome.
+ */
+function LinhaItem({ item, primeiro }: { item: Item; primeiro: boolean }) {
+  const c = useCores();
+  const { principal, detalhe } = separarQuantidade(item.quantidade);
+
+  return (
+    <View
+      style={[
+        estilos.item,
+        !primeiro && { borderTopColor: c.borda, borderTopWidth: StyleSheet.hairlineWidth },
+      ]}
+      accessible
+      accessibilityLabel={`${item.alimento}, ${item.quantidade}`}
+    >
+      <View style={estilos.nomeItem}>
+        <Texto style={estilos.alimento}>{item.alimento}</Texto>
+        {detalhe ? (
+          <Texto variante="legenda" secundario>
+            {detalhe}
+          </Texto>
+        ) : null}
+      </View>
+      {principal ? (
+        <Texto variante="rotulo" style={estilos.quantidade}>
+          {principal}
+        </Texto>
+      ) : null}
+    </View>
+  );
+}
+
+export function PlanoDietaDetalhe({ plano: original }: { plano: PlanoDieta }) {
   const c = useCores();
   const categorias = useCategorias();
+  // Planos salvos antes da limpeza podem ter markdown da IA
+  const plano = useMemo(() => limparPlano(original), [original]);
 
   return (
     <View style={estilos.container}>
@@ -39,14 +80,14 @@ export function PlanoDietaDetalhe({ plano }: { plano: PlanoDieta }) {
         const cor = CORES_REFEICAO[indice % CORES_REFEICAO.length];
 
         return (
-          <Cartao key={`${refeicao.horario}-${refeicao.nome}`}>
+          <Cartao key={`${indice}-${refeicao.horario}-${refeicao.nome}`}>
             <View style={estilos.cabecalhoRefeicao}>
               <Texto
                 variante="subtitulo"
                 accessibilityRole="header"
                 style={[estilos.nomeRefeicao, { color: categorias.texto[cor] }]}
               >
-                {refeicao.nome.toLowerCase()}
+                {refeicao.nome}
               </Texto>
               <View style={[estilos.horario, { backgroundColor: c.superficieSecundaria }]}>
                 <Ionicons name="time-outline" size={14} color={c.textoSecundario} />
@@ -55,31 +96,37 @@ export function PlanoDietaDetalhe({ plano }: { plano: PlanoDieta }) {
                 </Texto>
               </View>
             </View>
-            <Texto variante="rotulo" secundario>
-              {formatarNumero(refeicao.calorias)} kcal
-            </Texto>
+            <View style={[estilos.kcal, { backgroundColor: categorias.fundo[cor] }]}>
+              <Texto variante="legenda" style={{ color: c.textoSobreDestaque }}>
+                {formatarNumero(refeicao.calorias)} kcal
+              </Texto>
+            </View>
 
             <View style={estilos.itens}>
               {refeicao.itens.map((item, i) => (
-                <View
-                  key={item.alimento}
-                  style={[
-                    estilos.item,
-                    i > 0 && { borderTopColor: c.borda, borderTopWidth: StyleSheet.hairlineWidth },
-                  ]}
-                >
-                  <Texto style={estilos.alimento}>{item.alimento}</Texto>
-                  <Texto secundario style={estilos.quantidade}>
-                    {item.quantidade}
-                  </Texto>
-                </View>
+                <LinhaItem key={`${i}-${item.alimento}`} item={item} primeiro={i === 0} />
               ))}
             </View>
 
             {refeicao.substituicoes.length > 0 ? (
-              <Texto variante="legenda" secundario>
-                Pode trocar: {refeicao.substituicoes.join('; ')}.
-              </Texto>
+              <View style={[estilos.trocas, { backgroundColor: c.superficieSecundaria }]}>
+                <Texto variante="legenda" secundario>
+                  pode trocar
+                </Texto>
+                {refeicao.substituicoes.map((troca, i) => (
+                  <View key={`${i}-${troca}`} style={estilos.troca}>
+                    <Ionicons
+                      name="swap-horizontal"
+                      size={14}
+                      color={c.textoSecundario}
+                      style={estilos.iconeTroca}
+                    />
+                    <Texto variante="legenda" style={estilos.textoTroca}>
+                      {troca}
+                    </Texto>
+                  </View>
+                ))}
+              </View>
             ) : null}
           </Cartao>
         );
@@ -129,6 +176,13 @@ const estilos = StyleSheet.create({
   },
   nomeRefeicao: {
     flex: 1,
+    minWidth: 0,
+  },
+  kcal: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: espaco.sm + 2,
+    paddingVertical: 2,
+    borderRadius: raio.total,
   },
   horario: {
     flexDirection: 'row',
@@ -143,16 +197,42 @@ const estilos = StyleSheet.create({
   },
   item: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     gap: espaco.md,
     paddingVertical: espaco.sm,
   },
+  // flexBasis 'auto' + minWidth 0: o nome nunca encolhe até uma letra por linha
+  nomeItem: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    minWidth: 0,
+    gap: 2,
+  },
   alimento: {
-    flex: 1,
+    flexShrink: 1,
   },
   quantidade: {
-    flexShrink: 1,
+    flexShrink: 0,
+    maxWidth: '40%',
     textAlign: 'right',
+  },
+  trocas: {
+    gap: espaco.xs,
+    padding: espaco.sm + 2,
+    borderRadius: raio.md,
+  },
+  troca: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: espaco.xs + 2,
+  },
+  iconeTroca: {
+    marginTop: 2,
+  },
+  textoTroca: {
+    flex: 1,
+    minWidth: 0,
   },
   dica: {
     flexDirection: 'row',

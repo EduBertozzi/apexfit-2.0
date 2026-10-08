@@ -8,7 +8,7 @@ import { gerarPlanoComIa } from '@/features/dieta/servidor/gerarDietaLocal';
 import { ErroServidor } from '@/shared/servidor/claude';
 import { erroSemIa, escolherProvedor } from '@/shared/servidor/provedor';
 
-/** POST /api/dieta: recebe o perfil, devolve { plano, provedor }. Só repassa; a lógica fica na feature. */
+/** POST /api/dieta: recebe o perfil (e o dia, se for o plano de um dia só), devolve { plano, provedor }. Só repassa; a lógica fica na feature. */
 export async function POST(request: Request) {
   const pedido = pedidoDietaSchema.safeParse(await request.json().catch(() => null));
 
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         ? await gerarDieta(pedido.data)
         : await gerarPlanoComIa(
             provedor,
-            montarPromptDieta(pedido.data.perfil),
+            montarPromptDieta(pedido.data.perfil, pedido.data),
             calcularNecessidades(pedido.data.perfil)?.metaCalorias,
           );
 
