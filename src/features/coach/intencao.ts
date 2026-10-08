@@ -1,5 +1,7 @@
 import type { PlanoDieta } from '@/features/dieta/contrato';
+import type { SlotRefeicao } from '@/features/dieta/mesclar';
 import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
+import { textoDosDias } from '@/features/treinos/diasIa';
 import { formatarNumero } from '@/shared/lib/numero';
 import { minusculaInicial } from '@/shared/lib/texto';
 
@@ -37,14 +39,23 @@ export function pedeMudancaDeDieta(mensagem: string): boolean {
 
 const ASSUNTO_TREINO = /\b(treinos?|ficha|divisao|exercicios?|musculacao|academia|treino [a-f])\b/;
 
+/** Nomes de exercício comuns: "troca o leg press por agachamento" é pedido de treino. */
+const EXERCICIO =
+  /\b(supino|agachamentos?|leg ?press|remadas?|puxadas?|pulldown|roscas?|triceps|biceps|flexao|flexoes|abdominais?|prancha|esteira|bike|bicicleta|corrida|eliptico|elevacao (lateral|frontal|pelvica)|desenvolvimento|stiff|afundos?|cadeira (extensora|flexora|abdutora|adutora)|mesa flexora|panturrilhas?|crucifixo|crossover|burpees?|polichinelos?|levantamento terra|hack|smith|graviton|mergulho|extensora|flexora|abdutora|adutora|gluteos?)\b/;
+
 /**
  * A mensagem pede para criar ou mudar os treinos? ("monta meu treino",
- * "refaz minha ficha para 4 dias"). Pergunta sobre treino não conta.
+ * "refaz minha ficha para 4 dias", "troca o leg press por agachamento").
+ * Pergunta sobre treino não conta.
  */
 export function pedeMudancaDeTreino(mensagem: string): boolean {
   const texto = normalizar(mensagem).trim();
 
-  if (!ASSUNTO_TREINO.test(texto) || !ACAO.test(texto) || ASSUNTO_DIETA.test(texto)) {
+  if (
+    !(ASSUNTO_TREINO.test(texto) || EXERCICIO.test(texto)) ||
+    !ACAO.test(texto) ||
+    ASSUNTO_DIETA.test(texto)
+  ) {
     return false;
   }
 
@@ -54,6 +65,75 @@ export function pedeMudancaDeTreino(mensagem: string): boolean {
   );
 }
 
+/** Plano novo do zero ou só um ajuste no que já existe. */
+export type ModoMudanca = 'novo' | 'ajuste';
+
+const VERBO_NOVO = /\b(mont\w*|cri(a|e|ar)|refa\w*|ger(a|e|ar)|fa(z|ca|zer)|do zero)\b/;
+const TREINO_NOVO =
+  /\b(nov[oa]s?|outr[ao]s?) (treinos?|ficha|divisao)\b|\b(treinos?|ficha|divisao) nov[oa]s?\b|\b\d+ ?dias\b|\bdias por semana\b|\bem casa\b|\bdo zero\b/;
+const ASSUNTO_PLANO = /\b(dieta|plano|cardapio)\b/;
+const DIETA_NOVA =
+  /\b(nov[oa]|outr[ao]) (dieta|plano|cardapio)\b|\b(dieta|plano|cardapio)( alimentar)? nov[oa]\b|\bdo zero\b/;
+
+/**
+ * Treino novo ("monta meu treino", "refaz minha ficha", "novo treino", "4 dias")
+ * ou ajuste ("troca o leg press por agachamento", "tira a prancha do treino A")?
+ * Sem treinos salvos, é sempre novo.
+ */
+export function modoDoTreino(mensagem: string, temTreinos: boolean): ModoMudanca {
+  const texto = normalizar(mensagem);
+
+  if (!temTreinos || TREINO_NOVO.test(texto)) {
+    return 'novo';
+  }
+
+  const especifico = EXERCICIO.test(texto) || /\btreino [a-f]\b/.test(texto);
+
+  return VERBO_NOVO.test(texto) && !especifico ? 'novo' : 'ajuste';
+}
+
+/**
+ * Refeições citadas no pedido: "troca o café da manhã e o jantar" vira
+ * ["cafe", "jantar"]. "Café" sozinho só conta se nenhuma outra refeição foi
+ * citada ("tira o café do lanche" é sobre o lanche).
+ */
+export function refeicoesPedidas(mensagem: string): SlotRefeicao[] {
+  const texto = normalizar(mensagem);
+  const slots: SlotRefeicao[] = [];
+
+  if (/\bcafe da manha\b/.test(texto)) slots.push('cafe');
+  if (/\balmoco\b/.test(texto)) slots.push('almoco');
+  if (/\blanches?\b/.test(texto)) slots.push('lanche');
+  if (/\bjant(ar|a)\b/.test(texto)) slots.push('jantar');
+  if (/\bceia\b/.test(texto)) slots.push('ceia');
+
+  if (slots.length === 0 && /\bcafe\b/.test(texto)) {
+    slots.push('cafe');
+  }
+
+  return slots;
+}
+
+/**
+ * Dieta nova ("monta minha dieta", "quero um cardápio novo") ou ajuste
+ * ("troca o café da manhã", "dieta sem lactose")? Sem plano salvo, é sempre nova.
+ */
+export function modoDaDieta(mensagem: string, temPlano: boolean): ModoMudanca {
+  const texto = normalizar(mensagem);
+
+  if (!temPlano) {
+    return 'novo';
+  }
+
+  if (refeicoesPedidas(texto).length > 0) {
+    return 'ajuste';
+  }
+
+  return DIETA_NOVA.test(texto) || (VERBO_NOVO.test(texto) && ASSUNTO_PLANO.test(texto))
+    ? 'novo'
+    : 'ajuste';
+}
+
 /** Lê a meta de calorias do texto de contexto ("Meta de calorias: 2.830 kcal"). */
 export function metaDoContexto(contexto: string): number | undefined {
   const achado = /Meta de calorias: ([\d.]+) kcal/.exec(contexto);
@@ -61,8 +141,17 @@ export function metaDoContexto(contexto: string): number | undefined {
   return achado ? Number(achado[1].replace(/\./g, '')) : undefined;
 }
 
-/** Texto do coach depois de salvar um plano (modo IA local). */
-export function confirmarPlano(plano: PlanoDieta): string {
+const APLICAR = 'Confira a proposta aqui embaixo e toque em aplicar para salvar.';
+
+/** Texto do coach com a proposta de dieta. `mudancas`: o que mudou num ajuste. */
+export function confirmarPlano(plano: PlanoDieta, mudancas: readonly string[] = []): string {
+  if (mudancas.length > 0) {
+    return (
+      `Proposta pronta, mudei só o que você pediu:\n${mudancas.map((linha) => `- ${linha}`).join('\n')}\n\n` +
+      `O resto do plano fica igual, ${formatarNumero(plano.caloriasDia)} kcal no dia. ${APLICAR}`
+    );
+  }
+
   const refeicoes = plano.refeicoes
     .map((refeicao) => {
       const destaques = refeicao.itens
@@ -75,23 +164,40 @@ export function confirmarPlano(plano: PlanoDieta): string {
     .join('\n');
 
   return (
-    `Pronto! Salvei um plano de ${formatarNumero(plano.caloriasDia)} kcal em ${plano.refeicoes.length} refeições:\n` +
-    `${refeicoes}\n\nToque em "Dieta atualizada" para ver as quantidades. Quer trocar alguma refeição?`
+    `Montei uma proposta de ${formatarNumero(plano.caloriasDia)} kcal em ${plano.refeicoes.length} refeições:\n` +
+    `${refeicoes}\n\n${APLICAR}`
   );
 }
 
-/** Texto do coach depois de salvar treinos novos. */
-export function confirmarTreinos(resultado: RespostaTreinosIa): string {
-  const lista = resultado.treinos
-    .map((treino) => {
-      const quantidade = treino.exercicios.length;
+/**
+ * Texto do coach com a proposta de treinos. `dias`: os dias de cada treino
+ * (mesma ordem). `mudancas`: o que mudou num ajuste.
+ */
+export function confirmarTreinos(
+  resultado: RespostaTreinosIa,
+  opcoes: { dias?: readonly (readonly number[])[]; mudancas?: readonly string[] } = {},
+): string {
+  const { dias = [], mudancas } = opcoes;
 
-      return `- ${minusculaInicial(treino.nome)}: ${minusculaInicial(treino.foco)} (${quantidade} ${quantidade === 1 ? 'exercício' : 'exercícios'})`;
+  if (mudancas) {
+    return mudancas.length > 0
+      ? `Proposta pronta, mudei só o que você pediu:\n${mudancas.map((linha) => `- ${linha}`).join('\n')}\n\n` +
+          `O resto dos treinos fica igual. ${APLICAR}`
+      : 'Não achei o que mudar nos seus treinos com esse pedido. Me diz qual exercício ou treino você quer trocar?';
+  }
+
+  const lista = resultado.treinos
+    .map((treino, indice) => {
+      const quantidade = treino.exercicios.length;
+      const quando =
+        dias[indice] && dias[indice].length > 0 ? `, ${textoDosDias(dias[indice])}` : '';
+
+      return `- ${minusculaInicial(treino.nome)}: ${minusculaInicial(treino.foco)} (${quantidade} ${quantidade === 1 ? 'exercício' : 'exercícios'})${quando}`;
     })
     .join('\n');
 
   return (
-    `Pronto! Montei ${resultado.treinos.length} ${resultado.treinos.length === 1 ? 'treino' : 'treinos'}:\n` +
-    `${lista}\n\nJá estão na tela inicial, separados por grupo muscular. Quer trocar algum exercício?`
+    `Montei ${resultado.treinos.length} ${resultado.treinos.length === 1 ? 'treino' : 'treinos'}:\n` +
+    `${lista}\n\n${APLICAR}`
   );
 }

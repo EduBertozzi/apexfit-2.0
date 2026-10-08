@@ -140,7 +140,13 @@ O servidor publicado (EAS Hosting) não tem Ollama: lá vale a OpenAI (com a cha
 
 ### Treinos montados pela IA
 
-Na aba do cérebro (`src/app/(tabs)/ia.tsx`) a pessoa escolhe dias por semana, academia ou casa e o tempo, e toca em "gerar treino". A rota `/api/treino` devolve uma sessão por dia ("Treino A", "B"...), cada exercício com o seu `grupo` (aquecimento, peito, costas... cardio), e o app troca os treinos salvos (`treinos/storeIa.ts` chama `substituirTreinos`). A tela inicial agrupa os exercícios nos cards por grupo. O histórico de treinos feitos fica. O coach também monta treinos pela ferramenta `atualizar_treinos`.
+Na aba do cérebro (`src/app/(tabs)/ia.tsx`) a pessoa escolhe dias por semana, academia ou casa e o tempo, e toca em "gerar treino". A rota `/api/treino` devolve uma sessão por dia ("Treino A", "B"...), cada exercício com o seu `grupo` (aquecimento, peito, costas... cardio), e o app troca os treinos salvos (`treinos/storeIa.ts` chama `substituirTreinos`). A tela inicial agrupa os exercícios nos cards por grupo. O histórico de treinos feitos fica. Treinos novos (da central ou do coach) já ganham dias da semana (`treinos/diasIa.ts`: os dias citados no pedido ou `diasPadrao`). O coach também monta treinos pela ferramenta `atualizar_treinos` e ajusta só uma parte com `ajustar_treino`.
+
+### Coach: propõe antes de aplicar
+
+O coach nunca salva dieta ou treinos sozinho. O plano ou os treinos que chegam (IA ou modo demonstração) viram uma **proposta** dentro da mensagem (`coach/proposta.ts`, salva com a conversa): resumo, "aplicar" e "não, obrigado". Aplicar guarda o que havia antes para o "desfazer" (só na última proposta aplicada de cada tipo).
+
+Pedido pequeno muda só o que foi pedido. `coach/intencao.ts` separa plano novo ("monta", "refaz", "novo treino") de ajuste ("troca o leg press por agachamento", "troca o café da manhã"). No ajuste, o app manda `planoAtual` e `treinosAtuais` no pedido, a IA devolve uma cópia editada e as funções puras `mesclarPlano` (`dieta/mesclar.ts`, as outras refeições voltam idênticas) e `mesclarTreinos` (`treinos/mesclar.ts`, exercício com o mesmo nome mantém o id, então sessões e marcas continuam valendo) montam o resultado e o resumo do que mudou.
 
 ### Design system "Bento"
 

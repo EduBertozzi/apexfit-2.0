@@ -84,6 +84,7 @@ describe('conversarOpenAI', () => {
     expect(corpo.tools.map((t: { function: { name: string } }) => t.function.name)).toEqual([
       'atualizar_dieta',
       'atualizar_treinos',
+      'ajustar_treino',
     ]);
     expect(corpo.messages[0].content).toContain('Nome: Eduardo');
   });
@@ -108,8 +109,11 @@ describe('conversarOpenAI', () => {
     const eventos = await coletar(conversarOpenAI(pedido('Não tenho banco, e agora?')));
 
     expect(eventos.map((evento) => evento.tipo)).toEqual(['texto', 'texto', 'treinos', 'texto']);
-    expect(eventos[2]).toEqual({ tipo: 'treinos', resultado: TREINOS });
-    expect(eventos[3]).toEqual({ tipo: 'texto', texto: confirmarTreinos(TREINOS) });
+    expect(eventos[2]).toEqual({ tipo: 'treinos', resultado: TREINOS, modo: 'novo' });
+    expect(eventos[3]).toEqual({
+      tipo: 'texto',
+      texto: confirmarTreinos(TREINOS, { dias: [[1]] }),
+    });
 
     const segunda = corpoDaChamada(1);
     expect(segunda.response_format.json_schema.name).toBe('treinos');
@@ -135,6 +139,7 @@ describe('conversarOpenAI', () => {
     expect(eventos.find((evento) => evento.tipo === 'dieta')).toEqual({
       tipo: 'dieta',
       plano: PLANO,
+      modo: 'novo',
     });
   });
 
@@ -183,8 +188,12 @@ describe('prompt do coach com ferramentas por pedido', () => {
 
   it('confirmação dos treinos sem emoji nem travessão', () => {
     expect(confirmarTreinos(TREINOS)).toMatch(
-      /^Pronto! Montei 1 treino:\n- treino A: corpo todo \(2 exercícios\)/,
+      /^Montei 1 treino:\n- treino A: corpo todo \(2 exercícios\)/,
     );
+    expect(confirmarTreinos(TREINOS, { dias: [[1, 4]] })).toContain(
+      '- treino A: corpo todo (2 exercícios), segunda e quinta',
+    );
+    expect(confirmarTreinos(TREINOS)).toContain('toque em aplicar');
     expect(confirmarTreinos(TREINOS)).not.toMatch(/[–—]|\p{Extended_Pictographic}/u);
   });
 });

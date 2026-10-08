@@ -62,12 +62,15 @@ export function criarExercicio(dados: DadosExercicio, gerarId: GeradorId = novoI
 }
 
 export function criarTreino(dados: DadosTreino, gerarId: GeradorId = novoId): Treino {
-  return {
+  const treino: Treino = {
     id: gerarId(),
     nome: dados.nome,
     foco: dados.foco,
     exercicios: (dados.exercicios ?? []).map((exercicio) => criarExercicio(exercicio, gerarId)),
   };
+  const dias = normalizarDias(dados.dias ?? []);
+
+  return dias ? { ...treino, dias } : treino;
 }
 
 export function adicionarTreino(treinos: readonly Treino[], treino: Treino): Treino[] {

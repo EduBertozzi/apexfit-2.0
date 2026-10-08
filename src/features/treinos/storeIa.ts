@@ -7,7 +7,8 @@ import { SemIa, type ProvedorIa } from '@/shared/lib/semIa';
 
 import { pedirTreinosIa } from './apiIa';
 import type { PreferenciasTreino } from './contratoIa';
-import { paraDadosTreino } from './ia';
+import { diasDoTexto } from './diasIa';
+import { comDias, paraDadosTreino } from './ia';
 import { montarTreinosPorRegras } from './regrasIa';
 import { useTreinosStore } from './store';
 
@@ -80,7 +81,8 @@ export const useTreinosIaStore = create<TreinosIaState>()(
           origem = 'demo';
         }
 
-        const dados = paraDadosTreino(resultado);
+        // Cada treino ganha o seu dia: os citados no pedido ou espalhados na semana
+        const dados = comDias(paraDadosTreino(resultado), diasDoTexto(preferencias.foco ?? ''));
 
         if (dados.length === 0) {
           set({ gerando: false, erro: 'Os treinos vieram vazios. Tente de novo.' });

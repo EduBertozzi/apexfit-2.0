@@ -1,4 +1,12 @@
-import { confirmarPlano, metaDoContexto, pedeMudancaDeDieta } from '../intencao';
+import {
+  confirmarPlano,
+  metaDoContexto,
+  modoDaDieta,
+  modoDoTreino,
+  pedeMudancaDeDieta,
+  pedeMudancaDeTreino,
+  refeicoesPedidas,
+} from '../intencao';
 
 describe('pedeMudancaDeDieta', () => {
   it.each([
@@ -62,6 +70,100 @@ describe('confirmarPlano', () => {
 
     expect(texto).toContain('2.830 kcal em 1 refeições');
     expect(texto).toContain('12:00 Almoço: frango grelhado e arroz integral');
+    expect(texto).not.toMatch(/[—–]/);
+  });
+});
+
+describe('pedeMudancaDeTreino com nome de exercício', () => {
+  it.each(['troca o leg press por agachamento', 'tira a prancha', 'substitui o supino por flexão'])(
+    'reconhece: "%s"',
+    (mensagem) => {
+      expect(pedeMudancaDeTreino(mensagem)).toBe(true);
+    },
+  );
+
+  it.each(['troca o arroz por batata', 'posso trocar o supino por flexão?'])(
+    'não confunde: "%s"',
+    (mensagem) => {
+      expect(pedeMudancaDeTreino(mensagem)).toBe(false);
+    },
+  );
+});
+
+describe('modoDoTreino', () => {
+  it.each([
+    'Monta meu treino',
+    'refaz minha ficha',
+    'quero um novo treino',
+    'Cria uma divisão nova',
+    'treino de 4 dias',
+    'monta um treino em casa',
+  ])('plano novo: "%s"', (mensagem) => {
+    expect(modoDoTreino(mensagem, true)).toBe('novo');
+  });
+
+  it.each([
+    'troca o leg press por agachamento livre',
+    'Troca os exercícios do treino A',
+    'tira a prancha do treino B',
+    'aumenta as séries do supino',
+    'faz o treino A sem leg press',
+  ])('ajuste: "%s"', (mensagem) => {
+    expect(modoDoTreino(mensagem, true)).toBe('ajuste');
+  });
+
+  it('sem treinos salvos é sempre novo', () => {
+    expect(modoDoTreino('troca o leg press por agachamento', false)).toBe('novo');
+  });
+});
+
+describe('refeicoesPedidas e modoDaDieta', () => {
+  it.each([
+    ['troca o café da manhã', ['cafe']],
+    ['muda o almoço e a janta', ['almoco', 'jantar']],
+    ['tira o café do lanche', ['lanche']],
+    ['quero outro café', ['cafe']],
+    ['ceia mais leve', ['ceia']],
+    ['monta minha dieta', []],
+  ])('"%s" cita %j', (mensagem, slots) => {
+    expect(refeicoesPedidas(mensagem)).toEqual(slots);
+  });
+
+  it.each(['Monta minha dieta', 'Faz uma dieta nova pra mim', 'Quero um cardápio novo'])(
+    'plano novo: "%s"',
+    (mensagem) => {
+      expect(modoDaDieta(mensagem, true)).toBe('novo');
+    },
+  );
+
+  it.each(['Troca o café da manhã', 'tira o leite do lanche', 'dieta sem lactose'])(
+    'ajuste: "%s"',
+    (mensagem) => {
+      expect(modoDaDieta(mensagem, true)).toBe('ajuste');
+    },
+  );
+
+  it('sem plano salvo é sempre novo', () => {
+    expect(modoDaDieta('troca o café da manhã', false)).toBe('novo');
+  });
+});
+
+describe('confirmarPlano num ajuste', () => {
+  it('lista só o que mudou e pede para aplicar', () => {
+    const texto = confirmarPlano(
+      {
+        resumo: 'x',
+        caloriasDia: 2000,
+        macros: { proteinaG: 1, carboidratoG: 1, gorduraG: 1 },
+        refeicoes: [],
+        dicas: [],
+        aviso: 'x',
+      },
+      ['café da manhã trocado'],
+    );
+
+    expect(texto).toContain('- café da manhã trocado');
+    expect(texto).toContain('aplicar');
     expect(texto).not.toMatch(/[—–]/);
   });
 });

@@ -2,9 +2,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import { betaZodTool } from '@anthropic-ai/sdk/helpers/beta/zod';
 
 import { planoDietaSchema } from '@/features/dieta/contrato';
+import { mesclarPlano } from '@/features/dieta/mesclar';
 import { FALLBACK, MODELO_CLAUDE, obterCliente } from '@/shared/servidor/claude';
 
 import type { EventoCoach, PedidoCoach } from '../contrato';
+import { modoDaDieta, refeicoesPedidas } from '../intencao';
 import { paraMensagensApi } from '../mensagens';
 import { ORIENTACAO_FERRAMENTA_DIETA, SISTEMA_COACH } from '../prompt';
 
@@ -28,9 +30,20 @@ export async function* conversar(pedido: PedidoCoach): AsyncGenerator<EventoCoac
       description: ORIENTACAO_FERRAMENTA_DIETA,
       inputSchema: planoDietaSchema,
       run: async (plano) => {
-        pendentes.push({ tipo: 'dieta', plano });
+        // Pedido pequeno ("troca o café da manhã"): o resto do plano volta igual
+        const ultima = pedido.mensagens[pedido.mensagens.length - 1].texto;
+        const atual = pedido.planoAtual ?? null;
+        const modo = modoDaDieta(ultima, atual !== null);
+        const alvos = modo === 'ajuste' ? refeicoesPedidas(ultima) : [];
 
-        return 'Plano salvo no app do usuário. Agora explique em poucas frases o que mudou.';
+        pendentes.push({
+          tipo: 'dieta',
+          plano: mesclarPlano(atual, plano, alvos),
+          modo,
+          ...(alvos.length > 0 ? { refeicoes: alvos } : {}),
+        });
+
+        return 'Proposta enviada ao app: a pessoa decide se aplica. Agora explique em poucas frases o que mudou, sem dizer que já salvou.';
       },
     }),
     eager_input_streaming: true,

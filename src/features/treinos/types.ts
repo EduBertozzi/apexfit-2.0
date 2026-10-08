@@ -54,6 +54,8 @@ export type DadosTreino = {
   nome: string;
   foco?: string;
   exercicios?: DadosExercicio[];
+  /** Dias da semana (0 = domingo). Sem o campo, o treino entra no rodízio. */
+  dias?: number[];
 };
 
 /** Função que gera ids. Nos testes, trocamos por um contador previsível. */

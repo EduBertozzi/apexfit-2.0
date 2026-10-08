@@ -90,6 +90,8 @@ describe('useTreinosIaStore.gerar', () => {
 
     expect(useTreinosStore.getState().treinos.map((t) => t.nome)).toEqual(['Treino A', 'Treino B']);
     expect(useTreinosStore.getState().treinos[0].exercicios[0].grupo).toBe('costas');
+    // Treinos novos já vêm com dia da semana: 2 treinos, segunda e quinta
+    expect(useTreinosStore.getState().treinos.map((t) => t.dias)).toEqual([[1], [4]]);
     expect(useTreinosIaStore.getState().ultima).toMatchObject({
       origem: 'openai',
       quantidade: 2,
@@ -105,6 +107,15 @@ describe('useTreinosIaStore.gerar', () => {
 
     expect(useTreinosStore.getState().treinos).toHaveLength(4);
     expect(useTreinosIaStore.getState().ultima?.origem).toBe('demo');
+  });
+
+  it('dias citados no pedido livre viram os dias dos treinos', async () => {
+    responder(200, { resultado: RESPOSTA, provedor: 'openai' });
+    useTreinosIaStore.getState().mudarPreferencias({ diasPorSemana: 2, foco: 'terça e sexta' });
+
+    await useTreinosIaStore.getState().gerar(PERFIL);
+
+    expect(useTreinosStore.getState().treinos.map((t) => t.dias)).toEqual([[2], [5]]);
   });
 
   it('erro de verdade: mantém os treinos e mostra a mensagem', async () => {
