@@ -70,6 +70,14 @@ export const LIMITES_MONTADOR = {
   itensAquecimento: 6,
   repeticoesAquecimento: { min: 1, max: 100 },
   minutosAquecimento: { min: 1, max: 30 },
+  /** Exercícios por dia, sem contar o aquecimento. */
+  exerciciosPorDia: { min: 2, max: 12 },
+  /** Cardio em circuito: exercícios, segundos de cada um e voltas. */
+  circuito: {
+    exercicios: { min: 2, max: 8 },
+    segundos: { min: 20, max: 90 },
+    voltas: { min: 2, max: 6 },
+  },
 } as const;
 
 export const itemAquecimentoSchema = z.object({
@@ -85,10 +93,41 @@ export const areaEscolhidaSchema = z.object({
   regioes: z.array(z.string().trim().min(1).max(20)).max(6),
 });
 
+/** Cardio em circuito. Sem o campo no dia, o cardio é contínuo (um aparelho só). */
+export const circuitoCardioSchema = z.object({
+  exercicios: z
+    .number()
+    .int()
+    .min(LIMITES_MONTADOR.circuito.exercicios.min)
+    .max(LIMITES_MONTADOR.circuito.exercicios.max),
+  segundos: z
+    .number()
+    .int()
+    .min(LIMITES_MONTADOR.circuito.segundos.min)
+    .max(LIMITES_MONTADOR.circuito.segundos.max),
+  voltas: z
+    .number()
+    .int()
+    .min(LIMITES_MONTADOR.circuito.voltas.min)
+    .max(LIMITES_MONTADOR.circuito.voltas.max),
+});
+
 export const diaMontadoSchema = z.object({
   /** 0 = domingo, 6 = sábado. */
   dia: z.number().int().min(0).max(6),
   areas: z.array(areaEscolhidaSchema).max(AREAS_TREINO.length),
+  /**
+   * Quantos exercícios no dia, sem o aquecimento. Sem o campo: o padrão do
+   * nível (`EXERCICIOS_POR_NIVEL` em `montadorIa`), que muda junto com o nível.
+   */
+  exercicios: z
+    .number()
+    .int()
+    .min(LIMITES_MONTADOR.exerciciosPorDia.min)
+    .max(LIMITES_MONTADOR.exerciciosPorDia.max)
+    .optional(),
+  /** Cardio em circuito (só vale se o dia tem cardio). Sem o campo: contínuo. */
+  circuito: circuitoCardioSchema.optional(),
 });
 
 const escolhasSemanaBaseSchema = z.object({
@@ -108,6 +147,7 @@ const escolhasSemanaBaseSchema = z.object({
 export type ItemAquecimento = z.infer<typeof itemAquecimentoSchema>;
 export type AreaEscolhida = z.infer<typeof areaEscolhidaSchema>;
 export type DiaMontado = z.infer<typeof diaMontadoSchema>;
+export type CircuitoCardio = z.infer<typeof circuitoCardioSchema>;
 export type EscolhasSemana = z.infer<typeof escolhasSemanaBaseSchema>;
 
 /**
@@ -186,7 +226,7 @@ export const exercicioIaSchema = z.object({
   repeticoes: z
     .string()
     .describe(
-      'Só número ou faixa: "10" ou "8 a 12". Por tempo (cardio, bike, esteira ou aquecimento por tempo), os minutos com a unidade: "5 min".',
+      'Só número ou faixa: "10" ou "8 a 12". Por tempo (cardio, bike, esteira ou aquecimento por tempo), os minutos com a unidade: "5 min". No circuito de cardio, os segundos com a unidade: "40 s".',
     ),
   observacao: z
     .string()

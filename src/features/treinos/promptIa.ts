@@ -3,8 +3,23 @@ import type { Perfil } from '@/features/perfil/types';
 import { formatarNumero } from '@/shared/lib/numero';
 
 import { textoDaMedida } from './aquecimento';
-import type { EscolhasSemana, MinutosTreino, PreferenciasTreino } from './contratoIa';
-import { NOME_EQUIPAMENTO, NOME_NIVEL, nomeTreinoDoDia, textoArea } from './montadorIa';
+import { circuitoDoDia, DESCANSO_CIRCUITO, textoSegundos } from './circuito';
+import type {
+  DiaMontado,
+  EscolhasSemana,
+  MinutosTreino,
+  NivelTreino,
+  PreferenciasTreino,
+} from './contratoIa';
+import {
+  distribuirExercicios,
+  exerciciosDoDia,
+  NOME_EQUIPAMENTO,
+  NOME_NIVEL,
+  nomeTreinoDoDia,
+  textoArea,
+  textoExercicios,
+} from './montadorIa';
 
 /**
  * Instruções fixas para a IA que monta os treinos. Ficam separadas dos dados
@@ -18,7 +33,7 @@ export const SISTEMA_TREINOS = [
   'Use nomes de exercícios como se fala em academia no Brasil (ex: Supino reto com barra, Puxada frontal, Leg press 45, Cadeira extensora).',
   'Em casa, use só peso do corpo, mochila com peso, garrafas de água, cadeira e sofá. Nada de máquinas nem barras.',
   'Séries e repetições realistas: 2 a 4 séries; força com 6 a 10 repetições, hipertrofia com 8 a 12, resistência e emagrecimento com 12 a 15.',
-  'Em repeticoes, escreva só um número ou uma faixa, como "10" ou "8 a 12". Em exercícios por tempo (cardio, corrida, corda, bike ou esteira no aquecimento), use 1 série e escreva os minutos em repeticoes com a unidade, como "8 min".',
+  'Em repeticoes, escreva só um número ou uma faixa, como "10" ou "8 a 12". Em exercícios por tempo (cardio, corrida, corda, bike ou esteira no aquecimento), use 1 série e escreva os minutos em repeticoes com a unidade, como "8 min". Exercícios curtos por segundos usam "40 s".',
   'Respeite o tempo disponível: a quantidade de exercícios precisa caber na sessão.',
   'Respeite todas as restrições de saúde e lesões: troque exercícios que forçam a região e, se for o caso, diga no resumo para procurar um profissional.',
   'Se o usuário for menor de idade: nada de cargas altas, foco em técnica, repetições entre 12 e 15 e acompanhamento de um professor.',
@@ -87,8 +102,40 @@ export const SISTEMA_SEMANA = [
   'Se o aquecimento estiver ligado, comece cada treino com os exercícios de aquecimento pedidos, exatamente com as repetições ou os minutos indicados. Se estiver desligado, não coloque aquecimento.',
   'Respeite o nível e o equipamento: com halteres, nada de máquinas, barras nem cabos; só com o peso do corpo, nada de pesos.',
   'Nunca use exercícios que a pessoa pediu para evitar nem exercícios que forcem a lesão citada.',
-  'Iniciante: 4 exercícios de força por treino, 3 séries de 12. Intermediário: 5 exercícios, 3 séries de 10 a 12. Avançado: 6 exercícios, 4 séries de 8 a 12.',
+  'Cada dia diz quantos exercícios montar e quantos de cada área, sem contar o aquecimento. Siga exatamente essas quantidades, com exercícios diferentes entre si. Cardio contínuo conta como 1 exercício.',
+  'Quando o dia pede cardio em circuito, monte exatamente a quantidade de exercícios do circuito, curtos e com o peso do corpo (ex: polichinelo, corrida no lugar, escalador, agachamento com salto, burpee, pular corda), todos com grupo "cardio", series igual ao número de voltas e repeticoes com os segundos e a unidade, como "40 s". Coloque o circuito no fim do treino. O circuito não entra na conta dos outros exercícios.',
+  'Séries por nível: iniciante 3 séries de 12; intermediário 3 séries de 10 a 12; avançado 4 séries de 8 a 12.',
 ].join('\n');
+
+/**
+ * Linha de um dia no prompt:
+ * "- treino de segunda: 6 exercícios (peito 3; braço (tríceps) 3), mais o aquecimento".
+ * Com circuito: "...; cardio em circuito: 4 exercícios de 40 s, 3 voltas, 20 s de
+ * descanso entre exercícios e 1 min entre voltas".
+ */
+export function linhaDoDiaNoPrompt(
+  dia: DiaMontado,
+  nivel: NivelTreino,
+  comAquecimento: boolean,
+): string {
+  const circuito = circuitoDoDia(dia);
+  const areas = distribuirExercicios(dia, nivel)
+    .filter(({ area }) => !(area.area === 'cardio' && circuito))
+    .map(({ area, quantidade }) => `${textoArea(area.area, area.regioes)} ${quantidade}`)
+    .join('; ');
+  const quantidade = exerciciosDoDia(dia, nivel);
+  const base = [
+    quantidade > 0 ? `${textoExercicios(quantidade)} (${areas})` : null,
+    comAquecimento ? 'mais o aquecimento' : null,
+  ]
+    .filter((parte) => parte !== null)
+    .join(', ');
+  const textoDoCircuito = circuito
+    ? `cardio em circuito: ${circuito.exercicios} exercícios de ${textoSegundos(circuito.segundos)}, ${circuito.voltas} voltas, ${DESCANSO_CIRCUITO.entreExercicios} s de descanso entre exercícios e ${DESCANSO_CIRCUITO.entreVoltas / 60} min entre voltas`
+    : null;
+
+  return `- ${nomeTreinoDoDia(dia.dia)}: ${[base, textoDoCircuito].filter(Boolean).join('; ')}`;
+}
 
 /** Dados do usuário + a semana montada. Vai como mensagem do usuário. */
 export function montarPromptSemana(perfil: Perfil, escolhas: EscolhasSemana): string {
@@ -112,9 +159,8 @@ export function montarPromptSemana(perfil: Perfil, escolhas: EscolhasSemana): st
     escolhas.evitar.trim() ? `Evitar (lesões ou exercícios): ${escolhas.evitar.trim()}` : null,
     '',
     `Dias de treino (${escolhas.dias.length}, um treino por dia):`,
-    ...escolhas.dias.map(
-      (dia) =>
-        `- ${nomeTreinoDoDia(dia.dia)}: ${dia.areas.map((area) => textoArea(area.area, area.regioes)).join('; ')}`,
+    ...escolhas.dias.map((dia) =>
+      linhaDoDiaNoPrompt(dia, escolhas.nivel, aquecimento.ativo && aquecimento.itens.length > 0),
     ),
     '',
     aquecimento.ativo && aquecimento.itens.length > 0

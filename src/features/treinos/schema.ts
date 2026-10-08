@@ -13,6 +13,8 @@ export const LIMITES = {
   series: { min: 1, max: 20 },
   repeticoes: { min: 1, max: 100 },
   minutos: { min: 1, max: 180 },
+  /** Exercício por segundos (circuito de cardio): "40 s". */
+  segundos: { min: 5, max: 300 },
   cargaKg: { min: 0, max: 500 },
   observacao: { max: 140 },
 } as const;
@@ -31,6 +33,9 @@ const PADRAO_REPETICOES = /^(\d+)(?:\s*(?:a|até|ate|-|\u2013|\u2014)\s*(\d+))?$
 
 // Cardio conta em minutos: "10 min", "10min" ou "10 minutos" viram "10 min".
 const PADRAO_MINUTOS = /^(\d+)\s*min(?:uto|utos)?$/i;
+
+// Circuito conta em segundos: "40 s", "40s", "40 seg" ou "40 segundos" viram "40 s".
+const PADRAO_SEGUNDOS = /^(\d+)\s*(?:s|seg|segundos?)$/i;
 
 /**
  * Repetições como texto padronizado: "10" ou "8 a 12".
@@ -56,6 +61,20 @@ const campoRepeticoes = z.string().transform((texto, ctx) => {
     }
 
     return `${valor} min`;
+  }
+
+  const segundos = PADRAO_SEGUNDOS.exec(limpo);
+
+  if (segundos) {
+    const valor = Number(segundos[1]);
+    const { min, max } = LIMITES.segundos;
+
+    if (valor < min || valor > max) {
+      ctx.addIssue({ code: 'custom', message: `deve estar entre ${min} e ${max} segundos` });
+      return z.NEVER;
+    }
+
+    return `${valor} s`;
   }
 
   const partes = PADRAO_REPETICOES.exec(limpo);

@@ -23,7 +23,7 @@ function cortar(texto: string, max: number): string {
   return texto.trim().slice(0, max).trim();
 }
 
-/** "8-12 reps" vira "8 a 12"; "30 s" vira "30"; sem número, "10". */
+/** "8-12 reps" vira "8 a 12"; "30 s" fica "30 s"; sem número, "10". */
 export function normalizarRepeticoes(texto: string): string {
   const validado = exercicioSchema.shape.repeticoes.safeParse(texto);
 
@@ -43,15 +43,22 @@ export function normalizarRepeticoes(texto: string): string {
 
 /**
  * A IA às vezes manda só "8" num exercício por tempo e explica "8 minutos" na
- * observação. No card isso viraria "1x8"; aqui vira "8 min".
+ * observação. No card isso viraria "1x8"; aqui vira "8 min" (ou "40 s" quando
+ * a observação fala em segundos).
  */
 export function comUnidadeDeTempo(repeticoes: string, grupo: string, observacao: string): string {
   const porTempo = grupo === 'cardio' || grupo === 'aquecimento';
   const soNumero = /^\d+$/.test(repeticoes.trim());
 
-  return porTempo && soNumero && /minuto/i.test(observacao)
-    ? `${repeticoes.trim()} min`
-    : repeticoes;
+  if (!porTempo || !soNumero) {
+    return repeticoes;
+  }
+
+  if (/minuto/i.test(observacao)) {
+    return `${repeticoes.trim()} min`;
+  }
+
+  return /segundo/i.test(observacao) ? `${repeticoes.trim()} s` : repeticoes;
 }
 
 export function paraDadosTreino(resultado: RespostaTreinosIa): DadosTreino[] {

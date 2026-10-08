@@ -14,6 +14,13 @@ type Props = {
   podeMais?: boolean;
   /** Rótulo à esquerda e botões à direita, numa linha só (ex: quantidade). */
   emLinha?: boolean;
+  /** Para o leitor de tela, quando o rótulo visível não basta (ex: "6 exercícios na segunda"). */
+  rotuloAcessivel?: string;
+  /** O que o leitor de tela fala como valor. Padrão: `valorTexto`. */
+  valorAcessivel?: string;
+  /** Nome dos botões para o leitor de tela. Padrão: "diminuir/aumentar <rótulo>". */
+  rotuloMenos?: string;
+  rotuloMais?: string;
   testID?: string;
 };
 
@@ -67,6 +74,10 @@ export function ContadorCompacto({
   podeMenos = true,
   podeMais = true,
   emLinha = false,
+  rotuloAcessivel,
+  valorAcessivel,
+  rotuloMenos,
+  rotuloMais,
   testID,
 }: Props) {
   return (
@@ -83,8 +94,8 @@ export function ContadorCompacto({
       <View
         accessible
         accessibilityRole="adjustable"
-        accessibilityLabel={rotulo}
-        accessibilityValue={{ text: valorTexto }}
+        accessibilityLabel={rotuloAcessivel ?? rotulo}
+        accessibilityValue={{ text: valorAcessivel ?? valorTexto }}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={(evento) => {
           if (evento.nativeEvent.actionName === 'increment' && podeMais) {
@@ -99,7 +110,7 @@ export function ContadorCompacto({
       >
         <Botao
           icone="remove"
-          rotulo={`diminuir ${rotulo}`}
+          rotulo={rotuloMenos ?? `diminuir ${rotulo}`}
           onPress={onMenos}
           ativo={podeMenos}
           testID={testID && `${testID}-menos`}
@@ -109,7 +120,7 @@ export function ContadorCompacto({
         </Texto>
         <Botao
           icone="add"
-          rotulo={`aumentar ${rotulo}`}
+          rotulo={rotuloMais ?? `aumentar ${rotulo}`}
           onPress={onMais}
           ativo={podeMais}
           testID={testID && `${testID}-mais`}

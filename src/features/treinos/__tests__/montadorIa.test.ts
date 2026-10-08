@@ -168,12 +168,21 @@ describe('textos do montador', () => {
     expect(nomeTreinoDoDia(1)).toBe('treino de segunda');
     expect(nomeTreinoDoDia(6)).toBe('treino de sábado');
     expect(focoDoDia(segunda)).toBe('peito e braço (tríceps)');
-    expect(resumoDoDia({ dia: 2, areas: [] })).toBe('toque para escolher o que treinar');
-    expect(rotuloDoDia(segunda)).toBe('segunda, peito e braço (tríceps)');
+    expect(resumoDoDia({ dia: 2, areas: [] }, 'iniciante')).toBe(
+      'toque para escolher o que treinar',
+    );
+    expect(resumoDoDia(segunda, 'intermediario')).toBe('peito e braço (tríceps) · 6 exercícios');
+    expect(rotuloDoDia(segunda, 'iniciante')).toBe(
+      'segunda, peito e braço (tríceps), 5 exercícios',
+    );
     expect(textoBotaoGerar(ESCOLHAS_PADRAO)).toBe('gerar 3 treinos');
     expect(textoBotaoGerar({ ...ESCOLHAS_PADRAO, dias: [segunda] })).toBe('gerar 1 treino');
 
-    for (const texto of [focoDoDia(segunda), rotuloDoDia(segunda), resumoDoDia(segunda)]) {
+    for (const texto of [
+      focoDoDia(segunda),
+      rotuloDoDia(segunda, 'avancado'),
+      resumoDoDia(segunda, 'avancado'),
+    ]) {
       expect(texto).not.toMatch(SEM_EMOJI_NEM_TRAVESSAO);
       expect(texto).toBe(texto.toLocaleLowerCase('pt-BR'));
     }

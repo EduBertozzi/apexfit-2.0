@@ -10,6 +10,7 @@ import { alternarItemAquecimento, mudarMedidaAquecimento, passoAquecimento } fro
 import {
   primeiroErroEscolhas,
   type AreaTreino,
+  type CircuitoCardio,
   type EscolhasSemana,
   type MedidaAquecimento,
 } from './contratoIa';
@@ -21,6 +22,10 @@ import {
   copiarDia,
   ESCOLHAS_PADRAO,
   escolhasValidas,
+  exerciciosPadrao,
+  modoCardio,
+  passoCircuito,
+  passoExercicios,
   prepararSemana,
 } from './montadorIa';
 import { montarSemanaPorRegras } from './regrasSemana';
@@ -49,6 +54,13 @@ type TreinosIaState = {
   alternarArea: (dia: number, area: AreaTreino) => void;
   alternarRegiao: (dia: number, area: AreaTreino, regiao: string) => void;
   copiarDia: (de: number, para: number) => void;
+  /** Um exercício a mais (1) ou a menos (-1) no dia; o número fica fixo. */
+  passoExercicios: (dia: number, sentido: 1 | -1) => void;
+  /** O dia volta a seguir o padrão do nível. */
+  exerciciosPadrao: (dia: number) => void;
+  /** Cardio do dia contínuo (um aparelho) ou em circuito. */
+  modoCardio: (dia: number, modo: 'continuo' | 'circuito') => void;
+  passoCircuito: (dia: number, campo: keyof CircuitoCardio, sentido: 1 | -1) => void;
   ligarAquecimento: (ativo: boolean) => void;
   alternarAquecimento: (nome: string) => void;
   medidaAquecimento: (nome: string, medida: MedidaAquecimento) => void;
@@ -86,6 +98,12 @@ export const useTreinosIaStore = create<TreinosIaState>()(
         alternarRegiao: (dia, area, regiao) =>
           mudar((escolhas) => alternarRegiao(escolhas, dia, area, regiao)),
         copiarDia: (de, para) => mudar((escolhas) => copiarDia(escolhas, de, para)),
+        passoExercicios: (dia, sentido) =>
+          mudar((escolhas) => passoExercicios(escolhas, dia, sentido)),
+        exerciciosPadrao: (dia) => mudar((escolhas) => exerciciosPadrao(escolhas, dia)),
+        modoCardio: (dia, modo) => mudar((escolhas) => modoCardio(escolhas, dia, modo)),
+        passoCircuito: (dia, campo, sentido) =>
+          mudar((escolhas) => passoCircuito(escolhas, dia, campo, sentido)),
         ligarAquecimento: (ativo) =>
           mudar((escolhas) => ({ ...escolhas, aquecimento: { ...escolhas.aquecimento, ativo } })),
         alternarAquecimento: (nome) =>
@@ -155,7 +173,9 @@ export const useTreinosIaStore = create<TreinosIaState>()(
       name: 'apexfit/treinos-ia',
       storage: armazenamento,
       // 2: as preferências antigas (dias por semana, local, minutos) viraram o montador da semana
-      version: 2,
+      // 3: cada dia ganhou a quantidade de exercícios (dias salvos antes ficam no padrão do
+      //    nível) e o cardio em circuito (dias salvos antes ficam com cardio contínuo)
+      version: 3,
       partialize: ({ escolhas, ultima }) => ({ escolhas, ultima }),
       migrate: (salvo) => {
         const antigo = (salvo ?? {}) as { escolhas?: unknown; ultima?: UltimaGeracao | null };
