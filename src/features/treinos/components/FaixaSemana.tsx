@@ -197,7 +197,10 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
               hitSlop={{ left: espacoPilulas / 2, right: espacoPilulas / 2 }}
               style={({ pressed }) => [
                 estilos.pilula,
-                { width: larguraPilula },
+                // Semana inteira na tela: pílula estreita, então mais baixa (não fica esticada)
+                cabe
+                  ? [estilos.pilulaCompacta, { width: larguraPilula }]
+                  : { width: larguraPilula },
                 indice > 0 && dia.sigla === 'dom' && { marginLeft: ESPACO_SEMANA },
                 { backgroundColor: cor.fundo },
                 // Dia tocado ganha um contorno, sem mudar o tamanho da pílula
@@ -269,6 +272,11 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: espaco.sm,
     gap: espaco.sm,
+  },
+  pilulaCompacta: {
+    minHeight: 0,
+    paddingVertical: espaco.xs + 2,
+    gap: espaco.xs,
   },
   sigla: {
     fontFamily: familia.display,

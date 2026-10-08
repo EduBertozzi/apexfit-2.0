@@ -1,7 +1,11 @@
+import { chaveDoDia } from '@/shared/lib/data';
 import type { RespostaTreinosIa } from '../contratoIa';
 import { comUnidadeDeTempo, normalizarRepeticoes, paraDadosTreino, substituirTreinos } from '../ia';
 import { useTreinosStore } from '../store';
 import type { Sessao } from '../types';
+
+// Sessão aberta precisa ser de hoje de verdade: de dias passados ela vira histórico
+const HOJE_DE_VERDADE = chaveDoDia(new Date());
 
 const RESPOSTA: RespostaTreinosIa = {
   resumo: 'ABC.',
@@ -68,7 +72,7 @@ describe('paraDadosTreino', () => {
 describe('substituirTreinos', () => {
   const SESSOES: Sessao[] = [
     { id: 's1', treinoId: 'velho', data: '2026-10-01', concluidos: ['e1'], finalizada: true },
-    { id: 's2', treinoId: 'velho', data: '2026-10-07', concluidos: [], finalizada: false },
+    { id: 's2', treinoId: 'velho', data: HOJE_DE_VERDADE, concluidos: [], finalizada: false },
   ];
 
   it('troca os treinos, guarda o histórico e descarta a sessão aberta', () => {

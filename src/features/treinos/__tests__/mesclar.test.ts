@@ -1,3 +1,4 @@
+import { chaveDoDia } from '@/shared/lib/data';
 import {
   mesclarTreinos,
   restringirAosDias,
@@ -6,6 +7,9 @@ import {
   treinosNosDias,
 } from '../mesclar';
 import type { DadosTreino, Sessao, Treino } from '../types';
+
+// Sessão aberta precisa ser de hoje de verdade: de dias passados ela vira histórico
+const HOJE_DE_VERDADE = chaveDoDia(new Date());
 
 function contador() {
   let n = 0;
@@ -172,8 +176,14 @@ describe('resumoMudancas', () => {
 describe('sessoesValidas', () => {
   const sessoes: Sessao[] = [
     { id: 's0', treinoId: 'apagado', data: '2026-10-01', concluidos: ['z'], finalizada: true },
-    { id: 's1', treinoId: 't1', data: '2026-10-07', concluidos: ['e1', 'e2'], finalizada: false },
-    { id: 's2', treinoId: 'apagado', data: '2026-10-07', concluidos: [], finalizada: false },
+    {
+      id: 's1',
+      treinoId: 't1',
+      data: HOJE_DE_VERDADE,
+      concluidos: ['e1', 'e2'],
+      finalizada: false,
+    },
+    { id: 's2', treinoId: 'apagado', data: HOJE_DE_VERDADE, concluidos: [], finalizada: false },
   ];
 
   it('histórico fica; sessão aberta continua só com marcas que ainda existem', () => {

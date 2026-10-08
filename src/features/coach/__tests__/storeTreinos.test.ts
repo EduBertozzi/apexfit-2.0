@@ -1,3 +1,4 @@
+import { chaveDoDia } from '@/shared/lib/data';
 import { calcularNecessidades } from '@/features/nutricao/calculos';
 import type { Perfil } from '@/features/perfil/types';
 import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
@@ -8,6 +9,9 @@ import type { EventoCoach } from '../contrato';
 import type { DadosDemo } from '../demo';
 import { escreverEvento, lerEventos } from '../eventos';
 import { useCoachStore } from '../store';
+
+// Sessão aberta precisa ser de hoje de verdade: de dias passados ela vira histórico
+const HOJE_DE_VERDADE = chaveDoDia(new Date());
 
 const PERFIL: Perfil = {
   nome: 'Eduardo',
@@ -142,7 +146,7 @@ describe('ajuste de treino pelo coach', () => {
   const SESSAO_ABERTA: Sessao = {
     id: 's1',
     treinoId: 't1',
-    data: '2026-10-07',
+    data: HOJE_DE_VERDADE,
     concluidos: ['e1', 'e2'],
     finalizada: false,
   };
