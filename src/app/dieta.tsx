@@ -71,6 +71,15 @@ export default function Dieta() {
         </Cartao>
       ) : null}
 
+      {!plano && !gerando && !erro ? (
+        <Cartao titulo="ainda sem dieta" variante="tracejado">
+          <Texto secundario>
+            a IA monta as refeições da semana com as suas metas. depois dá para ter um plano próprio
+            em qualquer dia.
+          </Texto>
+        </Cartao>
+      ) : null}
+
       {erro ? (
         <Texto style={{ color: c.erro }} accessibilityLiveRegion="polite">
           {erro}
@@ -129,7 +138,7 @@ export default function Dieta() {
 
       {!gerando || plano ? (
         <Botao
-          titulo={plano ? 'novo plano da semana' : 'tentar de novo'}
+          titulo={plano ? 'novo plano da semana' : erro ? 'tentar de novo' : 'montar minha dieta'}
           variante={plano ? 'secundario' : 'primario'}
           onPress={() => gerar(perfil)}
           carregando={gerandoAlgo && diaGerando === null}
