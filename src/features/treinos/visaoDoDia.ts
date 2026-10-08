@@ -7,6 +7,7 @@ import {
   progressoDaSessao,
   situacaoDoDia,
   temDias,
+  treinoDaSessao,
   treinoDoDia,
 } from './logica';
 import { ehDescanso, nomeDoDia, sessaoQueVale, somarDias } from './semana';
@@ -74,7 +75,7 @@ export function visaoDoDia(
 
   if (dia < hoje) {
     const sessao = sessaoQueVale(sessoes, dia);
-    const treino = sessao ? (treinos.find((item) => item.id === sessao.treinoId) ?? null) : null;
+    const treino = sessao ? treinoDaSessao(treinos, sessao) : null;
 
     if (sessao && treino) {
       const { feitos, total } = progressoDaSessao(sessao, treino);

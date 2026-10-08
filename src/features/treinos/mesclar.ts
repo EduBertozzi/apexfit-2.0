@@ -1,7 +1,8 @@
+import { chaveDoDia } from '@/shared/lib/data';
 import { minusculaInicial } from '@/shared/lib/texto';
 
 import { textoDosDias } from './diasIa';
-import { criarExercicio, novoId, normalizarDias, resumoExercicio } from './logica';
+import { criarExercicio, ficaNoHistorico, novoId, normalizarDias, resumoExercicio } from './logica';
 import type { DadosTreino, Exercicio, GeradorId, Sessao, Treino } from './types';
 
 /**
@@ -207,9 +208,13 @@ export function resumoMudancas(
  * sessão aberta continua se o treino ainda existe, só com as marcas de
  * exercícios que ainda existem.
  */
-export function sessoesValidas(sessoes: readonly Sessao[], treinos: readonly Treino[]): Sessao[] {
+export function sessoesValidas(
+  sessoes: readonly Sessao[],
+  treinos: readonly Treino[],
+  hoje: string = chaveDoDia(new Date()),
+): Sessao[] {
   return sessoes.flatMap((sessao) => {
-    if (sessao.finalizada) {
+    if (ficaNoHistorico(sessao, hoje)) {
       return [sessao];
     }
 

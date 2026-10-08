@@ -1,6 +1,6 @@
 import { chaveDoDia } from '@/shared/lib/data';
 
-import { progressoDaSessao, treinoDoDia } from './logica';
+import { progressoDaSessao, treinoDaSessao, treinoDoDia } from './logica';
 import type { Sessao, Treino } from './types';
 import { minusculaInicial } from '@/shared/lib/texto';
 
@@ -115,7 +115,7 @@ export function fracaoDoDia(
     return null;
   }
 
-  const treino = treinos.find((item) => item.id === sessao.treinoId);
+  const treino = treinoDaSessao(treinos, sessao);
 
   if (!treino) {
     return sessao.finalizada ? 1 : 0;
@@ -136,7 +136,7 @@ export function detalheDoDia(
     return null;
   }
 
-  const treino = treinos.find((item) => item.id === sessao.treinoId);
+  const treino = treinoDaSessao(treinos, sessao);
 
   if (!treino) {
     return { treino: 'treino apagado', feitos: sessao.concluidos.length, total: 0 };

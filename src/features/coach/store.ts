@@ -10,6 +10,7 @@ import { useDietaStore, type OrigemPlano } from '@/features/dieta/store';
 import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
 import { diasDoTexto } from '@/features/treinos/diasIa';
 import { paraDadosTreino } from '@/features/treinos/ia';
+import { guardarRegistros } from '@/features/treinos/logica';
 import { sessoesValidas } from '@/features/treinos/mesclar';
 import { montarTreinosPorRegras } from '@/features/treinos/regrasIa';
 import { useTreinosStore } from '@/features/treinos/store';
@@ -201,9 +202,12 @@ export const useCoachStore = create<CoachState>()(
 
       /** Troca os treinos mantendo as sessões que ainda fazem sentido. */
       function trocarTreinos(treinos: Treino[]) {
-        const { sessoes } = useTreinosStore.getState();
+        const { sessoes, treinos: antigos } = useTreinosStore.getState();
 
-        useTreinosStore.setState({ treinos, sessoes: sessoesValidas(sessoes, treinos) });
+        useTreinosStore.setState({
+          treinos,
+          sessoes: guardarRegistros(sessoesValidas(sessoes, treinos), antigos, treinos),
+        });
       }
 
       /** Sem IA: responde offline com o motor de demonstração, palavra por palavra. */

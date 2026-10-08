@@ -102,10 +102,11 @@ describe('useTreinosStore', () => {
     expect(estado().sessoes[0].concluidos).toEqual([]);
   });
 
-  it('apagar treino descarta a sessão aberta dele', () => {
+  it('apagar treino descarta a sessão aberta de hoje', () => {
     const id = estado().novoTreino();
 
-    estado().comecarTreino(id, HOJE);
+    // A sessão aberta precisa ser de hoje de verdade: de dias passados ela fica no histórico
+    estado().comecarTreino(id, new Date());
     estado().removerTreino(id);
 
     expect(estado().sessoes).toEqual([]);

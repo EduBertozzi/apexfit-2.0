@@ -1,6 +1,8 @@
 import { distribuirDias } from './diasIa';
 import { inferirGrupo } from './grupos';
-import { criarTreino, novoId } from './logica';
+import { chaveDoDia } from '@/shared/lib/data';
+
+import { criarTreino, ficaNoHistorico, guardarRegistros, novoId } from './logica';
 import type { RespostaTreinosIa } from './contratoIa';
 import { exercicioSchema, LIMITES } from './schema';
 import type { DadosExercicio, DadosTreino, GeradorId, Sessao, Treino } from './types';
@@ -100,11 +102,13 @@ export function substituirTreinos(
   sessoes: readonly Sessao[],
   dados: readonly DadosTreino[],
   gerarId: GeradorId = novoId,
+  antigos: readonly Treino[] = [],
+  hoje: string = chaveDoDia(new Date()),
 ): { treinos: Treino[]; sessoes: Sessao[] } {
-  return {
-    treinos: dados.map((treino) => criarTreino(treino, gerarId)),
-    sessoes: sessoes.filter((sessao) => sessao.finalizada),
-  };
+  const treinos = dados.map((treino) => criarTreino(treino, gerarId));
+  const historico = sessoes.filter((sessao) => ficaNoHistorico(sessao, hoje));
+
+  return { treinos, sessoes: guardarRegistros(historico, antigos, treinos) };
 }
 
 /**

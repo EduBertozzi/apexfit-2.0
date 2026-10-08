@@ -5,6 +5,8 @@ import {
   aplicarModelo,
   criarTreino,
   descartarSessoesAbertas,
+  guardarRegistros,
+  treinoDaSessao,
   editarExercicio,
   editarTreino,
   finalizarSessao,
@@ -320,7 +322,33 @@ describe('sessões', () => {
       sessao({ id: '3', treinoId: 'b', data: HOJE, finalizada: false }),
     ];
 
-    expect(descartarSessoesAbertas(sessoes, 'a').map((s) => s.id)).toEqual(['1', '3']);
+    expect(descartarSessoesAbertas(sessoes, 'a', HOJE).map((s) => s.id)).toEqual(['1', '3']);
+  });
+
+  it('sessão aberta de um dia que passou fica no histórico', () => {
+    const sessoes = [sessao({ id: 'ontem', treinoId: 'a', data: '2026-10-02', finalizada: false })];
+
+    expect(descartarSessoesAbertas(sessoes, 'a', HOJE)).toHaveLength(1);
+  });
+
+  it('treino apagado ou trocado: a sessão guarda uma cópia e o histórico continua', () => {
+    const antigo: Treino = {
+      id: 'a',
+      nome: 'treino A',
+      exercicios: [{ id: 'e1', nome: 'supino', grupo: 'peito', series: 3, repeticoes: '10' }],
+    };
+    const novo: Treino = { id: 'n', nome: 'treino de segunda', exercicios: [] };
+    const sessoes = [
+      sessao({ id: '1', treinoId: 'a', data: '2026-10-01', concluidos: ['e1'] }),
+      sessao({ id: '2', treinoId: 'n', data: '2026-10-02' }),
+    ];
+
+    const guardadas = guardarRegistros(sessoes, [antigo], [novo]);
+
+    expect(guardadas[0].registro).toEqual({ nome: 'treino A', exercicios: antigo.exercicios });
+    expect(guardadas[1]).toBe(sessoes[1]);
+    expect(treinoDaSessao([novo], guardadas[0])?.nome).toBe('treino A');
+    expect(treinoDaSessao([novo], sessoes[0])).toBeNull();
   });
 
   it('limpa sessões com mais de um ano', () => {

@@ -14,6 +14,7 @@ import {
   criarTreino,
   definirDias,
   descartarSessoesAbertas,
+  guardarRegistros,
   editarExercicio,
   editarTreino,
   finalizarSessao,
@@ -118,11 +119,15 @@ export const useTreinosStore = create<TreinosState>()(
 
       editarTreino: (id, dados) => set({ treinos: editarTreino(get().treinos, id, dados) }),
 
-      removerTreino: (id) =>
+      removerTreino: (id) => {
+        const { treinos, sessoes } = get();
+        const restantes = removerTreino(treinos, id);
+
         set({
-          treinos: removerTreino(get().treinos, id),
-          sessoes: descartarSessoesAbertas(get().sessoes, id),
-        }),
+          treinos: restantes,
+          sessoes: guardarRegistros(descartarSessoesAbertas(sessoes, id), treinos, restantes),
+        });
+      },
 
       moverTreino: (id, direcao) => set({ treinos: moverTreino(get().treinos, id, direcao) }),
 
@@ -190,7 +195,8 @@ export const useTreinosStore = create<TreinosState>()(
         return finalizou && !sessao.finalizada;
       },
 
-      substituirTreinos: (dados) => set(substituirTreinos(get().sessoes, dados)),
+      substituirTreinos: (dados) =>
+        set(substituirTreinos(get().sessoes, dados, undefined, get().treinos)),
 
       registrarCongelados: (dias) => {
         const atuais = get().congelados;

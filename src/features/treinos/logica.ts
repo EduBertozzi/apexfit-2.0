@@ -405,9 +405,58 @@ export function finalizarSessao(sessoes: readonly Sessao[], sessaoId: string): S
   );
 }
 
-/** Ao apagar um treino, a sessão aberta dele perde o sentido. As finalizadas ficam no histórico. */
-export function descartarSessoesAbertas(sessoes: readonly Sessao[], treinoId: string): Sessao[] {
-  return sessoes.filter((sessao) => sessao.finalizada || sessao.treinoId !== treinoId);
+/**
+ * Ao apagar um treino, a sessão aberta de hoje perde o sentido. As finalizadas
+ * e as de dias que já passaram ficam no histórico.
+ */
+export function descartarSessoesAbertas(
+  sessoes: readonly Sessao[],
+  treinoId: string,
+  hoje: string = chaveDoDia(new Date()),
+): Sessao[] {
+  return sessoes.filter((sessao) => ficaNoHistorico(sessao, hoje) || sessao.treinoId !== treinoId);
+}
+
+/** Sessão finalizada ou de um dia que já passou: é histórico, nunca some. */
+export function ficaNoHistorico(sessao: Sessao, hoje: string): boolean {
+  return sessao.finalizada || sessao.data < hoje;
+}
+
+/** O treino que a sessão fez: o atual ou, se ele foi apagado ou trocado, a cópia guardada. */
+export function treinoDaSessao(treinos: readonly Treino[], sessao: Sessao): Treino | null {
+  const atual = treinos.find((treino) => treino.id === sessao.treinoId);
+
+  if (atual) {
+    return atual;
+  }
+
+  return sessao.registro
+    ? { id: sessao.treinoId, nome: sessao.registro.nome, exercicios: sessao.registro.exercicios }
+    : null;
+}
+
+/**
+ * Antes de trocar ou apagar treinos: cada sessão cujo treino vai sumir guarda
+ * uma cópia dele (`registro`), para o histórico não perder o que foi feito.
+ */
+export function guardarRegistros(
+  sessoes: readonly Sessao[],
+  antigos: readonly Treino[],
+  novos: readonly Treino[],
+): Sessao[] {
+  const ficam = new Set(novos.map((treino) => treino.id));
+
+  return sessoes.map((sessao) => {
+    if (sessao.registro || ficam.has(sessao.treinoId)) {
+      return sessao;
+    }
+
+    const treino = antigos.find((item) => item.id === sessao.treinoId);
+
+    return treino
+      ? { ...sessao, registro: { nome: treino.nome, exercicios: treino.exercicios } }
+      : sessao;
+  });
 }
 
 export function limparSessoesAntigas(sessoes: readonly Sessao[], hoje: string): Sessao[] {

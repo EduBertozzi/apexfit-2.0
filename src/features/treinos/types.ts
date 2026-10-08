@@ -44,6 +44,11 @@ export type Sessao = {
   /** Ids dos exercícios já feitos. */
   concluidos: string[];
   finalizada: boolean;
+  /**
+   * Cópia do treino feito, guardada quando ele é apagado ou trocado (modelo,
+   * IA, coach). Assim o histórico do dia continua mostrando o que foi treinado.
+   */
+  registro?: { nome: string; exercicios: Exercicio[] };
 };
 
 /** Dados de um exercício sem o id (o que sai do formulário ou de um modelo). */

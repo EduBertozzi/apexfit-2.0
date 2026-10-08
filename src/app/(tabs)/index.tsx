@@ -27,10 +27,10 @@ export default function Inicio() {
   const metaManualMl = useAjustesStore((state) => state.metaAguaManualMl);
   const hoje = useHoje();
   const semana = useSemanaDeTreinos(hoje);
-  // Dia tocado no calendário; fora da semana atual (virou a semana), volta para hoje
+  // Dia tocado no calendário; fora da faixa de 3 semanas (virou a semana), volta para hoje
   const [escolhido, setEscolhido] = useState<string | null>(null);
   const dia =
-    escolhido && semana.dias.some((item) => item.chave === escolhido)
+    escolhido && semana.faixa.some((item) => item.chave === escolhido)
       ? escolhido
       : chaveDoDia(hoje);
   const visao = useVisaoDoDia(dia, hoje);
