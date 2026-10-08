@@ -9,6 +9,7 @@ import {
   mesmosDias,
   montarCardio,
   montarMusculacao,
+  precisaMinutos,
   moverExercicioNoGrupo,
   moverNoGrupo,
   outrosTreinosNoDia,
@@ -229,5 +230,52 @@ describe('reordenar dentro do grupo', () => {
 
   it('posição para o leitor de tela', () => {
     expect(posicaoNoGrupo(1, 4, 'braço')).toBe('2 de 4 em braço');
+  });
+});
+
+describe('aquecimento na folha de adicionar', () => {
+  const base = { series: 2, repeticoes: 15, grupo: 'aquecimento' as const };
+
+  it('por repetições usa os contadores; bike vai sempre em minutos', () => {
+    expect(
+      montarMusculacao({ ...base, selecionados: ['polichinelo', 'bike leve'], minutos: 7 }),
+    ).toEqual([
+      { nome: 'polichinelo', grupo: 'aquecimento', series: 2, repeticoes: '15' },
+      { nome: 'bike leve', grupo: 'aquecimento', series: 1, repeticoes: '7 min' },
+    ]);
+  });
+
+  it('por tempo: uma série de minutos para todos', () => {
+    expect(
+      montarMusculacao({
+        ...base,
+        selecionados: ['polichinelo', 'flexão no joelho'],
+        medida: 'tempo',
+        minutos: 3,
+      }).map((exercicio) => [exercicio.series, exercicio.repeticoes]),
+    ).toEqual([
+      [1, '3 min'],
+      [1, '3 min'],
+    ]);
+  });
+
+  it('a medida só vale no aquecimento', () => {
+    expect(
+      montarMusculacao({
+        selecionados: ['rosca direta'],
+        grupo: 'braco',
+        series: 3,
+        repeticoes: 12,
+        medida: 'tempo',
+        minutos: 3,
+      })[0].repeticoes,
+    ).toBe('12');
+  });
+
+  it('o contador de minutos aparece com tempo ou com bike marcada', () => {
+    expect(precisaMinutos('aquecimento', 'tempo', [])).toBe(true);
+    expect(precisaMinutos('aquecimento', 'repeticoes', ['bike leve'])).toBe(true);
+    expect(precisaMinutos('aquecimento', 'repeticoes', ['polichinelo'])).toBe(false);
+    expect(precisaMinutos('braco', 'tempo', [])).toBe(false);
   });
 });

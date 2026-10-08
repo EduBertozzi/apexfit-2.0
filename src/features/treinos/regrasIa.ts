@@ -111,7 +111,7 @@ function normalizar(texto: string): string {
   return texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
-function filtroDeRestricoes(restricoes: string | undefined): (nome: string) => boolean {
+export function filtroDeRestricoes(restricoes: string | undefined): (nome: string) => boolean {
   const texto = normalizar(restricoes ?? '');
   const proibidos = EVITAR.filter(([regiao]) => regiao.test(texto)).map(([, padrao]) => padrao);
 

@@ -1,17 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-import { pedidoTreinoIaSchema } from '@/features/treinos/contratoIa';
-import { montarPromptTreinos } from '@/features/treinos/promptIa';
+import { pedidoSemanaIaSchema } from '@/features/treinos/contratoIa';
+import { montarPromptSemana } from '@/features/treinos/promptIa';
 import { gerarTreinos } from '@/features/treinos/servidor/gerarTreinos';
 import { ErroServidor } from '@/shared/servidor/claude';
 import { erroSemIa, escolherProvedor } from '@/shared/servidor/provedor';
 
-/** POST /api/treino: perfil + preferências, devolve { resultado, provedor }. Só repassa. */
+/**
+ * POST /api/treino: perfil + escolhas do montador da semana (dias, áreas, regiões,
+ * nível, equipamento, evitar, aquecimento). Devolve { resultado, provedor }. Só repassa.
+ */
 export async function POST(request: Request) {
-  const pedido = pedidoTreinoIaSchema.safeParse(await request.json().catch(() => null));
+  const pedido = pedidoSemanaIaSchema.safeParse(await request.json().catch(() => null));
 
   if (!pedido.success) {
-    return Response.json({ erro: 'perfil ou preferências inválidos.' }, { status: 400 });
+    return Response.json({ erro: 'perfil ou escolhas da semana inválidos.' }, { status: 400 });
   }
 
   try {
@@ -23,7 +26,8 @@ export async function POST(request: Request) {
 
     const resultado = await gerarTreinos(
       provedor,
-      montarPromptTreinos(pedido.data.perfil, pedido.data.preferencias),
+      montarPromptSemana(pedido.data.perfil, pedido.data.escolhas),
+      'semana',
     );
 
     return Response.json({ resultado, provedor });
@@ -33,11 +37,11 @@ export async function POST(request: Request) {
     }
 
     if (erro instanceof Anthropic.RateLimitError) {
-      return Response.json({ erro: 'muitos pedidos agora. tente em um minuto.' }, { status: 429 });
+      return Response.json({ erro: 'Muitos pedidos agora. Tente em um minuto.' }, { status: 429 });
     }
 
     console.error('[api/treino]', erro);
 
-    return Response.json({ erro: 'não deu para montar os treinos agora.' }, { status: 502 });
+    return Response.json({ erro: 'Não deu para montar os treinos agora.' }, { status: 502 });
   }
 }

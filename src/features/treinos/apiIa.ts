@@ -2,24 +2,26 @@ import type { Perfil } from '@/features/perfil/types';
 import { CODIGO_SEM_IA, SemIa, type ProvedorIa } from '@/shared/lib/semIa';
 
 import {
-  pedidoTreinoIaSchema,
+  pedidoSemanaIaSchema,
   respostaRotaTreinoSchema,
-  type PreferenciasTreino,
+  type EscolhasSemana,
   type RespostaTreinosIa,
 } from './contratoIa';
 
 /**
- * Pede os treinos para o NOSSO servidor (rota /api/treino), nunca direto para a IA.
- * Sem IA no servidor ou sem conexão: lança `SemIa` e o app monta offline.
+ * Pede os treinos da semana para o NOSSO servidor (rota /api/treino), nunca
+ * direto para a IA. Sem IA no servidor, sem conexão ou com o perfil incompleto:
+ * lança `SemIa` e o app monta offline.
  */
-export async function pedirTreinosIa(
+export async function pedirSemanaIa(
   perfil: Perfil,
-  preferencias: PreferenciasTreino,
+  escolhas: EscolhasSemana,
 ): Promise<{ resultado: RespostaTreinosIa; provedor: ProvedorIa }> {
-  const pedido = pedidoTreinoIaSchema.safeParse({ perfil, preferencias });
+  const pedido = pedidoSemanaIaSchema.safeParse({ perfil, escolhas });
 
   if (!pedido.success) {
-    throw new Error('complete seu perfil (sexo, atividade e objetivo) para montar os treinos.');
+    // Perfil sem sexo, atividade ou objetivo: o modo offline monta mesmo assim
+    throw new SemIa('perfil incompleto para a IA.');
   }
 
   let resposta: Response;

@@ -23,7 +23,9 @@ import {
   desmarcarUltimo,
   grupoInicial,
   marcarMaisUm,
+  MEDIDAS,
   mesmosDias,
+  MINUTOS_AQUECIMENTO,
   MINUTOS_INICIAIS,
   montarCardio,
   montarMusculacao,
@@ -32,6 +34,8 @@ import {
   padraoDaRegiao,
   passo,
   PASSOS,
+  PASSOS_AQUECIMENTO,
+  precisaMinutos,
   QUANTIDADE_INICIAL,
   regiaoInicial,
   descricaoBotaoSalvar,
@@ -40,6 +44,7 @@ import {
   type Aba,
 } from '../montagem';
 import { NOME_DIA, SIGLAS_DIA } from '../semana';
+import type { MedidaAquecimento } from '../contratoIa';
 import type { DadosExercicio, GrupoMuscular, Treino } from '../types';
 import { ContadorCompacto } from './ContadorCompacto';
 import { GrupoAbas, Pilula } from './Pilula';
@@ -92,6 +97,9 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
   const [series, setSeries] = useState(padrao.series);
   const [repeticoes, setRepeticoes] = useState(padrao.repeticoes);
   const [nomeLivre, setNomeLivre] = useState('');
+  // Aquecimento: cada leva pode ser por repetições ou por tempo
+  const [medida, setMedida] = useState<MedidaAquecimento>('repeticoes');
+  const [minutosAquecimento, setMinutosAquecimento] = useState(MINUTOS_AQUECIMENTO);
   const [cardio, setCardio] = useState<string[]>([]);
   const [minutos, setMinutos] = useState(MINUTOS_INICIAIS);
   const [dias, setDias] = useState<number[]>(treino.dias ?? []);
@@ -99,12 +107,23 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
   const disponiveis = semRepetidos(exerciciosDe(grupo, regiao), nomesNoTreino);
   const opcoesCardio = semRepetidos(exerciciosDe('cardio'), nomesNoTreino);
   const exercicios = [
-    ...montarMusculacao({ selecionados, nomeLivre, grupo, series, repeticoes }),
+    ...montarMusculacao({
+      selecionados,
+      nomeLivre,
+      grupo,
+      series,
+      repeticoes,
+      medida,
+      minutos: minutosAquecimento,
+    }),
     ...montarCardio({ selecionados: cardio, minutos }),
   ];
   const diasMudaram = !mesmosDias(dias, treino.dias);
   const podeSalvar = exercicios.length > 0 || diasMudaram;
   const erroNome = validarNomeLivre(nomeLivre).erro;
+  const ehAquecimento = grupo === 'aquecimento';
+  const porTempo = ehAquecimento && medida === 'tempo';
+  const mostrarMinutos = precisaMinutos(grupo, medida, selecionados);
 
   function escolher(novoGrupo: GrupoMuscular, novaRegiao: string | undefined) {
     const quantidade = selecionados.length || QUANTIDADE_INICIAL;
@@ -205,30 +224,70 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
               onAlternar={(nome) => setSelecionados(alternarSelecao(selecionados, nome))}
             />
 
-            <View style={estilos.dupla}>
-              <View style={estilos.metade}>
-                <ContadorCompacto
-                  rotulo="séries"
-                  valorTexto={String(series)}
-                  podeMenos={series > PASSOS.series.min}
-                  podeMais={series < PASSOS.series.max}
-                  onMenos={() => setSeries(passo(series, -1, PASSOS.series))}
-                  onMais={() => setSeries(passo(series, 1, PASSOS.series))}
-                  testID="series"
-                />
+            {ehAquecimento ? (
+              <>
+                <Rotulo>medir por</Rotulo>
+                <View style={estilos.medidas}>
+                  {MEDIDAS.map((item) => (
+                    <Pilula
+                      key={item.valor}
+                      esticar
+                      rotulo={item.rotulo}
+                      rotuloAcessivel={`medir por ${item.rotulo}`}
+                      selecionada={medida === item.valor}
+                      corSelecionada={cat.fundo.aquecimento}
+                      corTextoSelecionada={c.textoSobreDestaque}
+                      onPress={() => setMedida(item.valor)}
+                      testID={`medida-${item.valor}`}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            {porTempo ? null : (
+              <View style={estilos.dupla}>
+                <View style={estilos.metade}>
+                  <ContadorCompacto
+                    rotulo="séries"
+                    valorTexto={String(series)}
+                    podeMenos={series > PASSOS.series.min}
+                    podeMais={series < PASSOS.series.max}
+                    onMenos={() => setSeries(passo(series, -1, PASSOS.series))}
+                    onMais={() => setSeries(passo(series, 1, PASSOS.series))}
+                    testID="series"
+                  />
+                </View>
+                <View style={estilos.metade}>
+                  <ContadorCompacto
+                    rotulo="repetições"
+                    valorTexto={String(repeticoes)}
+                    podeMenos={repeticoes > PASSOS.repeticoes.min}
+                    podeMais={repeticoes < PASSOS.repeticoes.max}
+                    onMenos={() => setRepeticoes(passo(repeticoes, -1, PASSOS.repeticoes))}
+                    onMais={() => setRepeticoes(passo(repeticoes, 1, PASSOS.repeticoes))}
+                    testID="repeticoes"
+                  />
+                </View>
               </View>
-              <View style={estilos.metade}>
-                <ContadorCompacto
-                  rotulo="repetições"
-                  valorTexto={String(repeticoes)}
-                  podeMenos={repeticoes > PASSOS.repeticoes.min}
-                  podeMais={repeticoes < PASSOS.repeticoes.max}
-                  onMenos={() => setRepeticoes(passo(repeticoes, -1, PASSOS.repeticoes))}
-                  onMais={() => setRepeticoes(passo(repeticoes, 1, PASSOS.repeticoes))}
-                  testID="repeticoes"
-                />
-              </View>
-            </View>
+            )}
+
+            {mostrarMinutos ? (
+              <ContadorCompacto
+                rotulo={porTempo ? 'minutos' : 'minutos (bike e esteira)'}
+                emLinha
+                valorTexto={`${minutosAquecimento} min`}
+                podeMenos={minutosAquecimento > PASSOS_AQUECIMENTO.min}
+                podeMais={minutosAquecimento < PASSOS_AQUECIMENTO.max}
+                onMenos={() =>
+                  setMinutosAquecimento(passo(minutosAquecimento, -1, PASSOS_AQUECIMENTO))
+                }
+                onMais={() =>
+                  setMinutosAquecimento(passo(minutosAquecimento, 1, PASSOS_AQUECIMENTO))
+                }
+                testID="minutos-aquecimento"
+              />
+            ) : null}
 
             <CampoTexto
               rotulo="ou digite o nome"
@@ -237,7 +296,11 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
               onChangeText={setNomeLivre}
               placeholder="ex: supino reto"
               erro={erroNome}
-              dica={`entra em ${NOME_GRUPO[grupo]}, com as mesmas séries e repetições.`}
+              dica={
+                porTempo
+                  ? `entra em ${NOME_GRUPO[grupo]}, com os mesmos minutos.`
+                  : `entra em ${NOME_GRUPO[grupo]}, com as mesmas séries e repetições.`
+              }
               returnKeyType="done"
               testID="nome-livre"
             />
@@ -464,6 +527,10 @@ const estilos = StyleSheet.create({
   },
   nomeItem: {
     fontFamily: familia.corpoMedio,
+  },
+  medidas: {
+    flexDirection: 'row',
+    gap: espaco.sm,
   },
   dupla: {
     flexDirection: 'row',
