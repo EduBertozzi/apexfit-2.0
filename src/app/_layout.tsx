@@ -132,6 +132,10 @@ export default function RootLayout() {
             options={{ headerShown: true, title: 'água', headerBackTitle: 'início' }}
           />
           <Stack.Screen
+            name="sequencia"
+            options={{ headerShown: true, title: 'sequência', headerBackTitle: 'início' }}
+          />
+          <Stack.Screen
             name="peso"
             options={{ headerShown: true, title: 'peso', headerBackTitle: 'perfil' }}
           />
