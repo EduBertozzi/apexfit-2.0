@@ -48,17 +48,38 @@ function LinhaExercicio({
   exercicio,
   feito,
   podeMarcar,
+  soLeitura,
   onAlternar,
 }: {
   exercicio: Exercicio;
   feito: boolean;
   podeMarcar: boolean;
+  /** Dia sem marcação possível nem feita (ex: futuro): só o nome, sem caixa. */
+  soLeitura: boolean;
   onAlternar: (exercicioId: string) => void;
 }) {
   const c = useCores();
   const vibrar = useVibrar();
   // "Pop" só ao marcar; desmarcar é silencioso
   const pop = usePop(feito, feito);
+
+  if (soLeitura) {
+    return (
+      <View style={estilos.linha} accessible accessibilityLabel={exercicio.nome}>
+        <View style={estilos.caixaVazia}>
+          <View style={[estilos.ponto, { backgroundColor: c.textoSecundario }]} />
+        </View>
+        <Text
+          numberOfLines={2}
+          ellipsizeMode="tail"
+          maxFontSizeMultiplier={1.4}
+          style={[estilos.nome, { color: c.texto }]}
+        >
+          {nomeNoCard(exercicio.nome)}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <Pressable
@@ -159,6 +180,7 @@ export function CartaoGrupo({
       exercicio={exercicio}
       feito={feito(exercicio)}
       podeMarcar={podeMarcar}
+      soLeitura={!podeMarcar && concluidos.length === 0}
       onAlternar={onAlternar}
     />
   );
@@ -296,6 +318,17 @@ const estilos = StyleSheet.create({
   },
   linhaPressionada: {
     opacity: 0.6,
+  },
+  caixaVazia: {
+    width: TAMANHO_CAIXA,
+    height: TAMANHO_CAIXA,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ponto: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   caixa: {
     width: TAMANHO_CAIXA,
