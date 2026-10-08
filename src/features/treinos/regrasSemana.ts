@@ -178,22 +178,35 @@ export function montarSemanaPorRegras(perfil: Perfil, escolhas: EscolhasSemana):
       usados.set('circuito', vez + circuito.exercicios);
       exercicios.push(...montarCircuito(circuito, equipamento, permitido, vez));
     } else if (cardio) {
-      const minutos = MINUTOS_CARDIO[nivel][forca.length === 0 ? 'sozinho' : 'junto'];
+      const sozinho = forca.length === 0;
+      // Dia só de cardio: vários aparelhos, dividindo o tempo; junto da força: um só
+      const aparelhos = sozinho
+        ? (distribuirExercicios(dia, nivel).find((item) => item.area.area === 'cardio')
+            ?.quantidade ?? 1)
+        : 1;
+      const total = MINUTOS_CARDIO[nivel][sozinho ? 'sozinho' : 'junto'];
+      const minutos = Math.max(10, Math.round(total / aparelhos / 5) * 5);
       const opcoes = candidatos(cardio).filter(
         (item) => permitido(item.nome) && cabeNoEquipamento(item, equipamento),
       );
       const reserva = CATALOGO.find((item) => item.nome === 'caminhada');
-      const escolhido = opcoes[(usados.get('cardio') ?? 0) % Math.max(1, opcoes.length)] ?? reserva;
-      usados.set('cardio', (usados.get('cardio') ?? 0) + 1);
+      const inicio = usados.get('cardio') ?? 0;
+      usados.set('cardio', inicio + aparelhos);
+      const escolhidos = Array.from(
+        { length: Math.min(aparelhos, Math.max(1, opcoes.length)) },
+        (_, i) => opcoes[(inicio + i) % Math.max(1, opcoes.length)] ?? reserva,
+      );
 
-      if (escolhido) {
-        exercicios.push({
-          nome: escolhido.nome,
-          grupo: 'cardio',
-          series: 1,
-          repeticoes: `${minutos} min`,
-          observacao: `${minutos} minutos em ritmo moderado`,
-        });
+      for (const escolhido of escolhidos) {
+        if (escolhido) {
+          exercicios.push({
+            nome: escolhido.nome,
+            grupo: 'cardio',
+            series: 1,
+            repeticoes: `${minutos} min`,
+            observacao: `${minutos} minutos em ritmo moderado`,
+          });
+        }
       }
     }
 

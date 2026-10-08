@@ -123,7 +123,8 @@ export const diaMontadoSchema = z.object({
   exercicios: z
     .number()
     .int()
-    .min(LIMITES_MONTADOR.exerciciosPorDia.min)
+    // 1 vale para o dia só de cardio (um aparelho); a força tem o próprio mínimo no montador
+    .min(1)
     .max(LIMITES_MONTADOR.exerciciosPorDia.max)
     .optional(),
   /** Cardio em circuito (só vale se o dia tem cardio). Sem o campo: contínuo. */

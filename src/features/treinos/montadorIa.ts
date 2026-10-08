@@ -90,6 +90,15 @@ function temForca(dia: DiaMontado): boolean {
   return dia.areas.some((item) => item.area !== 'cardio');
 }
 
+/** Dia de cardio puro e contínuo: vários aparelhos, um depois do outro (esteira, bike, escada). */
+const CARDIO_SO = { padrao: 3, min: 1, max: 6 } as const;
+
+function soCardioContinuo(dia: DiaMontado): boolean {
+  return (
+    dia.areas.length > 0 && dia.areas.every((item) => item.area === 'cardio') && !circuitoDoDia(dia)
+  );
+}
+
 /** Áreas que entram no contador: todas, menos o cardio em circuito (bloco à parte). */
 function areasNoContador(dia: DiaMontado): AreaEscolhida[] {
   const circuito = circuitoDoDia(dia);
@@ -99,16 +108,28 @@ function areasNoContador(dia: DiaMontado): AreaEscolhida[] {
 
 /** Menor quantidade do dia: o limite do contador ou 1 por área, o que for maior. */
 export function minimoExercicios(dia: DiaMontado): number {
+  if (soCardioContinuo(dia)) {
+    return CARDIO_SO.min;
+  }
+
   return Math.max(MIN_EXERCICIOS, areasNoContador(dia).length);
+}
+
+function maximoExercicios(dia: DiaMontado): number {
+  return soCardioContinuo(dia) ? CARDIO_SO.max : MAX_EXERCICIOS;
 }
 
 /**
  * Quantos exercícios o dia tem de verdade (sem o aquecimento e sem o circuito
  * de cardio): o escolhido ou o padrão do nível, nunca menos que 1 por área (a
- * quantidade sobe junto) nem mais que o limite. Dia só de cardio contínuo: 1;
- * só de circuito ou sem área: 0.
+ * quantidade sobe junto) nem mais que o limite. Dia só de cardio contínuo: o
+ * escolhido ou 3 aparelhos; só de circuito ou sem área: 0.
  */
 export function exerciciosDoDia(dia: DiaMontado, nivel: NivelTreino): number {
+  if (soCardioContinuo(dia)) {
+    return entre(dia.exercicios ?? CARDIO_SO.padrao, CARDIO_SO.min, CARDIO_SO.max);
+  }
+
   if (!temForca(dia)) {
     return areasNoContador(dia).length;
   }
@@ -140,6 +161,11 @@ export function distribuirExercicios(dia: DiaMontado, nivel: NivelTreino): Quant
     quantidades.set('cardio', circuito.exercicios);
   }
 
+  // Só cardio contínuo: todos os exercícios do dia são aparelhos de cardio
+  if (soCardioContinuo(dia)) {
+    quantidades.set('cardio', exerciciosDoDia(dia, nivel));
+  }
+
   for (let i = 0; sobra > 0 && forca.length > 0; i++, sobra--) {
     const area = forca[i % forca.length];
     quantidades.set(area, (quantidades.get(area) ?? 0) + 1);
@@ -153,25 +179,32 @@ export function contadorExercicios(dia: DiaMontado, nivel: NivelTreino) {
   const valor = exerciciosDoDia(dia, nivel);
   const padrao = dia.exercicios === undefined;
   const noDiaTexto = textoNoDia(dia.dia);
+  const cardio = soCardioContinuo(dia);
   // Mais áreas que exercícios: a quantidade sobe para 1 por área
-  const subiu = valor > (dia.exercicios ?? EXERCICIOS_POR_NIVEL[nivel]);
+  const subiu = !cardio && valor > (dia.exercicios ?? EXERCICIOS_POR_NIVEL[nivel]);
 
   return {
-    /** Dia só de cardio ou sem área não tem contador. */
-    visivel: temForca(dia),
+    /** Dia só de circuito ou sem área não tem contador. */
+    visivel: temForca(dia) || cardio,
     valor,
     padrao,
     podeMenos: valor > minimoExercicios(dia),
-    podeMais: valor < MAX_EXERCICIOS,
+    podeMais: valor < maximoExercicios(dia),
     rotuloAcessivel: `${textoExercicios(valor)} ${noDiaTexto}`,
-    valorAcessivel: padrao ? `padrão do nível ${NOME_NIVEL[nivel]}` : 'escolhido por você',
+    valorAcessivel: padrao
+      ? cardio
+        ? 'padrão do cardio'
+        : `padrão do nível ${NOME_NIVEL[nivel]}`
+      : 'escolhido por você',
     rotuloMenos: `menos um exercício ${noDiaTexto}`,
     rotuloMais: `mais um exercício ${noDiaTexto}`,
-    legenda: subiu
-      ? 'pelo menos 1 por área, sem contar o aquecimento'
-      : padrao
-        ? `padrão do nível ${NOME_NIVEL[nivel]}, sem contar o aquecimento`
-        : 'sem contar o aquecimento',
+    legenda: cardio
+      ? 'aparelhos de cardio, um depois do outro'
+      : subiu
+        ? 'pelo menos 1 por área, sem contar o aquecimento'
+        : padrao
+          ? `padrão do nível ${NOME_NIVEL[nivel]}, sem contar o aquecimento`
+          : 'sem contar o aquecimento',
   };
 }
 
@@ -369,14 +402,14 @@ export function passoExercicios(
   sentido: 1 | -1,
 ): EscolhasSemana {
   return noDia(escolhas, dia, (item) => {
-    if (!temForca(item)) {
+    if (!temForca(item) && !soCardioContinuo(item)) {
       return item;
     }
 
     const exercicios = entre(
       exerciciosDoDia(item, escolhas.nivel) + sentido,
       minimoExercicios(item),
-      MAX_EXERCICIOS,
+      maximoExercicios(item),
     );
 
     return { ...item, exercicios };

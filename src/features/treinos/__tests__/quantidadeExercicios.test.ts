@@ -109,12 +109,23 @@ describe('quantos exercícios por dia', () => {
     expect(total).toBe(11);
   });
 
-  it('dia só de cardio contínuo tem 1 exercício e nenhum contador', () => {
+  it('dia só de cardio contínuo: 3 aparelhos por padrão, de 1 a 6, com contador', () => {
     const cardio: DiaMontado = { dia: 5, areas: [{ area: 'cardio', regioes: [] }] };
 
-    expect(exerciciosDoDia(cardio, 'avancado')).toBe(1);
-    expect(contadorExercicios(cardio, 'avancado').visivel).toBe(false);
-    expect(passoExercicios({ ...ESCOLHAS_PADRAO, dias: [cardio] }, 5, 1).dias[0]).toEqual(cardio);
+    expect(exerciciosDoDia(cardio, 'avancado')).toBe(3);
+    expect(contadorExercicios(cardio, 'avancado')).toMatchObject({
+      visivel: true,
+      legenda: 'aparelhos de cardio, um depois do outro',
+    });
+    expect(distribuirExercicios(cardio, 'iniciante')).toEqual([
+      { area: cardio.areas[0], quantidade: 3 },
+    ]);
+
+    let escolhas: EscolhasSemana = { ...ESCOLHAS_PADRAO, dias: [cardio] };
+    for (let i = 0; i < 10; i++) escolhas = passoExercicios(escolhas, 5, -1);
+    expect(escolhas.dias[0].exercicios).toBe(1);
+    for (let i = 0; i < 10; i++) escolhas = passoExercicios(escolhas, 5, 1);
+    expect(escolhas.dias[0].exercicios).toBe(6);
   });
 
   it('passo para cima e para baixo fixa o número; padrão volta a seguir o nível', () => {
@@ -190,7 +201,7 @@ describe('quantos exercícios por dia', () => {
     expect(salvas.dias[2].exercicios).toBe(8);
   });
 
-  it('o contrato aceita de 2 a 12 e recusa fora disso', () => {
+  it('o contrato aceita de 1 (dia só de cardio) a 12 e recusa fora disso', () => {
     const pedido = (exercicios: number) =>
       pedidoSemanaIaSchema.safeParse({
         perfil: PERFIL,
@@ -199,7 +210,8 @@ describe('quantos exercícios por dia', () => {
 
     expect(pedido(2)).toBe(true);
     expect(pedido(12)).toBe(true);
-    expect(pedido(1)).toBe(false);
+    expect(pedido(1)).toBe(true);
+    expect(pedido(0)).toBe(false);
     expect(pedido(13)).toBe(false);
     expect(pedido(5.5)).toBe(false);
   });

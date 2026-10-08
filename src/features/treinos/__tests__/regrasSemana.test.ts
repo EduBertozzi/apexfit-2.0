@@ -56,9 +56,13 @@ describe('montarSemanaPorRegras (modo offline)', () => {
     );
     // Cardio fica no fim
     expect(segunda.exercicios.at(-1)?.grupo).toBe('cardio');
-    expect(exerciciosSemAquecimento(sexta)).toEqual([
-      expect.objectContaining({ grupo: 'cardio', repeticoes: '20 min' }),
-    ]);
+    // Dia só de cardio: 3 aparelhos diferentes, dividindo o tempo (nunca menos de 10 min)
+    const cardioDaSexta = exerciciosSemAquecimento(sexta);
+    expect(cardioDaSexta).toHaveLength(3);
+    expect(cardioDaSexta.every((e) => e.grupo === 'cardio' && e.repeticoes === '10 min')).toBe(
+      true,
+    );
+    expect(new Set(cardioDaSexta.map((e) => e.nome)).size).toBe(3);
 
     // Regiões escolhidas: só glúteo na quarta, bíceps e tríceps na segunda
     const regiao = (nome: string) => CATALOGO.find((item) => item.nome === nome)?.regiao;
