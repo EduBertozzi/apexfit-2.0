@@ -73,7 +73,8 @@ src/
 │   ├── treinos/              ← treinos A/B/C, modelos prontos, sessão do dia, frequência
 │   │   ├── contratoIa.ts, promptIa.ts ← treinos montados pela IA (/api/treino)
 │   │   ├── regrasIa.ts       ← os mesmos treinos sem IA (modo demonstração)
-│   │   └── ia.ts, storeIa.ts ← resposta da IA vira treinos salvos (com o grupo de cada exercício)
+│   │   ├── ia.ts, storeIa.ts ← resposta da IA vira treinos salvos (com o grupo de cada exercício)
+│   │   └── sequencia.ts      ← página de sequência (recorde, calendário, marcos); mesma regra da chama
 │   ├── ia/                   ← textos da central de IA (aba do cérebro)
 │   ├── lembretes/            ← lembretes de água (notificações locais; só notificacoes.ts toca no Expo)
 │   └── ajustes/
@@ -84,7 +85,8 @@ src/
 ├── shared/                   ← o que qualquer feature pode usar
 │   ├── ui/                   ← Botão, Campo de texto, Card, Tela...
 │   ├── theme/                ← cores, espaçamentos, modo escuro
-│   └── lib/                  ← utilidades (converter número, data do dia, armazenamento)
+│   └── lib/                  ← utilidades (converter número, data do dia, armazenamento,
+│                               compartilhar imagem: view-shot e expo-sharing; html2canvas na web)
 │
 └── hooks/                    ← hooks do app inteiro (ex: esperar os dados carregarem)
 ```

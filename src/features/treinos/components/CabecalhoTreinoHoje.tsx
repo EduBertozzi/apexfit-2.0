@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { espaco, familia } from '@/shared/theme/tokens';
 import { useCategorias } from '@/shared/theme/useCores';
@@ -40,16 +41,19 @@ export function CabecalhoTreinoHoje({
             {titulo}
           </Texto>
         </View>
-        <View
-          accessible
-          accessibilityLabel={`sequência: ${textoSequencia(sequencia)}`}
-          style={estilos.sequencia}
+        <Pressable
+          onPress={() => router.push('/sequencia')}
+          accessibilityRole="button"
+          accessibilityLabel="ver sua sequência"
+          accessibilityHint={textoSequencia(sequencia)}
+          hitSlop={8}
+          style={({ pressed }) => [estilos.sequencia, pressed && { opacity: 0.75 }]}
         >
           <Ionicons name="flame" size={34} color={cat.texto.cardio} />
           <Texto variante="titulo" style={estilos.numero}>
             {sequencia}
           </Texto>
-        </View>
+        </Pressable>
       </View>
       <Texto variante="legenda" secundario numberOfLines={2} accessibilityLiveRegion="polite">
         {legenda}
