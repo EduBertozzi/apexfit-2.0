@@ -60,19 +60,19 @@ export default function Ajustes() {
 
       <Secao
         titulo="privacidade"
-        rodape="seus dados ficam salvos neste aparelho. quando você pede a dieta ou conversa com o coach, seu perfil e suas metas vão para o servidor do ApexFit e para a OpenAI (empresa do ChatGPT, a IA que responde) só para responder."
+        rodape="seus dados ficam salvos neste aparelho. quando você pede a dieta ou conversa com o coach, seu perfil e suas metas vão para o servidor do Apex e para a OpenAI (empresa do ChatGPT, a IA que responde) só para responder."
       >
         <Botao titulo="apagar meus dados" variante="perigo" onPress={apagarDados} />
       </Secao>
 
       <Secao
         titulo="sobre"
-        rodape="o ApexFit ajuda a organizar sua rotina, mas não substitui médico, nutricionista ou educador físico."
+        rodape="o Apex ajuda a organizar sua rotina, mas não substitui médico, nutricionista ou educador físico."
       >
         <View style={estilos.sobre}>
           <Logo tamanho={48} />
           <View>
-            <Texto variante="subtitulo">ApexFit</Texto>
+            <Texto variante="subtitulo">Apex</Texto>
             <Texto variante="legenda" secundario>
               versão {Constants.expoConfig?.version ?? ''}
             </Texto>

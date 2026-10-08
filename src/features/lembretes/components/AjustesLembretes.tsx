@@ -21,7 +21,7 @@ const OPCOES_INTERVALO = INTERVALOS_MIN.map((minutos) => ({
 }));
 
 const AVISO_NEGADO =
-  'o celular não deixou o ApexFit mandar notificações. para receber os lembretes, libere as notificações do app nos ajustes do celular e tente de novo.';
+  'o celular não deixou o Apex mandar notificações. para receber os lembretes, libere as notificações do app nos ajustes do celular e tente de novo.';
 
 export function AjustesLembretes() {
   const ativo = useLembretesStore((state) => state.ativo);

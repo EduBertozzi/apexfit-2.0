@@ -25,7 +25,7 @@ export function prepararCaptura() {}
  */
 export async function compartilharView(
   ref: RefObject<View | null>,
-  { titulo = 'ApexFit', largura, altura }: OpcoesCompartilhar = {},
+  { titulo = 'Apex', largura, altura }: OpcoesCompartilhar = {},
 ): Promise<ResultadoCompartilhar> {
   if (!ref.current) {
     return 'erro';

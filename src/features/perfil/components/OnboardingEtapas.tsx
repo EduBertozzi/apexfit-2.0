@@ -34,7 +34,7 @@ function BoasVindas({ onComecar }: { onComecar: () => void }) {
       <Logo tamanho={88} />
       <View style={estilos.cabecalho}>
         <Texto variante="gigante" accessibilityRole="header">
-          ApexFit
+          Apex
         </Texto>
         <Texto variante="subtitulo" secundario>
           seu treino fora da academia também conta.

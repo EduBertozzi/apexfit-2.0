@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { espaco, familia, raio } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
@@ -12,22 +12,16 @@ type Props = {
   onSelecionar: (dia: number) => void;
 };
 
-const LARGURA_PILULA = 52;
-
 /**
- * Os 7 dias da semana em pílulas que rolam para o lado. A escolhida fica em
- * menta; hoje ganha a palavra "hoje" e o dia com plano próprio, um ponto.
+ * Os 7 dias da semana em pílulas que dividem a largura da tela, no mesmo estilo
+ * da faixa da semana do início. A escolhida fica em menta; hoje ganha a palavra
+ * "hoje" e o dia com plano próprio, um ponto.
  */
 export function SeletorDias({ dias, selecionado, onSelecionar }: Props) {
   const c = useCores();
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={estilos.linha}
-      accessibilityRole="tablist"
-    >
+    <View style={estilos.linha} accessibilityRole="tablist">
       {dias.map((dia) => {
         const marcado = dia.dia === selecionado;
         const corTexto = marcado ? c.textoSobreDestaque : c.texto;
@@ -77,23 +71,24 @@ export function SeletorDias({ dias, selecionado, onSelecionar }: Props) {
           </Pressable>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }
 
 const estilos = StyleSheet.create({
   linha: {
-    gap: espaco.xs + 2,
+    flexDirection: 'row',
+    gap: 6,
     paddingVertical: espaco.xs,
   },
   pilula: {
-    width: LARGURA_PILULA,
-    minHeight: 64,
+    flex: 1,
+    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    paddingVertical: espaco.sm,
-    borderRadius: raio.total,
+    paddingVertical: espaco.xs + 2,
+    borderRadius: raio.md,
     borderCurve: 'continuous',
   },
   sigla: {

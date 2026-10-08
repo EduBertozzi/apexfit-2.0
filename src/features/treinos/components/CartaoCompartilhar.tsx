@@ -75,7 +75,7 @@ export function CartaoCompartilhar({
           allowFontScaling={false}
           style={[estilos.nomeApp, { color: escuro.texto, fontSize: tam(fonte.subtitulo) }]}
         >
-          ApexFit
+          Apex
         </Text>
       </View>
 
@@ -164,7 +164,7 @@ export function CartaoCompartilhar({
         numberOfLines={1}
         style={[estilos.assinatura, { color: escuro.texto, fontSize: tam(fonte.rotulo + 1) }]}
       >
-        {nome ? `${nome} no ApexFit` : 'treinando com o ApexFit'}
+        {nome ? `${nome} no Apex` : 'treinando com o Apex'}
       </Text>
     </View>
   );

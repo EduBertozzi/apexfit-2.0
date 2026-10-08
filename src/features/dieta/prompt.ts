@@ -18,7 +18,7 @@ import {
  * (que mudam a cada pedido) para o servidor poder usar cache de prompt.
  */
 export const SISTEMA_DIETA = [
-  'Você é o assistente nutricional do ApexFit, um app brasileiro de treino e saúde.',
+  'Você é o assistente nutricional do Apex, um app brasileiro de treino e saúde.',
   'Monte um plano alimentar de um dia, prático, com comida comum no Brasil e fácil de achar em mercado.',
   'Use exatamente as metas de calorias e macros informadas: elas já foram calculadas pelo app.',
   'A soma das calorias das refeições deve ficar a no máximo 5% da meta.',

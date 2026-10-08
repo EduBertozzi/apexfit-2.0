@@ -12,7 +12,7 @@ type Props = {
 };
 
 /**
- * Símbolo do ApexFit: o "A" de pico, sem traço, com as pontas arredondadas.
+ * Símbolo do Apex: o "A" de pico, sem traço, com as pontas arredondadas.
  * Sempre num quadrado escuro arredondado, como o ícone: o menta (`destaque`)
  * não funciona sobre fundo claro.
  */
@@ -22,7 +22,7 @@ export function Logo({ tamanho = 72 }: Props) {
   return (
     <View
       accessibilityRole="image"
-      accessibilityLabel="Logo do ApexFit"
+      accessibilityLabel="Logo do Apex"
       style={{
         width: tamanho,
         height: tamanho,

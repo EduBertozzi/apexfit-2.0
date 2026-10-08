@@ -69,7 +69,7 @@ export async function pedirPermissao(): Promise<boolean> {
   return permitido(await Notifications.requestPermissionsAsync());
 }
 
-/** Cancela só os lembretes de água do ApexFit, sem mexer em outras notificações. */
+/** Cancela só os lembretes de água do Apex, sem mexer em outras notificações. */
 export async function cancelarLembretes(): Promise<void> {
   if (!notificacoesSuportadas()) {
     return;

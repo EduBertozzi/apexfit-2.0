@@ -47,7 +47,7 @@ function baixar(url: string, arquivo: string) {
  */
 export async function compartilharView(
   ref: RefObject<View | null>,
-  { arquivo = 'apexfit.png', titulo = 'ApexFit', largura }: OpcoesCompartilhar = {},
+  { arquivo = 'apexfit.png', titulo = 'Apex', largura }: OpcoesCompartilhar = {},
 ): Promise<ResultadoCompartilhar> {
   const elemento = ref.current as unknown as HTMLElement | null;
 

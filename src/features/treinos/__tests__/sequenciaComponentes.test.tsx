@@ -66,7 +66,7 @@ describe('<CartaoCompartilhar />', () => {
     );
 
     expect(screen.getByText('12')).toBeOnTheScreen();
-    expect(screen.getByText('Ana no ApexFit')).toBeOnTheScreen();
+    expect(screen.getByText('Ana no Apex')).toBeOnTheScreen();
     expect(screen.getByText('hoje: treino A: 5 de 6 exercícios')).toBeOnTheScreen();
   });
 
