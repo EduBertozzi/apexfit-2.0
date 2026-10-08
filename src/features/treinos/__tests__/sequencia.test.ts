@@ -205,7 +205,9 @@ describe('diasDoMes', () => {
 
     expect(estado(1)).toBe('completo');
     expect(estado(2)).toBe('parcial');
-    expect(estado(3)).toBe('fraco');
+    // Sem nada registrado e sem treino marcado no dia: neutro, não vermelho
+    expect(estado(3)).toBe('descanso');
+    // Treinou pouco (menos de 50%): vermelho
     expect(estado(5)).toBe('fraco');
     expect(estado(7)).toBe('hoje');
     expect(estado(8)).toBe('futuro');
@@ -223,7 +225,7 @@ describe('diasDoMes', () => {
     const mes = diasDoMes(2026, 9, [TREINO], [sessao('2026-10-03', 4)], HOJE);
 
     expect(mes.dias[0].estado).toBe('vazio');
-    expect(mes.dias[3].estado).toBe('fraco');
+    expect(mes.dias[3].estado).toBe('descanso');
   });
 
   it('descanso do plano fica neutro', () => {

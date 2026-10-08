@@ -118,8 +118,11 @@ describe('diasDaSemana', () => {
     expect(dias[4].fracao).toBeNull();
   });
 
-  it('dia passado sem treino é fraco', () => {
-    expect(diasDaSemana([TREINO], [], HOJE)[0].estado).toBe('fraco');
+  it('dia passado sem nada registrado: vermelho só se tinha treino marcado', () => {
+    // Rodízio (sem dia marcado): fica neutro
+    expect(diasDaSemana([TREINO], [], HOJE)[0].estado).toBe('descanso');
+    // Domingo marcado no plano e não treinou: vermelho
+    expect(diasDaSemana([{ ...TREINO, dias: [0] }], [], HOJE)[0].estado).toBe('fraco');
   });
 
   it('no domingo, a semana começa hoje; no sábado, termina hoje', () => {
@@ -182,7 +185,7 @@ describe('textos', () => {
     const resumo = resumoDaSemana(dias);
 
     expect(resumo).toMatch(
-      /^Sua semana: 1 com treino completo, 1 com treino parcial, 1 com pouco ou nada feito\./,
+      /^Sua semana: 1 com treino completo, 1 com treino parcial, 0 com pouco ou nada feito, 1 de descanso\./,
     );
     expect(resumo).toContain('domingo 4, treino completo');
     expect(resumo).toContain('quarta 7, hoje');
@@ -212,14 +215,14 @@ describe('toque e leitor de tela em cada dia', () => {
 
   it('rótulo de cada pílula', () => {
     expect(rotuloDoDia(segunda)).toBe('segunda, 5, 50% do treino feito');
-    expect(rotuloDoDia(domingo)).toBe('domingo, 4, sem treino');
+    expect(rotuloDoDia(domingo)).toBe('domingo, 4, dia de descanso');
     expect(rotuloDoDia(quarta)).toBe('quarta, 7, hoje, 25% do treino feito');
     expect(rotuloDoDia(quinta)).toBe('quinta, 8, ainda não chegou');
   });
 
   it('resumo ao tocar', () => {
     expect(resumoDoDia(segunda)).toBe('segunda: treino A, 2 de 4 exercícios');
-    expect(resumoDoDia(domingo)).toBe('domingo: sem treino');
+    expect(resumoDoDia(domingo)).toBe('domingo: descanso');
     expect(resumoDoDia(quarta)).toBe('hoje: treino A, 1 de 4 exercícios');
     expect(resumoDoDia(quinta)).toBe('quinta: ainda não chegou');
     expect(resumoDoDia(diasDaSemana([], [], HOJE)[3])).toBe('hoje: ainda sem treino');

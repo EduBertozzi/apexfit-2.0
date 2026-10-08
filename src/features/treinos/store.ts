@@ -42,7 +42,7 @@ import {
   semPlano,
 } from './planoSemana';
 import { calcularSequencia } from './regraSequencia';
-import { diasDaFaixa, diasDaSemana, nomeDoDia, resumoDaSemana } from './semana';
+import { diasDaSemana, nomeDoDia, resumoDaSemana } from './semana';
 import type { DadosExercicio, DadosTreino, Sessao, Treino } from './types';
 import { visaoDoDia } from './visaoDoDia';
 
@@ -266,8 +266,8 @@ export function useSemanaDeTreinos(data: Date = new Date()) {
     return {
       hoje,
       dias,
-      /** Semana passada, atual e próxima, para a faixa rolar para o lado. */
-      faixa: diasDaFaixa(treinos, sessoes, hoje, 1, 1, resultado.marcas),
+      /** Só a semana atual, de domingo a sábado (rola para o lado se não couber). */
+      faixa: dias,
       resumo: resumoDaSemana(dias),
       sequencia: resultado.atual,
       nomeDeHoje: nomeDoDia(hoje),

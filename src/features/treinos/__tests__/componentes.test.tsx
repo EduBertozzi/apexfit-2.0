@@ -174,7 +174,14 @@ describe('<FaixaSemana />', () => {
   it('tocar num dia escolhe esse dia', async () => {
     const usuario = userEvent.setup();
     const onSelecionar = jest.fn();
-    const dias = diasDaFaixa([], [], HOJE);
+    // Domingo marcado no plano e não treinado: vermelho; os outros dias sem nada ficam neutros
+    const dias = diasDaFaixa(
+      [{ id: 't', nome: 'treino A', exercicios: [], dias: [0] }],
+      [],
+      HOJE,
+      0,
+      0,
+    );
 
     await render(
       <FaixaSemana dias={dias} resumo="" selecionado={HOJE} onSelecionar={onSelecionar} />,
@@ -183,7 +190,7 @@ describe('<FaixaSemana />', () => {
     expect(screen.getByText('completo')).toBeOnTheScreen();
     expect(screen.getByText('pouco ou nada')).toBeOnTheScreen();
 
-    await usuario.press(screen.getByRole('button', { name: 'segunda, 5, sem treino' }));
+    await usuario.press(screen.getByRole('button', { name: 'segunda, 5, dia de descanso' }));
 
     expect(onSelecionar).toHaveBeenCalledWith('2026-10-05');
   });

@@ -24,6 +24,10 @@ const ESPACO_PILULAS = 10;
 /** Um respiro extra antes de cada domingo separa as semanas. */
 const ESPACO_SEMANA = 10;
 const TAMANHO_CIRCULO = 44;
+/** Uma semana só: as 7 pílulas dividem a largura, sem rolar, com um vão menor. */
+const ESPACO_SEMANA_UNICA = 6;
+/** Abaixo disso a pílula fica espremida: a faixa volta a rolar. */
+const LARGURA_MINIMA_PILULA = 40;
 /** Anel de progresso por dentro do círculo do número. */
 const ESPESSURA_ANEL = 3.5;
 const MARGEM_ANEL = 2.5;
@@ -76,7 +80,7 @@ function Legenda({
 }
 
 /**
- * Os dias em pílulas que rolam para o lado (semana passada, atual e próxima):
+ * Os dias da semana em pílulas (cabem na largura; se não couberem, rolam para o lado):
  * a cor diz o status (verde, amarelo, vermelho; hoje em branco; futuro em cinza;
  * congelado em azul gelo), o anel em volta do número mostra quanto do treino
  * foi feito (cheio = 100%) e a legenda explica. Abre com o dia escolhido no meio; tocar num dia troca a
@@ -90,6 +94,16 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
   const [medidas, setMedidas] = useState(0);
   const jaCentralizou = useRef(false);
 
+  // Até 7 dias: tentam caber na largura toda; se ficarem estreitos demais, rolam
+  const larguraDividida =
+    largura > 0 && dias.length <= 7
+      ? (largura - ESPACO_SEMANA_UNICA * (dias.length - 1)) / dias.length
+      : 0;
+  const cabe = larguraDividida >= LARGURA_MINIMA_PILULA;
+  const larguraPilula = cabe ? Math.min(LARGURA_PILULA, larguraDividida) : LARGURA_PILULA;
+  const espacoPilulas = cabe ? ESPACO_SEMANA_UNICA : ESPACO_PILULAS;
+  const tamanhoCirculo = Math.min(TAMANHO_CIRCULO, larguraPilula - 6);
+
   // Centraliza o dia escolhido: na abertura sem animação, depois (ex: "voltar
   // para hoje") com animação. Espera a largura e a posição da pílula existirem.
   useEffect(() => {
@@ -100,11 +114,11 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
     }
 
     rolagem.current?.scrollTo({
-      x: Math.max(x - (largura - LARGURA_PILULA) / 2, 0),
+      x: Math.max(x - (largura - larguraPilula) / 2, 0),
       animated: jaCentralizou.current,
     });
     jaCentralizou.current = true;
-  }, [selecionado, largura, medidas]);
+  }, [selecionado, largura, medidas, larguraPilula]);
 
   // Pílula pastel pelo status, círculo branco e o anel na versão forte da mesma cor
   const doStatus = (fundo: string, arco: string): CoresDia => ({
@@ -156,8 +170,9 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
         horizontal
         showsHorizontalScrollIndicator={false}
         onLayout={(evento) => setLargura(evento.nativeEvent.layout.width)}
-        contentContainerStyle={estilos.faixa}
-        accessibilityLabel="dias, role para o lado"
+        scrollEnabled={!cabe}
+        contentContainerStyle={[estilos.faixa, { gap: espacoPilulas }]}
+        accessibilityLabel={cabe ? 'dias da semana' : 'dias, role para o lado'}
       >
         {dias.map((dia, indice) => {
           const cor = cores[dia.estado];
@@ -179,9 +194,10 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
                 }
               }}
               // Metade do espaço entre pílulas de cada lado: a área de toque não tem buraco
-              hitSlop={{ left: ESPACO_PILULAS / 2, right: ESPACO_PILULAS / 2 }}
+              hitSlop={{ left: espacoPilulas / 2, right: espacoPilulas / 2 }}
               style={({ pressed }) => [
                 estilos.pilula,
+                { width: larguraPilula },
                 indice > 0 && dia.sigla === 'dom' && { marginLeft: ESPACO_SEMANA },
                 { backgroundColor: cor.fundo },
                 // Dia tocado ganha um contorno, sem mudar o tamanho da pílula
@@ -198,7 +214,7 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
               </Text>
               <View>
                 <AnelProgresso
-                  tamanho={TAMANHO_CIRCULO}
+                  tamanho={tamanhoCirculo}
                   espessura={ESPESSURA_ANEL}
                   margem={MARGEM_ANEL}
                   fracao={dia.estado === 'futuro' ? null : dia.fracao}

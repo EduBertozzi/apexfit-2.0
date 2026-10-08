@@ -165,10 +165,18 @@ export function ehDescanso(
   return treinoDoDia(treinos, sessoes, chave).descanso;
 }
 
+/** Algum treino tem esse dia da semana marcado no plano? */
+function temTreinoMarcado(treinos: readonly Treino[], chave: string): boolean {
+  const dia = diaDaSemana(chave);
+
+  return treinos.some((treino) => treino.dias?.includes(dia));
+}
+
 /**
  * Como um dia passado aparece: a marca da regra da sequência (descanso ou
- * congelado) vale primeiro; sem marca, descanso do plano sem treino; senão a
- * cor pelo quanto foi feito.
+ * congelado) vale primeiro; sem marca, descanso do plano sem treino. Dia sem
+ * nada registrado só fica vermelho se tinha treino marcado para ele; senão a
+ * cor é pelo quanto foi feito.
  */
 export function estadoDoDiaPassado(
   treinos: readonly Treino[],
@@ -181,6 +189,10 @@ export function estadoDoDiaPassado(
   }
 
   if ((fracao ?? 0) < MINIMO_PARCIAL && (marca === 'descanso' || ehDescanso(treinos, [], chave))) {
+    return 'descanso';
+  }
+
+  if (fracao === null && !temTreinoMarcado(treinos, chave)) {
     return 'descanso';
   }
 

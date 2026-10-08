@@ -62,8 +62,8 @@ describe('dias congelados no calendário', () => {
     expect(resumoDaSemana(faixa)).toContain('1 congelado');
   });
 
-  it('sem as marcas, a faixa volta ao vermelho (compatível)', () => {
-    expect(diasDaFaixa([RODIZIO], SESSOES, HOJE, 0, 0)[0].estado).toBe('fraco');
+  it('sem as marcas, dia sem nada registrado no rodízio fica neutro', () => {
+    expect(diasDaFaixa([RODIZIO], SESSOES, HOJE, 0, 0)[0].estado).toBe('descanso');
   });
 
   it('o mês do calendário pinta o congelado e guarda a fração para o anel', () => {
