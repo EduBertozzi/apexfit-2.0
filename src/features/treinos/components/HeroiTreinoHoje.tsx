@@ -32,7 +32,7 @@ export function HeroiTreinoHoje() {
   // Dia de descanso: o cartão mostra o próximo treino, não "o de hoje"
   const descanso = situacao.tipo === 'sugerido' && situacao.descanso === true;
   const rotulo = {
-    sugerido: descanso ? 'hoje é descanso. próximo treino' : 'treino de hoje',
+    sugerido: descanso ? 'próximo treino' : 'treino de hoje',
     'em-andamento': 'treino em andamento',
     concluido: 'treino de hoje feito',
   }[situacao.tipo];
@@ -94,7 +94,13 @@ export function HeroiTreinoHoje() {
             </Texto>
           ) : null}
           <Botao
-            titulo={situacao.tipo === 'em-andamento' ? 'continuar treino' : 'começar treino'}
+            titulo={
+              situacao.tipo === 'em-andamento'
+                ? 'continuar treino'
+                : descanso
+                  ? 'treinar mesmo assim'
+                  : 'começar treino'
+            }
             variante="destaque"
             onPress={comecar}
             desabilitado={semExercicios}
