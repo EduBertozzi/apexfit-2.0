@@ -3,20 +3,30 @@ import { StyleSheet, View } from 'react-native';
 
 import { espaco, familia } from '@/shared/theme/tokens';
 import { useCategorias } from '@/shared/theme/useCores';
-import { Texto } from '@/shared/ui';
+import { Botao, Texto } from '@/shared/ui';
 
 import { textoSequencia } from '../semana';
 
 type Props = {
   /** "quarta" */
   nomeDoDia: string;
+  /** "treino de hoje", "treino de amanhã", "treino de sexta"... */
+  titulo: string;
+  /** Aparece quando o dia escolhido não é hoje. */
+  onVoltarParaHoje?: () => void;
   /** "Treino A, Peito e tríceps" */
   legenda: string;
   sequencia: number;
 };
 
 /** "quarta / treino de hoje" à esquerda e a chama com os dias seguidos à direita. */
-export function CabecalhoTreinoHoje({ nomeDoDia, legenda, sequencia }: Props) {
+export function CabecalhoTreinoHoje({
+  nomeDoDia,
+  titulo,
+  legenda,
+  sequencia,
+  onVoltarParaHoje,
+}: Props) {
   const cat = useCategorias();
 
   return (
@@ -27,7 +37,7 @@ export function CabecalhoTreinoHoje({ nomeDoDia, legenda, sequencia }: Props) {
             {nomeDoDia}
           </Texto>
           <Texto variante="titulo" style={estilos.titulo} accessibilityRole="header">
-            treino de hoje
+            {titulo}
           </Texto>
         </View>
         <View
@@ -41,16 +51,24 @@ export function CabecalhoTreinoHoje({ nomeDoDia, legenda, sequencia }: Props) {
           </Texto>
         </View>
       </View>
-      <Texto variante="legenda" secundario numberOfLines={2}>
+      <Texto variante="legenda" secundario numberOfLines={2} accessibilityLiveRegion="polite">
         {legenda}
       </Texto>
+      {onVoltarParaHoje ? (
+        <Botao
+          titulo="voltar para hoje"
+          variante="secundario"
+          onPress={onVoltarParaHoje}
+          descricaoAcessivel="voltar para o treino de hoje"
+        />
+      ) : null}
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
   container: {
-    gap: 2,
+    gap: espaco.xs,
     marginTop: espaco.sm,
   },
   linha: {

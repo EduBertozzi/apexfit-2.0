@@ -13,9 +13,9 @@ import { useTreinoDoDia } from '../store';
  * "começar treino", "continuar treino · 3 de 11" ou "treino concluído" (apagado,
  * com check). Sempre abre o treino de hoje. Sem treino montado, não aparece.
  */
-export function BotaoTreinoHoje() {
+export function BotaoTreinoHoje({ hoje }: { hoje: Date }) {
   const c = useCores();
-  const { situacao } = useTreinoDoDia();
+  const { situacao } = useTreinoDoDia(hoje);
   const acao = acaoTreinoHoje(situacao);
 
   if (!acao) {

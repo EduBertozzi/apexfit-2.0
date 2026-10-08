@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { metaAguaEfetiva } from '@/features/ajustes/logica';
@@ -12,8 +13,9 @@ import { BotaoTreinoHoje } from '@/features/treinos/components/BotaoTreinoHoje';
 import { CabecalhoTreinoHoje } from '@/features/treinos/components/CabecalhoTreinoHoje';
 import { FaixaSemana } from '@/features/treinos/components/FaixaSemana';
 import { GradeTreinoHoje } from '@/features/treinos/components/GradeTreinoHoje';
-import { legendaTreinoDoDia } from '@/features/treinos/logica';
-import { useSemanaDeTreinos, useTreinoDoDia } from '@/features/treinos/store';
+import { useSemanaDeTreinos, useVisaoDoDia } from '@/features/treinos/store';
+import { chaveDoDia } from '@/shared/lib/data';
+import { useHoje } from '@/shared/lib/useHoje';
 import { espaco, familia } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
 import { Tela, Texto } from '@/shared/ui';
@@ -22,8 +24,15 @@ export default function Inicio() {
   const c = useCores();
   const perfil = usePerfilStore((state) => state.perfil);
   const metaManualMl = useAjustesStore((state) => state.metaAguaManualMl);
-  const { situacao } = useTreinoDoDia();
-  const semana = useSemanaDeTreinos();
+  const hoje = useHoje();
+  const semana = useSemanaDeTreinos(hoje);
+  // Dia tocado no calendário; fora da semana atual (virou a semana), volta para hoje
+  const [escolhido, setEscolhido] = useState<string | null>(null);
+  const dia =
+    escolhido && semana.dias.some((item) => item.chave === escolhido)
+      ? escolhido
+      : chaveDoDia(hoje);
+  const visao = useVisaoDoDia(dia, hoje);
 
   if (!perfil) {
     return null;
@@ -54,17 +63,24 @@ export default function Inicio() {
         </Text>
       </View>
 
-      <FaixaSemana dias={semana.dias} resumo={semana.resumo} />
-
-      <CabecalhoTreinoHoje
-        nomeDoDia={semana.nomeDeHoje}
-        legenda={legendaTreinoDoDia(situacao)}
-        sequencia={semana.sequencia}
+      <FaixaSemana
+        dias={semana.faixa}
+        resumo={semana.resumo}
+        selecionado={dia}
+        onSelecionar={setEscolhido}
       />
 
-      <BotaoTreinoHoje />
+      <CabecalhoTreinoHoje
+        nomeDoDia={visao.nomeDoDia}
+        titulo={visao.titulo}
+        legenda={visao.legenda}
+        sequencia={semana.sequencia}
+        onVoltarParaHoje={visao.quando === 'hoje' ? undefined : () => setEscolhido(null)}
+      />
 
-      <GradeTreinoHoje />
+      {visao.quando === 'hoje' ? <BotaoTreinoHoje hoje={hoje} /> : null}
+
+      <GradeTreinoHoje visao={visao} />
 
       <View style={estilos.secao}>
         <Texto variante="titulo" accessibilityRole="header" style={estilos.tituloSecao}>

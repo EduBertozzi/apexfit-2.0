@@ -57,7 +57,7 @@ function paraData(chave: string): Date {
   return new Date(Number(chave.slice(0, 4)), Number(chave.slice(5, 7)) - 1, Number(chave.slice(8)));
 }
 
-function somarDias(chave: string, dias: number): string {
+export function somarDias(chave: string, dias: number): string {
   const data = paraData(chave);
 
   return chaveDoDia(new Date(data.getFullYear(), data.getMonth(), data.getDate() + dias));
@@ -157,31 +157,56 @@ export function ehDescanso(
   return treinoDoDia(treinos, sessoes, chave).descanso;
 }
 
+/** Como um dia aparece na faixa: cor pelo quanto foi feito, hoje, futuro ou descanso. */
+function diaDaFaixa(
+  treinos: readonly Treino[],
+  sessoes: readonly Sessao[],
+  chave: string,
+  hoje: string,
+): DiaDaSemana {
+  const futuro = chave > hoje;
+  const fracao = futuro ? null : fracaoDoDia(treinos, sessoes, chave);
+  const detalhe = futuro ? null : detalheDoDia(treinos, sessoes, chave);
+  const descanso = fracao === null && ehDescanso(treinos, sessoes, chave);
+  const estado: EstadoDia =
+    chave === hoje ? 'hoje' : futuro ? 'futuro' : descanso ? 'descanso' : estadoPelaFracao(fracao);
+
+  return {
+    chave,
+    sigla: SIGLAS_DIA[diaDaSemana(chave)],
+    dia: Number(chave.slice(8)),
+    estado,
+    fracao,
+    detalhe,
+  };
+}
+
 /** Os 7 dias da semana atual, de domingo a sábado. */
 export function diasDaSemana(
   treinos: readonly Treino[],
   sessoes: readonly Sessao[],
   hoje: string,
 ): DiaDaSemana[] {
-  const domingo = somarDias(hoje, -diaDaSemana(hoje));
+  return diasDaFaixa(treinos, sessoes, hoje, 0, 0);
+}
 
-  return SIGLAS_DIA.map((sigla, indice) => {
-    const chave = somarDias(domingo, indice);
-    const futuro = chave > hoje;
-    const fracao = futuro ? null : fracaoDoDia(treinos, sessoes, chave);
-    const detalhe = futuro ? null : detalheDoDia(treinos, sessoes, chave);
-    const descanso = fracao === null && ehDescanso(treinos, sessoes, chave);
-    const estado: EstadoDia =
-      chave === hoje
-        ? 'hoje'
-        : futuro
-          ? 'futuro'
-          : descanso
-            ? 'descanso'
-            : estadoPelaFracao(fracao);
+/**
+ * Dias da faixa rolável: a semana atual mais `antes` semanas para trás e
+ * `depois` para frente, sempre de domingo a sábado.
+ */
+export function diasDaFaixa(
+  treinos: readonly Treino[],
+  sessoes: readonly Sessao[],
+  hoje: string,
+  antes = 1,
+  depois = 1,
+): DiaDaSemana[] {
+  const domingo = somarDias(hoje, -diaDaSemana(hoje) - 7 * antes);
+  const total = 7 * (antes + 1 + depois);
 
-    return { chave, sigla, dia: Number(chave.slice(8)), estado, fracao, detalhe };
-  });
+  return Array.from({ length: total }, (_, indice) =>
+    diaDaFaixa(treinos, sessoes, somarDias(domingo, indice), hoje),
+  );
 }
 
 /**

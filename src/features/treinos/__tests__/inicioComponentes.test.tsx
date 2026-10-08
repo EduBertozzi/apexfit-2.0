@@ -3,7 +3,15 @@ import { router } from 'expo-router';
 
 import { BotaoTreinoHoje } from '../components/BotaoTreinoHoje';
 import { GradeTreinoHoje } from '../components/GradeTreinoHoje';
-import { useTreinosStore } from '../store';
+import { useTreinosStore, useVisaoDoDia } from '../store';
+import { chaveDoDia } from '@/shared/lib/data';
+
+/** Como a tela inicial: a grade do dia de hoje, recalculada quando a store muda. */
+function GradeDeHoje() {
+  const hoje = new Date();
+
+  return <GradeTreinoHoje visao={useVisaoDoDia(chaveDoDia(hoje), hoje)} />;
+}
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
@@ -26,7 +34,7 @@ function montarTreino(nomes: string[]) {
 
 describe('<BotaoTreinoHoje />', () => {
   it('sem treino montado não aparece', async () => {
-    await render(<BotaoTreinoHoje />);
+    await render(<BotaoTreinoHoje hoje={new Date()} />);
 
     expect(screen.queryByTestId('botao-treino-hoje')).toBeNull();
   });
@@ -36,7 +44,7 @@ describe('<BotaoTreinoHoje />', () => {
     const id = montarTreino(['Agachamento', 'Leg press']);
     const [a, b] = useTreinosStore.getState().treinos[0].exercicios;
 
-    await render(<BotaoTreinoHoje />);
+    await render(<BotaoTreinoHoje hoje={new Date()} />);
 
     expect(screen.getByText('começar treino')).toBeOnTheScreen();
 
@@ -59,7 +67,7 @@ describe('<GradeTreinoHoje />', () => {
     const usuario = userEvent.setup();
     montarTreino(['Agachamento']);
 
-    await render(<GradeTreinoHoje />);
+    await render(<GradeDeHoje />);
 
     await usuario.press(screen.getByRole('checkbox', { name: 'agachamento, marcar como feito' }));
 
@@ -71,7 +79,7 @@ describe('<GradeTreinoHoje />', () => {
   it('só tem cards de grupo: água e dieta ficam fora da grade', async () => {
     montarTreino(['Agachamento']);
 
-    await render(<GradeTreinoHoje />);
+    await render(<GradeDeHoje />);
 
     expect(screen.getByTestId('grupo-perna')).toBeOnTheScreen();
     expect(screen.queryByTestId('cartao-agua')).toBeNull();

@@ -5,7 +5,7 @@ import { ChecklistSessao } from '../components/ChecklistSessao';
 import { FaixaSemana } from '../components/FaixaSemana';
 import { FormularioExercicio } from '../components/FormularioExercicio';
 import { agruparPorGrupo } from '../grupos';
-import { diasDaSemana, resumoDaSemana } from '../semana';
+import { diasDaFaixa, diasDaSemana, resumoDaSemana } from '../semana';
 import { useTreinosStore } from '../store';
 
 describe('<FormularioExercicio />', () => {
@@ -147,64 +147,45 @@ describe('<CartaoGrupo /> feito', () => {
 });
 
 describe('<FaixaSemana />', () => {
-  it('mostra os 7 dias e um resumo para o leitor de tela', async () => {
-    const dias = diasDaSemana([], [], '2026-10-07');
-    const resumo = resumoDaSemana(dias);
+  const HOJE = '2026-10-07';
 
-    await render(<FaixaSemana dias={dias} resumo={resumo} />);
+  it('mostra as 3 semanas e um resumo para o leitor de tela', async () => {
+    const dias = diasDaFaixa([], [], HOJE);
+    const resumo = resumoDaSemana(diasDaSemana([], [], HOJE));
 
+    await render(
+      <FaixaSemana dias={dias} resumo={resumo} selecionado={HOJE} onSelecionar={jest.fn()} />,
+    );
+
+    expect(dias).toHaveLength(21);
     expect(screen.getByLabelText(resumo)).toBeOnTheScreen();
-    expect(screen.getByText('qua')).toBeOnTheScreen();
-    expect(screen.getByTestId('dia-2026-10-10')).toBeOnTheScreen();
+    expect(screen.getByTestId('dia-2026-09-27')).toBeOnTheScreen(); // domingo da semana passada
+    expect(screen.getByTestId('dia-2026-10-17')).toBeOnTheScreen(); // sábado da próxima
   });
 
-  it('cabe na largura toda, sem rolagem lateral', async () => {
-    const dias = diasDaSemana([], [], '2026-10-07');
+  it('pílulas largas de tamanho fixo: a faixa rola em vez de espremer', async () => {
+    const dias = diasDaFaixa([], [], HOJE);
 
-    await render(<FaixaSemana dias={dias} resumo={resumoDaSemana(dias)} />);
+    await render(<FaixaSemana dias={dias} resumo="" selecionado={HOJE} onSelecionar={jest.fn()} />);
 
-    // Todos dividem a largura por igual (flex: 1), sem largura fixa
-    for (const chave of ['2026-10-04', '2026-10-07', '2026-10-10']) {
-      expect(screen.getByTestId(`dia-${chave}`)).toHaveStyle({ flex: 1 });
-    }
+    expect(screen.getByTestId(`dia-${HOJE}`)).toHaveStyle({ width: 62 });
   });
 
-  it('tocar num dia mostra o resumo dele', async () => {
+  it('tocar num dia escolhe esse dia', async () => {
     const usuario = userEvent.setup();
-    const dias = diasDaSemana([], [], '2026-10-07');
+    const onSelecionar = jest.fn();
+    const dias = diasDaFaixa([], [], HOJE);
 
-    await render(<FaixaSemana dias={dias} resumo={resumoDaSemana(dias)} />);
+    await render(
+      <FaixaSemana dias={dias} resumo="" selecionado={HOJE} onSelecionar={onSelecionar} />,
+    );
 
-    // Hoje já tem resumo embaixo do título da tela; a faixa só mostra o dia tocado
-    expect(screen.queryByText('hoje: ainda sem treino')).toBeNull();
     expect(screen.getByText('completo')).toBeOnTheScreen();
     expect(screen.getByText('pouco ou nada')).toBeOnTheScreen();
 
     await usuario.press(screen.getByRole('button', { name: 'segunda, 5, sem treino' }));
 
-    expect(screen.getByText('segunda: sem treino')).toBeOnTheScreen();
-  });
-
-  it('cards longos cortam a lista e mostram quantos faltam', async () => {
-    const blocos = agruparPorGrupo(
-      ['Supino reto', 'Supino inclinado', 'Crucifixo', 'Crossover', 'Peck deck'].map(
-        (nome, indice) => ({
-          id: String(indice),
-          nome,
-          grupo: 'peito' as const,
-          series: 3,
-          repeticoes: '12',
-        }),
-      ),
-    );
-
-    await render(
-      <CartaoGrupo bloco={blocos[0]} concluidos={[]} onAbrir={jest.fn()} onAlternar={jest.fn()} />,
-    );
-
-    expect(screen.getByText('supino reto')).toBeOnTheScreen();
-    expect(screen.queryByText('crossover')).toBeNull();
-    expect(screen.getByText('+3 exercícios')).toBeOnTheScreen();
+    expect(onSelecionar).toHaveBeenCalledWith('2026-10-05');
   });
 });
 

@@ -32,8 +32,9 @@ import {
 import { substituirTreinos } from './ia';
 import { moverExercicioNoGrupo, reordenarExercicioNoGrupo } from './montagem';
 import type { ModeloTreino } from './modelos';
-import { diasDaSemana, nomeDoDia, resumoDaSemana, sequenciaDeDias } from './semana';
+import { diasDaFaixa, diasDaSemana, nomeDoDia, resumoDaSemana, sequenciaDeDias } from './semana';
 import type { DadosExercicio, DadosTreino, Sessao, Treino } from './types';
+import { visaoDoDia } from './visaoDoDia';
 
 type TreinosState = {
   treinos: Treino[];
@@ -181,10 +182,20 @@ export function useSemanaDeTreinos(data: Date = new Date()) {
   return {
     hoje,
     dias,
+    /** Semana passada, atual e próxima, para a faixa rolar para o lado. */
+    faixa: diasDaFaixa(treinos, sessoes, hoje),
     resumo: resumoDaSemana(dias),
     sequencia: sequenciaDeDias(treinos, sessoes, hoje),
     nomeDeHoje: nomeDoDia(hoje),
   };
+}
+
+/** O que mostrar para o dia escolhido no calendário (hoje, passado ou futuro). */
+export function useVisaoDoDia(dia: string, hoje: Date) {
+  const treinos = useTreinosStore((state) => state.treinos);
+  const sessoes = useTreinosStore((state) => state.sessoes);
+
+  return visaoDoDia(treinos, sessoes, dia, chaveDoDia(hoje));
 }
 
 /** Hook para as telas: a situação do treino de hoje e quantos treinos na semana. */

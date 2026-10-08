@@ -9,8 +9,8 @@ import { CartaoToque, ESPACO_DA_SETA } from '@/shared/ui/CartaoToque';
 
 import { montarGrade } from '../grade';
 import { agruparPorGrupo, type BlocoDoTreino } from '../grupos';
-import { concluidosDeHoje, podeMarcarNoInicio } from '../logica';
-import { useTreinoDoDia, useTreinosStore } from '../store';
+import { useTreinosStore } from '../store';
+import type { VisaoDoDia } from '../visaoDoDia';
 import { CartaoGrupo } from './CartaoGrupo';
 import { minusculaInicial } from '@/shared/lib/texto';
 
@@ -55,25 +55,28 @@ function ConviteTreino() {
 }
 
 /**
- * A grade "bento" do treino de hoje: só os cards de grupo muscular (aquecimento
- * em cima). Cada exercício se marca ali mesmo; a seta de cada card abre o treino.
+ * A grade "bento" do dia escolhido no calendário: só os cards de grupo muscular
+ * (aquecimento em cima). Hoje cada exercício se marca ali mesmo; nos outros dias
+ * é só consulta, e a seta abre o treino.
  */
-export function GradeTreinoHoje() {
+export function GradeTreinoHoje({ visao }: { visao: VisaoDoDia }) {
   const c = useCores();
-  const { situacao } = useTreinoDoDia();
   const marcar = useTreinosStore((state) => state.marcarExercicioDeHoje);
+  const semTreinos = useTreinosStore((state) => state.treinos.length === 0);
 
-  const treino = situacao.tipo === 'sem-treinos' ? null : situacao.treino;
-  const concluidos = concluidosDeHoje(situacao);
-  const podeMarcar = podeMarcarNoInicio(situacao);
+  const { treino, concluidos, podeMarcar } = visao;
   const linhas = montarGrade(agruparPorGrupo(treino?.exercicios ?? []));
+  const abrir =
+    visao.quando === 'hoje' || !treino
+      ? abrirSessao
+      : () => router.push({ pathname: '/treino/[id]', params: { id: treino.id } });
 
   function cartao(bloco: BlocoDoTreino, inteiro = false) {
     return (
       <CartaoGrupo
         bloco={bloco}
         concluidos={concluidos}
-        onAbrir={abrirSessao}
+        onAbrir={abrir}
         onAlternar={(exercicioId) => treino && marcar(treino.id, exercicioId)}
         podeMarcar={podeMarcar}
         inteiro={inteiro}
@@ -82,19 +85,37 @@ export function GradeTreinoHoje() {
     );
   }
 
-  if (situacao.tipo === 'sugerido' && situacao.descanso) {
+  if (visao.descanso) {
     return (
       <View style={estilos.grade}>
         <View
           accessible
-          accessibilityLabel={`hoje é dia de descanso. próximo treino: ${minusculaInicial(situacao.treino.nome)}`}
+          accessibilityLabel={`${visao.titulo}: dia de descanso`}
           style={[estilos.descanso, { backgroundColor: c.superficie }]}
         >
           <MaterialCommunityIcons name="weather-night" size={28} color={c.agua} />
           <Texto variante="subtitulo">dia de descanso</Texto>
-          <Texto secundario>
-            recuperar também é treino. próximo: {minusculaInicial(situacao.treino.nome)}
-          </Texto>
+          <Texto secundario>recuperar também é treino.</Texto>
+        </View>
+      </View>
+    );
+  }
+
+  if (!treino && !semTreinos) {
+    return (
+      <View style={estilos.grade}>
+        <View
+          accessible
+          accessibilityLabel={`${visao.titulo}: ${visao.legenda}`}
+          style={[estilos.descanso, { backgroundColor: c.superficie }]}
+        >
+          <MaterialCommunityIcons
+            name="calendar-blank-outline"
+            size={28}
+            color={c.textoSecundario}
+          />
+          <Texto variante="subtitulo">sem treino</Texto>
+          <Texto secundario>{visao.legenda}</Texto>
         </View>
       </View>
     );
