@@ -210,7 +210,8 @@ function CasaDoDia({
     },
     // Hoje em branco (o inverso no claro), como na faixa da semana da tela inicial
     hoje: { fundo: c.texto, arco: c.fundo, trilho: 'transparent', numero: c.fundo },
-    futuro: { arco: c.textoSecundario, trilho: c.superficieSecundaria, numero: c.textoSecundario },
+    // Futuro: sem anel, ainda não dá para ter progresso
+    futuro: { arco: 'transparent', trilho: 'transparent', numero: c.textoSecundario },
     vazio: { arco: 'transparent', trilho: 'transparent', numero: c.textoSecundario },
   };
   // Hoje fica em branco enquanto não tem treino registrado (mesmo sendo descanso)

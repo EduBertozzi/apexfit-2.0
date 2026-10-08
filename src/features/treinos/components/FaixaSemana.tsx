@@ -27,7 +27,7 @@ const TAMANHO_CIRCULO = 44;
 /** Uma semana só: as 7 pílulas dividem a largura, sem rolar, com um vão menor. */
 const ESPACO_SEMANA_UNICA = 6;
 /** Abaixo disso a pílula fica espremida: a faixa volta a rolar. */
-const LARGURA_MINIMA_PILULA = 40;
+const LARGURA_MINIMA_PILULA = 32;
 const CIRCULO_COMPACTO = 36;
 /** Anel de progresso por dentro do círculo do número. */
 const ESPESSURA_ANEL = 3.5;
@@ -105,7 +105,7 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
   const espacoPilulas = cabe ? ESPACO_SEMANA_UNICA : ESPACO_PILULAS;
   // Semana inteira na tela: círculo menor, para a pílula ficar baixa
   const tamanhoCirculo = cabe
-    ? Math.min(CIRCULO_COMPACTO, larguraPilula - 10)
+    ? Math.min(CIRCULO_COMPACTO, larguraPilula - 8)
     : Math.min(TAMANHO_CIRCULO, larguraPilula - 6);
 
   // Centraliza o dia escolhido: na abertura sem animação, depois (ex: "voltar
@@ -145,16 +145,17 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
       circulo: c.fundo,
       numero: c.texto,
       arco: c.texto,
-      trilho: c.superficieSecundaria,
+      // Sem trilho: o anel só aparece quando já tem treino feito hoje
+      trilho: 'transparent',
     },
-    // Futuro: só o trilho cinza, nada feito ainda
+    // Futuro: sem anel nenhum, ainda não dá para ter progresso
     futuro: {
       fundo: c.superficie,
       rotulo: c.textoSecundario,
       circulo: c.superficieSecundaria,
       numero: c.textoSecundario,
-      arco: c.textoSecundario,
-      trilho: c.bordaCampo,
+      arco: 'transparent',
+      trilho: 'transparent',
     },
     // Descanso: neutro, mas com número legível (o dia já passou)
     descanso: {
@@ -215,7 +216,15 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
-                style={[estilos.sigla, cabe && estilos.siglaCompacta, { color: cor.rotulo }]}
+                // Tela bem estreita: a sigla encolhe para caber ("dom" não vira "do...")
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+                style={[
+                  estilos.sigla,
+                  cabe && estilos.siglaCompacta,
+                  cabe && larguraPilula < 38 && estilos.siglaMinima,
+                  { color: cor.rotulo },
+                ]}
               >
                 {dia.sigla}
               </Text>
@@ -284,6 +293,9 @@ const estilos = StyleSheet.create({
   },
   siglaCompacta: {
     fontSize: 14,
+  },
+  siglaMinima: {
+    fontSize: 12,
   },
   sigla: {
     fontFamily: familia.display,
