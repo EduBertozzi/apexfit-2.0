@@ -1,11 +1,20 @@
 import type { Tabs } from 'expo-router';
-import type { ComponentProps, ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
-import { espaco, familia, fonte, raio } from '../theme/tokens';
+import { posicaoDaAba } from '../lib/posicaoAba';
+import { useVibrar } from '../lib/vibracao';
+import { espaco, familia, fonte, movimento, raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
+import { usePop } from './animacao';
 
 /** Props que o Expo Router passa para uma barra de abas própria. */
 type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -15,6 +24,65 @@ export type IconeDaAba = (props: { cor: string; tamanho: number }) => ReactNode;
 /** Altura do degradê acima da base da barra: o conteúdo some aos poucos antes de chegar nela. */
 const ALTURA_DEGRADE = 90;
 const ID_DEGRADE = 'degradeBarraAbas';
+/** Respiro da pílula dentro da barra e vão entre as abas (iguais ao estilo `barra`). */
+const RESPIRO = 6;
+const VAO = 6;
+/** Rápida e com quase nenhum balanço: a pílula para na aba sem ultrapassar. */
+const MOLA_PILULA = { ...movimento.mola, damping: 24, stiffness: 260 };
+
+/** Pílula menta que desliza até a aba ativa, com uma mola firme (sem passar da barra). */
+function PilulaAtiva({
+  larguraBarra,
+  quantidade,
+  indice,
+  cor,
+}: {
+  larguraBarra: number;
+  quantidade: number;
+  indice: number;
+  cor: string;
+}) {
+  const reduzir = useReducedMotion();
+  const alvo = posicaoDaAba(larguraBarra, quantidade, indice, RESPIRO, VAO);
+  const x = useSharedValue(alvo.x);
+  const largura = useSharedValue(alvo.largura);
+  const posicionada = useRef(false);
+
+  useEffect(() => {
+    if (alvo.largura === 0) {
+      return;
+    }
+
+    // A primeira vez só posiciona; depois desliza (a não ser com "reduzir movimento")
+    if (!posicionada.current || reduzir) {
+      posicionada.current = true;
+      x.set(alvo.x);
+      largura.set(alvo.largura);
+      return;
+    }
+
+    x.set(withSpring(alvo.x, MOLA_PILULA));
+    largura.set(withSpring(alvo.largura, MOLA_PILULA));
+  }, [alvo.x, alvo.largura, reduzir, x, largura]);
+
+  const estilo = useAnimatedStyle(() => ({
+    width: largura.get(),
+    transform: [{ translateX: x.get() }],
+  }));
+
+  return (
+    <Animated.View
+      style={[estilos.pilula, { backgroundColor: cor, pointerEvents: 'none' }, estilo]}
+    />
+  );
+}
+
+/** Ícone da aba: dá um "pop" quando a aba fica ativa. */
+function IconeAnimado({ focada, children }: { focada: boolean; children: ReactNode }) {
+  const pop = usePop(focada, focada);
+
+  return <Animated.View style={pop}>{children}</Animated.View>;
+}
 
 /** Degradê vertical do fundo da tela (transparente em cima, opaco embaixo), atrás da barra. */
 function Degrade({ cor, altura }: { cor: string; altura: number }) {
@@ -37,7 +105,7 @@ function Degrade({ cor, altura }: { cor: string; altura: number }) {
 /**
  * Barra de abas flutuante: uma pílula translúcida (com fio claro e sombra, para não se
  * misturar com os cards que passam por baixo) com ícone e um rótulo curto embaixo
- * (o `title` da aba). A aba ativa ganha uma pílula menta atrás dos dois.
+ * (o `title` da aba). Uma pílula menta desliza até a aba ativa e o ícone dela dá um "pop".
  * O leitor de tela usa `tabBarAccessibilityLabel` quando existe (rótulo mais completo).
  */
 export function BarraAbas({
@@ -49,6 +117,9 @@ export function BarraAbas({
   const c = useCores();
   const { bottom } = useSafeAreaInsets();
   const respiroBaixo = Math.max(bottom, espaco.md);
+  const vibrar = useVibrar();
+  const [larguraBarra, setLarguraBarra] = useState(0);
+  const medida = larguraBarra > 0;
 
   return (
     <View style={[estilos.envoltorio, { paddingBottom: respiroBaixo, pointerEvents: 'box-none' }]}>
@@ -59,7 +130,14 @@ export function BarraAbas({
           { backgroundColor: c.barra, borderColor: c.bordaBarra, boxShadow: c.sombraBarra },
         ]}
         accessibilityRole="tablist"
+        onLayout={(evento) => setLarguraBarra(evento.nativeEvent.layout.width)}
       >
+        <PilulaAtiva
+          larguraBarra={larguraBarra}
+          quantidade={state.routes.length}
+          indice={state.index}
+          cor={c.destaque}
+        />
         {state.routes.map((rota, indice) => {
           const focada = state.index === indice;
           const { options } = descriptors[rota.key];
@@ -82,16 +160,22 @@ export function BarraAbas({
                 });
 
                 if (!focada && !evento.defaultPrevented) {
+                  vibrar('leve');
                   navigation.navigate(rota.name, rota.params);
                 }
               }}
               style={({ pressed }) => [
                 estilos.aba,
-                focada && { backgroundColor: c.destaque },
+                // Antes de medir a barra a pílula não existe: a aba pinta o próprio fundo
+                focada && !medida && { backgroundColor: c.destaque },
                 pressed && { opacity: 0.75 },
               ]}
             >
-              {Icone ? <Icone cor={cor} tamanho={24} /> : null}
+              {Icone ? (
+                <IconeAnimado focada={focada}>
+                  <Icone cor={cor} tamanho={24} />
+                </IconeAnimado>
+              ) : null}
               <Text
                 style={[estilos.rotulo, { color: cor }]}
                 numberOfLines={1}
@@ -125,11 +209,19 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: raio.total,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 6,
-    gap: 6,
+    padding: RESPIRO,
+    gap: VAO,
     maxWidth: 560,
     width: '100%',
     alignSelf: 'center',
+    overflow: 'hidden',
+  },
+  pilula: {
+    position: 'absolute',
+    top: RESPIRO,
+    bottom: RESPIRO,
+    left: 0,
+    borderRadius: raio.total,
   },
   aba: {
     flex: 1,
