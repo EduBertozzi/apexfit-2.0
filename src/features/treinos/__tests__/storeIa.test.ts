@@ -101,11 +101,14 @@ describe('useTreinosIaStore.gerar', () => {
       ['treino de terça', [2]],
       ['treino de quinta', [4]],
     ]);
-    expect(treinos[0].exercicios.map((e) => e.nome)).toEqual([
+    // A IA mandou 1 de costas, mas o dia pede 5 (iniciante): o modo offline completa
+    expect(treinos[0].exercicios.map((e) => e.nome).slice(0, 3)).toEqual([
       'polichinelo',
       'mobilidade de quadril',
       'Puxada frontal',
     ]);
+    expect(treinos[0].exercicios).toHaveLength(7);
+    expect(treinos[0].exercicios.slice(2).every((e) => e.grupo === 'costas')).toBe(true);
     expect(useTreinosIaStore.getState().ultima).toMatchObject({
       origem: 'openai',
       quantidade: 2,
@@ -175,6 +178,46 @@ describe('useTreinosIaStore.gerar', () => {
       ['polichinelo', 'tempo'],
       ['mobilidade de quadril', 'repeticoes'],
       ['bike leve', 'tempo'],
+    ]);
+  });
+
+  it('contador de exercícios e circuito pela store', () => {
+    const store = useTreinosIaStore.getState();
+
+    store.alternarArea(4, 'cardio');
+    store.passoExercicios(2, 1);
+    store.modoCardio(4, 'circuito');
+    store.passoCircuito(4, 'voltas', 1);
+
+    const { escolhas } = useTreinosIaStore.getState();
+    expect(escolhas.dias[0].exercicios).toBe(6);
+    expect(escolhas.dias[1].circuito).toEqual({ exercicios: 4, segundos: 40, voltas: 4 });
+
+    useTreinosIaStore.getState().exerciciosPadrao(2);
+    expect(useTreinosIaStore.getState().escolhas.dias[0]).not.toHaveProperty('exercicios');
+  });
+
+  it('migração para a versão 3: dias salvos antes ficam no padrão e com cardio contínuo', async () => {
+    const opcoes = useTreinosIaStore.persist.getOptions();
+    expect(opcoes.version).toBe(3);
+
+    const migrado = (await opcoes.migrate?.(
+      {
+        escolhas: {
+          ...ESCOLHAS_PADRAO,
+          dias: [
+            { dia: 1, areas: [{ area: 'peito', regioes: [] }] },
+            { dia: 3, areas: [{ area: 'cardio', regioes: [] }], circuito: 'quebrado' },
+          ],
+        },
+        ultima: null,
+      },
+      2,
+    )) as { escolhas: EscolhasSemana };
+
+    expect(migrado.escolhas.dias).toEqual([
+      { dia: 1, areas: [{ area: 'peito', regioes: [] }] },
+      { dia: 3, areas: [{ area: 'cardio', regioes: [] }] },
     ]);
   });
 

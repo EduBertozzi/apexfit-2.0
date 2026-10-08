@@ -1,6 +1,7 @@
 import type { Perfil } from '@/features/perfil/types';
 
 import { exercicioDeAquecimento } from './aquecimento';
+import { circuitoDoDia, montarCircuito } from './circuito';
 import { CATALOGO, exerciciosDe, type ExercicioCatalogo } from './catalogo';
 import type {
   AreaEscolhida,
@@ -11,7 +12,13 @@ import type {
   RespostaTreinosIa,
 } from './contratoIa';
 import { textoDosDias } from './diasIa';
-import { focoDoDia, NOME_EQUIPAMENTO, NOME_NIVEL, nomeTreinoDoDia } from './montadorIa';
+import {
+  distribuirExercicios,
+  focoDoDia,
+  NOME_EQUIPAMENTO,
+  NOME_NIVEL,
+  nomeTreinoDoDia,
+} from './montadorIa';
 import { filtroDeRestricoes } from './regrasIa';
 
 /**
@@ -19,13 +26,6 @@ import { filtroDeRestricoes } from './regrasIa';
  * o catálogo, sem IA nem internet. Usado quando o servidor não tem IA ou o
  * pedido falha, para o app sempre entregar a semana.
  */
-
-/** Exercícios de força por treino, conforme o nível. */
-const EXERCICIOS_POR_NIVEL: Record<NivelTreino, number> = {
-  iniciante: 4,
-  intermediario: 5,
-  avancado: 6,
-};
 
 const SERIES_POR_NIVEL: Record<NivelTreino, number> = {
   iniciante: 3,
@@ -113,18 +113,6 @@ function candidatos(area: AreaEscolhida): ExercicioCatalogo[] {
   return intercalados;
 }
 
-/** Reparte o total de exercícios entre as áreas de força do dia (pelo menos 1 cada). */
-export function exerciciosPorArea(total: number, areas: number): number[] {
-  if (areas <= 0) {
-    return [];
-  }
-
-  const base = Math.max(1, Math.floor(total / areas));
-  const sobra = Math.max(0, total - base * areas);
-
-  return Array.from({ length: areas }, (_, indice) => base + (indice < sobra ? 1 : 0));
-}
-
 function juntar(itens: readonly string[]): string {
   return itens.length > 1
     ? `${itens.slice(0, -1).join(', ')} e ${itens[itens.length - 1]}`
@@ -151,9 +139,13 @@ export function montarSemanaPorRegras(perfil: Perfil, escolhas: EscolhasSemana):
       : [];
     const forca = dia.areas.filter((area) => area.area !== 'cardio');
     const cardio = dia.areas.find((area) => area.area === 'cardio');
-    const quantidades = exerciciosPorArea(EXERCICIOS_POR_NIVEL[nivel], forca.length);
+    // Quantos exercícios cada área recebe (a mesma conta que vai para a IA)
+    const quantidades = distribuirExercicios(dia, nivel).filter(
+      (item) => item.area.area !== 'cardio',
+    );
 
     forca.forEach((area, indice) => {
+      const quantidade = quantidades[indice].quantidade;
       const todos = candidatos(area).filter((item) => permitido(item.nome));
       const doEquipamento = todos.filter((item) => cabeNoEquipamento(item, equipamento));
       // Sem nada no equipamento (ex: bíceps só com o corpo), usa o que der em casa
@@ -165,8 +157,8 @@ export function montarSemanaPorRegras(perfil: Perfil, escolhas: EscolhasSemana):
       const inicio = usados.get(chave) ?? 0;
       usados.set(chave, inicio + 1);
 
-      for (let i = 0; i < Math.min(quantidades[indice], lista.length); i++) {
-        const item = lista[(inicio * quantidades[indice] + i) % lista.length];
+      for (let i = 0; i < Math.min(quantidade, lista.length); i++) {
+        const item = lista[(inicio * quantidade + i) % lista.length];
 
         exercicios.push({
           nome: item.nome,
@@ -178,7 +170,14 @@ export function montarSemanaPorRegras(perfil: Perfil, escolhas: EscolhasSemana):
       }
     });
 
-    if (cardio) {
+    const circuito = circuitoDoDia(dia);
+
+    if (circuito) {
+      // Circuito: bloco à parte, fora da conta do contador de exercícios
+      const vez = usados.get('circuito') ?? 0;
+      usados.set('circuito', vez + circuito.exercicios);
+      exercicios.push(...montarCircuito(circuito, equipamento, permitido, vez));
+    } else if (cardio) {
       const minutos = MINUTOS_CARDIO[nivel][forca.length === 0 ? 'sozinho' : 'junto'];
       const opcoes = candidatos(cardio).filter(
         (item) => permitido(item.nome) && cabeNoEquipamento(item, equipamento),

@@ -16,18 +16,23 @@ import {
   type AreaTreino,
   type DiaMontado,
   type ItemAquecimento,
+  type NivelTreino,
 } from '../contratoIa';
 import { NOME_GRUPO } from '../grupos';
 import { MEDIDAS } from '../montagem';
 import {
+  contadoresCircuito,
+  contadorExercicios,
   DIAS_DA_SEMANA,
   diasParaCopiar,
   NOME_EQUIPAMENTO,
   NOME_NIVEL,
   nomeDoDia,
+  opcoesCardio,
   resumoDoDia,
   rotuloDoDia,
   siglaDoDia,
+  textoNoDia,
 } from '../montadorIa';
 import { useTreinosIaStore } from '../storeIa';
 import { ContadorCompacto } from './ContadorCompacto';
@@ -116,6 +121,7 @@ export function MontadorSemana() {
             <LinhaDia
               key={dia.dia}
               dia={dia}
+              nivel={escolhas.nivel}
               aberto={aberto === dia.dia}
               copiarDe={diasParaCopiar(escolhas, dia.dia)}
               onAbrir={() => setAberto(aberto === dia.dia ? null : dia.dia)}
@@ -195,11 +201,13 @@ export function MontadorSemana() {
 /** Um dia marcado: a linha com o resumo e, aberta, as áreas e regiões. */
 function LinhaDia({
   dia,
+  nivel,
   aberto,
   copiarDe,
   onAbrir,
 }: {
   dia: DiaMontado;
+  nivel: NivelTreino;
   aberto: boolean;
   copiarDe: number[];
   onAbrir: () => void;
@@ -222,7 +230,7 @@ function LinhaDia({
       <Pressable
         onPress={onAbrir}
         accessibilityRole="button"
-        accessibilityLabel={rotuloDoDia(dia)}
+        accessibilityLabel={rotuloDoDia(dia, nivel)}
         accessibilityHint={aberto ? 'fecha as escolhas do dia' : 'abre para escolher as áreas'}
         accessibilityState={{ expanded: aberto }}
         testID={`montador-linha-${dia.dia}`}
@@ -231,7 +239,7 @@ function LinhaDia({
         <View style={estilos.textosDia}>
           <Texto style={estilos.nomeDia}>{nomeDoDia(dia.dia)}</Texto>
           <Texto variante="legenda" secundario numberOfLines={aberto ? undefined : 1}>
-            {resumoDoDia(dia)}
+            {resumoDoDia(dia, nivel)}
           </Texto>
         </View>
         <Ionicons name={aberto ? 'chevron-up' : 'chevron-down'} size={20} color={c.texto} />
@@ -303,6 +311,9 @@ function LinhaDia({
               </View>
             ))}
 
+          <ExerciciosDoDia dia={dia} nivel={nivel} />
+          <CardioDoDia dia={dia} />
+
           {copiarDe.length > 0 ? (
             <View style={estilos.copiar}>
               <Texto variante="legenda" secundario>
@@ -330,6 +341,109 @@ function LinhaDia({
           ) : null}
         </View>
       ) : null}
+    </View>
+  );
+}
+
+/** Contador "exercícios" do dia (sem o aquecimento) e o atalho de voltar ao padrão. */
+function ExerciciosDoDia({ dia, nivel }: { dia: DiaMontado; nivel: NivelTreino }) {
+  const c = useCores();
+  const passoExercicios = useTreinosIaStore((state) => state.passoExercicios);
+  const exerciciosPadrao = useTreinosIaStore((state) => state.exerciciosPadrao);
+  const contador = contadorExercicios(dia, nivel);
+
+  if (!contador.visivel) {
+    return null;
+  }
+
+  return (
+    <View style={[estilos.itemAquecimento, { borderTopColor: c.borda }]}>
+      <ContadorCompacto
+        rotulo="exercícios"
+        emLinha
+        valorTexto={String(contador.valor)}
+        podeMenos={contador.podeMenos}
+        podeMais={contador.podeMais}
+        onMenos={() => passoExercicios(dia.dia, -1)}
+        onMais={() => passoExercicios(dia.dia, 1)}
+        rotuloAcessivel={contador.rotuloAcessivel}
+        valorAcessivel={contador.valorAcessivel}
+        rotuloMenos={contador.rotuloMenos}
+        rotuloMais={contador.rotuloMais}
+        testID={`exercicios-${dia.dia}`}
+      />
+      <View style={estilos.legendaExercicios}>
+        <Texto variante="legenda" secundario style={estilos.textoLegenda}>
+          {contador.legenda}
+        </Texto>
+        {contador.padrao ? null : (
+          <Pressable
+            onPress={() => exerciciosPadrao(dia.dia)}
+            accessibilityRole="button"
+            accessibilityLabel={`voltar ao padrão do nível ${textoNoDia(dia.dia)}`}
+            hitSlop={8}
+            testID={`exercicios-${dia.dia}-padrao`}
+            style={({ pressed }) => pressed && { opacity: 0.6 }}
+          >
+            <Texto variante="legenda" style={estilos.voltarPadrao}>
+              usar o padrão
+            </Texto>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+}
+
+/** Cardio do dia: contínuo ou em circuito (com exercícios, segundos e voltas). */
+function CardioDoDia({ dia }: { dia: DiaMontado }) {
+  const c = useCores();
+  const cat = useCategorias();
+  const modoCardio = useTreinosIaStore((state) => state.modoCardio);
+  const passoCircuito = useTreinosIaStore((state) => state.passoCircuito);
+  const cardio = opcoesCardio(dia);
+
+  if (!cardio.visivel) {
+    return null;
+  }
+
+  return (
+    <View style={[estilos.itemAquecimento, { borderTopColor: c.borda }]}>
+      <Rotulo>cardio</Rotulo>
+      <View style={estilos.medidas}>
+        {cardio.opcoes.map((opcao) => (
+          <Pilula
+            key={opcao.modo}
+            esticar
+            rotulo={opcao.rotulo}
+            selecionada={opcao.selecionada}
+            corSelecionada={cat.fundo.cardio}
+            corTextoSelecionada={c.textoSobreDestaque}
+            onPress={() => modoCardio(dia.dia, opcao.modo)}
+            rotuloAcessivel={opcao.rotuloAcessivel}
+            testID={`cardio-${dia.dia}-${opcao.modo}`}
+          />
+        ))}
+      </View>
+      <Texto variante="legenda" secundario>
+        {cardio.legenda}
+      </Texto>
+      {contadoresCircuito(dia).map((contador) => (
+        <ContadorCompacto
+          key={contador.campo}
+          rotulo={contador.rotulo}
+          emLinha
+          valorTexto={contador.valorTexto}
+          podeMenos={contador.podeMenos}
+          podeMais={contador.podeMais}
+          onMenos={() => passoCircuito(dia.dia, contador.campo, -1)}
+          onMais={() => passoCircuito(dia.dia, contador.campo, 1)}
+          rotuloAcessivel={contador.rotuloAcessivel}
+          rotuloMenos={contador.rotuloMenos}
+          rotuloMais={contador.rotuloMais}
+          testID={`circuito-${dia.dia}-${contador.campo}`}
+        />
+      ))}
     </View>
   );
 }
@@ -506,6 +620,18 @@ const estilos = StyleSheet.create({
     gap: espaco.sm,
     paddingTop: espaco.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  legendaExercicios: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.sm,
+  },
+  textoLegenda: {
+    flex: 1,
+  },
+  voltarPadrao: {
+    fontFamily: familia.corpoForte,
+    textDecorationLine: 'underline',
   },
   medidas: {
     flexDirection: 'row',

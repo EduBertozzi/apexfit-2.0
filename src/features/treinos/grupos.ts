@@ -95,30 +95,32 @@ export function agruparPorGrupo(exercicios: readonly Exercicio[]): BlocoDoTreino
 // ---------------------------------------------------------------------------
 
 const PADRAO_MINUTOS = /^(\d+) min$/;
+const PADRAO_SEGUNDOS = /^(\d+) s$/;
 
 /**
- * Esquema como aparece no card: "3x12". No cardio (repetições em minutos) e com
- * uma série só, vira "10 min".
+ * Esquema como aparece no card: "3x12". No cardio (repetições em minutos ou
+ * segundos) e com uma série só, vira "10 min"; com voltas, "3x 40 s".
  */
 export function textoEsquema(esquema: string): string {
   const [series, repeticoes = ''] = esquema.split('x');
 
-  if (PADRAO_MINUTOS.test(repeticoes)) {
+  if (PADRAO_MINUTOS.test(repeticoes) || PADRAO_SEGUNDOS.test(repeticoes)) {
     return series === '1' ? repeticoes : `${series}x ${repeticoes}`;
   }
 
   return esquema;
 }
 
-/** Versão falada: "3 séries de 12", "10 minutos". */
+/** Versão falada: "3 séries de 12", "10 minutos", "3 séries de 40 segundos". */
 export function esquemaAcessivel(esquema: string): string {
   const [seriesTexto, repeticoes = ''] = esquema.split('x');
   const series = Number(seriesTexto);
   const minutos = PADRAO_MINUTOS.exec(repeticoes);
+  const segundos = PADRAO_SEGUNDOS.exec(repeticoes);
   const textoSeries = series === 1 ? '1 série' : `${series} séries`;
 
-  if (minutos) {
-    const tempo = `${minutos[1]} minutos`;
+  if (minutos || segundos) {
+    const tempo = minutos ? `${minutos[1]} minutos` : `${segundos?.[1]} segundos`;
 
     return series === 1 ? tempo : `${textoSeries} de ${tempo}`;
   }

@@ -102,7 +102,7 @@ const DIVISOES: Record<number, GrupoForca[][]> = {
 
 /** Exercícios que forçam uma região com restrição comum. */
 const EVITAR: [RegExp, RegExp][] = [
-  [/joelho/, /afundo|bulgaro|agachamento livre|corrida|polichinelo/],
+  [/joelho/, /afundo|bulgaro|agachamento livre|corrida|polichinelo|salto|burpee|skipping/],
   [/coluna|lombar|hernia|costas/, /stiff|remada curvada|agachamento livre|extensao lombar/],
   [/ombro/, /desenvolvimento|mergulho|tríceps testa|triceps testa/],
 ];

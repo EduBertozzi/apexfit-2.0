@@ -631,12 +631,14 @@ export function resumoExercicioAcessivel(
   exercicio: Pick<Exercicio, 'series' | 'repeticoes' | 'cargaKg'>,
 ) {
   const series = exercicio.series === 1 ? '1 série' : `${exercicio.series} séries`;
-  // Cardio guarda minutos nas repetições: "10 min"
+  // Cardio guarda o tempo nas repetições: "10 min" ou, no circuito, "40 s"
   const minutos = /^(\d+) min$/.exec(exercicio.repeticoes);
-  const base = minutos
+  const segundos = /^(\d+) s$/.exec(exercicio.repeticoes);
+  const tempo = minutos ? `${minutos[1]} minutos` : segundos ? `${segundos[1]} segundos` : null;
+  const base = tempo
     ? exercicio.series === 1
-      ? `${minutos[1]} minutos`
-      : `${series} de ${minutos[1]} minutos`
+      ? tempo
+      : `${series} de ${tempo}`
     : `${series} de ${exercicio.repeticoes} repetições`;
 
   return exercicio.cargaKg === undefined

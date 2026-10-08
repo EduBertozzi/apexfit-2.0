@@ -6,12 +6,7 @@ import { grupoDe } from '../grupos';
 import { paraDadosTreino } from '../ia';
 import { ESCOLHAS_PADRAO, prepararSemana } from '../montadorIa';
 import { montarPromptSemana, SISTEMA_SEMANA, SISTEMA_TREINOS } from '../promptIa';
-import {
-  cabeNoEquipamento,
-  exerciciosPorArea,
-  filtroDoEvitar,
-  montarSemanaPorRegras,
-} from '../regrasSemana';
+import { cabeNoEquipamento, filtroDoEvitar, montarSemanaPorRegras } from '../regrasSemana';
 
 const PERFIL: Perfil = {
   nome: 'Eduardo',
@@ -120,8 +115,8 @@ describe('montarSemanaPorRegras (modo offline)', () => {
     const iniciante = montarSemanaPorRegras(PERFIL, { ...dia, nivel: 'iniciante' }).treinos[0];
     const avancado = montarSemanaPorRegras(PERFIL, { ...dia, nivel: 'avancado' }).treinos[0];
 
-    expect(iniciante.exercicios).toHaveLength(4);
-    expect(avancado.exercicios).toHaveLength(6);
+    expect(iniciante.exercicios).toHaveLength(5);
+    expect(avancado.exercicios).toHaveLength(7);
     expect(avancado.exercicios[0].series).toBe(4);
   });
 
@@ -200,13 +195,6 @@ describe('montarSemanaPorRegras (modo offline)', () => {
 });
 
 describe('peças do modo offline', () => {
-  it('reparte os exercícios entre as áreas, pelo menos um cada', () => {
-    expect(exerciciosPorArea(5, 2)).toEqual([3, 2]);
-    expect(exerciciosPorArea(4, 1)).toEqual([4]);
-    expect(exerciciosPorArea(4, 6)).toEqual([1, 1, 1, 1, 1, 1]);
-    expect(exerciciosPorArea(4, 0)).toEqual([]);
-  });
-
   it('equipamento', () => {
     expect(cabeNoEquipamento({ nome: 'leg press', local: 'academia' }, 'academia')).toBe(true);
     expect(cabeNoEquipamento({ nome: 'leg press', local: 'academia' }, 'halteres')).toBe(false);
@@ -255,8 +243,12 @@ describe('prompt da semana', () => {
     expect(texto).toContain('Equipamento: halteres');
     expect(texto).toContain('Evitar (lesões ou exercícios): dor no joelho');
     expect(texto).toContain('Dias de treino (3, um treino por dia):');
-    expect(texto).toContain('- treino de segunda: braço (bíceps e tríceps); cardio');
-    expect(texto).toContain('- treino de quarta: perna (glúteo)');
+    expect(texto).toContain(
+      '- treino de segunda: 6 exercícios (braço (bíceps e tríceps) 5; cardio 1), mais o aquecimento',
+    );
+    expect(texto).toContain(
+      '- treino de quarta: 6 exercícios (perna (glúteo) 6), mais o aquecimento',
+    );
     expect(texto).toContain('polichinelo 20 repetições; bike leve 5 min');
     expect(texto).toContain('Pedido do usuário: quero focar em glúteo');
     expect(texto).not.toMatch(SEM_EMOJI_NEM_TRAVESSAO);
