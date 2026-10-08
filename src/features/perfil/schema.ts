@@ -40,7 +40,7 @@ type OpcoesNumero = {
 function campoNumerico(opcoes: OpcoesNumero) {
   return z.string().transform((texto, ctx) => {
     if (texto.trim() === '') {
-      ctx.addIssue({ code: 'custom', message: `Informe ${opcoes.rotulo}` });
+      ctx.addIssue({ code: 'custom', message: `informe ${opcoes.rotulo}` });
       return z.NEVER;
     }
 
@@ -48,14 +48,14 @@ function campoNumerico(opcoes: OpcoesNumero) {
 
     if (valor === null) {
       const formato = opcoes.inteiro ? 'um número inteiro' : 'um número';
-      ctx.addIssue({ code: 'custom', message: `Digite ${formato}, ex: ${opcoes.exemplo}` });
+      ctx.addIssue({ code: 'custom', message: `digite ${formato}, ex: ${opcoes.exemplo}` });
       return z.NEVER;
     }
 
     if (valor < opcoes.min || valor > opcoes.max) {
       ctx.addIssue({
         code: 'custom',
-        message: `Deve estar entre ${opcoes.min} e ${opcoes.max} ${opcoes.unidade}`,
+        message: `deve estar entre ${opcoes.min} e ${opcoes.max} ${opcoes.unidade}`,
       });
       return z.NEVER;
     }
@@ -104,8 +104,8 @@ export const perfilSchema = z.object({
   nome: z
     .string()
     .trim()
-    .min(LIMITES.nome.min, 'Informe seu nome')
-    .max(LIMITES.nome.max, `Use no máximo ${LIMITES.nome.max} caracteres`),
+    .min(LIMITES.nome.min, 'informe seu nome')
+    .max(LIMITES.nome.max, `use no máximo ${LIMITES.nome.max} caracteres`),
 
   idade: campoNumerico({
     rotulo: 'sua idade',
@@ -115,7 +115,7 @@ export const perfilSchema = z.object({
     exemplo: '17',
   }),
 
-  sexo: campoEscolha(SEXOS, 'Escolha uma opção'),
+  sexo: campoEscolha(SEXOS, 'escolha uma opção'),
 
   alturaCm: campoNumerico({
     rotulo: 'sua altura',
@@ -141,12 +141,12 @@ export const perfilSchema = z.object({
   restricoes: z
     .string()
     .trim()
-    .max(LIMITES.restricoes.max, `Use no máximo ${LIMITES.restricoes.max} caracteres`)
+    .max(LIMITES.restricoes.max, `use no máximo ${LIMITES.restricoes.max} caracteres`)
     .transform((texto) => (texto === '' ? undefined : texto)),
 
-  nivelAtividade: campoEscolha(NIVEIS_ATIVIDADE, 'Escolha seu nível de atividade'),
+  nivelAtividade: campoEscolha(NIVEIS_ATIVIDADE, 'escolha seu nível de atividade'),
 
-  objetivo: campoEscolha(OBJETIVOS, 'Escolha seu objetivo'),
+  objetivo: campoEscolha(OBJETIVOS, 'escolha seu objetivo'),
 }) satisfies z.ZodType<Perfil, FormularioPerfilValores>;
 
 /** O que o formulário guarda enquanto o usuário digita (tudo texto). */

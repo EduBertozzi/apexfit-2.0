@@ -19,7 +19,7 @@ describe('<FormularioExercicio />', () => {
 
     await usuario.press(screen.getByRole('button', { name: 'Adicionar' }));
 
-    expect(await screen.findByText('Informe o nome do exercício')).toBeOnTheScreen();
+    expect(await screen.findByText('informe o nome do exercício')).toBeOnTheScreen();
     expect(onSalvar).not.toHaveBeenCalled();
   });
 

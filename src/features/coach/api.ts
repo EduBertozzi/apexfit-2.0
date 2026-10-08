@@ -21,7 +21,7 @@ export async function conversarComCoach(
     });
   } catch {
     // Sem conexão com o servidor: o app responde no modo demonstração
-    throw new SemIa('Sem conexão com o servidor.');
+    throw new SemIa('sem conexão com o servidor.');
   }
 
   if (!resposta.ok) {

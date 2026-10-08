@@ -32,7 +32,7 @@ export function CartaoImc({ perfil, style }: Props) {
         </View>
       ) : (
         <Texto variante="legenda" secundario>
-          Para menores de 18 anos, o IMC é avaliado com curvas de crescimento. Converse com um
+          para menores de 18 anos, o IMC é avaliado com curvas de crescimento. converse com um
           profissional de saúde.
         </Texto>
       )}

@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { minusculaInicial } from '@/shared/lib/texto';
 import { espaco, familia, raio } from '@/shared/theme/tokens';
 import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { Botao, Texto } from '@/shared/ui';
@@ -52,10 +53,10 @@ export function EditorExercicios({ treino }: { treino: Treino }) {
       </Texto>
 
       {blocos.length === 0 ? (
-        <Texto secundario>Nenhum exercício ainda. Adicione o primeiro e bora.</Texto>
+        <Texto secundario>nenhum exercício ainda. adicione o primeiro e bora.</Texto>
       ) : (
         <Texto variante="legenda" secundario>
-          Toque para editar. Segure e arraste para mudar a ordem.
+          toque para editar. segure e arraste para mudar a ordem.
         </Texto>
       )}
 
@@ -304,7 +305,7 @@ function LinhaExercicio({
             maxFontSizeMultiplier={1.3}
             style={estilos.nome}
           >
-            {exercicio.nome}
+            {minusculaInicial(exercicio.nome)}
           </Texto>
           <Texto variante="legenda" secundario numberOfLines={1} maxFontSizeMultiplier={1.3}>
             {resumoExercicio(exercicio)}

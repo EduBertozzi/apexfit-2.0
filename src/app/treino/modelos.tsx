@@ -7,7 +7,7 @@ export default function Modelos() {
   return (
     <Tela bordas={['bottom']}>
       <Texto secundario>
-        Um toque adiciona todos os treinos do modelo. Depois é só ajustar as cargas.
+        um toque adiciona todos os treinos do modelo. depois é só ajustar as cargas.
       </Texto>
       <ListaModelos onUsado={() => router.back()} />
     </Tela>

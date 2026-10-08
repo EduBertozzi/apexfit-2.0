@@ -19,7 +19,7 @@ export async function pedirTreinosIa(
   const pedido = pedidoTreinoIaSchema.safeParse({ perfil, preferencias });
 
   if (!pedido.success) {
-    throw new Error('Complete seu perfil (sexo, atividade e objetivo) para montar os treinos.');
+    throw new Error('complete seu perfil (sexo, atividade e objetivo) para montar os treinos.');
   }
 
   let resposta: Response;
@@ -31,7 +31,7 @@ export async function pedirTreinosIa(
       body: JSON.stringify(pedido.data),
     });
   } catch {
-    throw new SemIa('Sem conexão com o servidor.');
+    throw new SemIa('sem conexão com o servidor.');
   }
 
   const corpo: unknown = await resposta.json().catch(() => null);
@@ -43,7 +43,7 @@ export async function pedirTreinosIa(
       throw new SemIa();
     }
 
-    throw new Error(typeof erro === 'string' ? erro : 'Não deu para montar os treinos agora.');
+    throw new Error(typeof erro === 'string' ? erro : 'não deu para montar os treinos agora.');
   }
 
   const validado = respostaRotaTreinoSchema.safeParse(corpo);

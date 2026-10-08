@@ -241,9 +241,9 @@ describe('textos', () => {
   it('formata datas curtas e relativas', () => {
     expect(rotuloData('2026-10-03')).toBe('3 out');
     expect(rotuloData('2026-01-15')).toBe('15 jan');
-    expect(rotuloDia(HOJE, HOJE)).toBe('Hoje');
-    expect(rotuloDia('2026-10-02', HOJE)).toBe('Ontem');
-    expect(rotuloDia('2026-09-30', '2026-10-01')).toBe('Ontem');
+    expect(rotuloDia(HOJE, HOJE)).toBe('hoje');
+    expect(rotuloDia('2026-10-02', HOJE)).toBe('ontem');
+    expect(rotuloDia('2026-09-30', '2026-10-01')).toBe('ontem');
     expect(rotuloDia('2026-09-28', HOJE)).toBe('28 set');
   });
 
@@ -251,9 +251,9 @@ describe('textos', () => {
     expect(textoVariacao(-0.8)).toBe('-0,8 kg');
     expect(textoVariacao(1.5)).toBe('+1,5 kg');
     expect(textoVariacao(0)).toBe('0,0 kg');
-    expect(variacaoPorExtenso(-0.8, 30)).toBe('Queda de 0,8 kg nos últimos 30 dias.');
-    expect(variacaoPorExtenso(0, 30)).toBe('Peso estável nos últimos 30 dias.');
-    expect(variacaoPorExtenso(null, 30)).toContain('Sem registros suficientes');
+    expect(variacaoPorExtenso(-0.8, 30)).toBe('queda de 0,8 kg nos últimos 30 dias.');
+    expect(variacaoPorExtenso(0, 30)).toBe('peso estável nos últimos 30 dias.');
+    expect(variacaoPorExtenso(null, 30)).toContain('sem registros suficientes');
   });
 
   it('descreve o gráfico para o leitor de tela', () => {
@@ -272,7 +272,7 @@ describe('textos', () => {
 
     expect(texto).toContain('2 registros');
     expect(texto).toContain('de 76,0 kg em 10 set para 75,2 kg em 3 out');
-    expect(texto).toContain('Queda de 0,8 kg');
+    expect(texto).toContain('queda de 0,8 kg');
     expect(texto).not.toMatch(new RegExp('[\\u2013\\u2014]'));
   });
 });

@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const pedido = pedidoTreinoIaSchema.safeParse(await request.json().catch(() => null));
 
   if (!pedido.success) {
-    return Response.json({ erro: 'Perfil ou preferências inválidos.' }, { status: 400 });
+    return Response.json({ erro: 'perfil ou preferências inválidos.' }, { status: 400 });
   }
 
   try {
@@ -33,11 +33,11 @@ export async function POST(request: Request) {
     }
 
     if (erro instanceof Anthropic.RateLimitError) {
-      return Response.json({ erro: 'Muitos pedidos agora. Tente em um minuto.' }, { status: 429 });
+      return Response.json({ erro: 'muitos pedidos agora. tente em um minuto.' }, { status: 429 });
     }
 
     console.error('[api/treino]', erro);
 
-    return Response.json({ erro: 'Não deu para montar os treinos agora.' }, { status: 502 });
+    return Response.json({ erro: 'não deu para montar os treinos agora.' }, { status: 502 });
   }
 }

@@ -48,18 +48,18 @@ describe('exercicioSchema', () => {
   });
 
   it('nome obrigatório', () => {
-    expect(erroDe('nome', ' ')).toBe('Informe o nome do exercício');
+    expect(erroDe('nome', ' ')).toBe('informe o nome do exercício');
   });
 
   describe('séries', () => {
     it('obrigatório e inteiro', () => {
-      expect(erroDe('series', '')).toBe('Informe as séries');
-      expect(erroDe('series', '3,5')).toBe('Digite um número inteiro, ex: 3');
+      expect(erroDe('series', '')).toBe('informe as séries');
+      expect(erroDe('series', '3,5')).toBe('digite um número inteiro, ex: 3');
     });
 
     it('dentro da faixa', () => {
-      expect(erroDe('series', '0')).toBe('Deve estar entre 1 e 20 séries');
-      expect(erroDe('series', '21')).toBe('Deve estar entre 1 e 20 séries');
+      expect(erroDe('series', '0')).toBe('deve estar entre 1 e 20 séries');
+      expect(erroDe('series', '21')).toBe('deve estar entre 1 e 20 séries');
       expect(erroDe('series', '20')).toBeUndefined();
     });
   });
@@ -79,19 +79,19 @@ describe('exercicioSchema', () => {
     });
 
     it('recusa texto solto', () => {
-      expect(erroDe('repeticoes', 'muitas')).toBe('Use um número ou uma faixa, ex: 10 ou 8 a 12');
-      expect(erroDe('repeticoes', '')).toBe('Informe as repetições');
+      expect(erroDe('repeticoes', 'muitas')).toBe('use um número ou uma faixa, ex: 10 ou 8 a 12');
+      expect(erroDe('repeticoes', '')).toBe('informe as repetições');
     });
 
     it('recusa faixa invertida ou fora do limite', () => {
       expect(erroDe('repeticoes', '12 a 8')).toBe(
-        'Na faixa, o segundo número é o maior, ex: 8 a 12',
+        'na faixa, o segundo número é o maior, ex: 8 a 12',
       );
       expect(erroDe('repeticoes', '10 a 10')).toBe(
-        'Na faixa, o segundo número é o maior, ex: 8 a 12',
+        'na faixa, o segundo número é o maior, ex: 8 a 12',
       );
-      expect(erroDe('repeticoes', '0')).toBe('Deve estar entre 1 e 100 repetições');
-      expect(erroDe('repeticoes', '10 a 150')).toBe('Deve estar entre 1 e 100 repetições');
+      expect(erroDe('repeticoes', '0')).toBe('deve estar entre 1 e 100 repetições');
+      expect(erroDe('repeticoes', '10 a 150')).toBe('deve estar entre 1 e 100 repetições');
     });
   });
 
@@ -105,8 +105,8 @@ describe('exercicioSchema', () => {
     });
 
     it('recusa texto e fora da faixa', () => {
-      expect(erroDe('cargaKg', 'pesado')).toBe('Digite um número, ex: 22,5');
-      expect(erroDe('cargaKg', '501')).toBe('Deve estar entre 0 e 500 kg');
+      expect(erroDe('cargaKg', 'pesado')).toBe('digite um número, ex: 22,5');
+      expect(erroDe('cargaKg', '501')).toBe('deve estar entre 0 e 500 kg');
     });
   });
 
@@ -114,7 +114,7 @@ describe('exercicioSchema', () => {
     expect(exercicioSchema.parse({ ...VALIDO, observacao: ' devagar ' }).observacao).toBe(
       'devagar',
     );
-    expect(erroDe('observacao', 'x'.repeat(141))).toBe('Use no máximo 140 caracteres');
+    expect(erroDe('observacao', 'x'.repeat(141))).toBe('use no máximo 140 caracteres');
   });
 });
 
@@ -125,14 +125,14 @@ describe('exercicioSchema: grupo e minutos', () => {
   });
 
   it('recusa grupo fora da lista', () => {
-    expect(erroDe('grupo', 'pescoco')).toBe('Escolha um grupo da lista');
+    expect(erroDe('grupo', 'pescoco')).toBe('escolha um grupo da lista');
   });
 
   it('aceita minutos para o cardio e padroniza', () => {
     expect(repeticoes('10 min')).toBe('10 min');
     expect(repeticoes('10min')).toBe('10 min');
     expect(repeticoes('15 minutos')).toBe('15 min');
-    expect(erroDe('repeticoes', '0 min')).toBe('Deve estar entre 1 e 180 minutos');
+    expect(erroDe('repeticoes', '0 min')).toBe('deve estar entre 1 e 180 minutos');
   });
 });
 
@@ -181,8 +181,8 @@ describe('treinoSchema', () => {
     const vazio = treinoSchema.safeParse({ nome: '  ', foco: '' });
     const longo = treinoSchema.safeParse({ nome: 'x'.repeat(31), foco: '' });
 
-    expect(vazio.error?.issues[0].message).toBe('Dê um nome ao treino, ex: Treino A');
-    expect(longo.error?.issues[0].message).toBe('Use no máximo 30 caracteres');
+    expect(vazio.error?.issues[0].message).toBe('dê um nome ao treino, ex: treino A');
+    expect(longo.error?.issues[0].message).toBe('use no máximo 30 caracteres');
   });
 
   it('treinoParaFormulario', () => {

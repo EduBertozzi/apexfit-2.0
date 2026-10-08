@@ -51,7 +51,7 @@ export function PreviaTreino({ treino, onComecar, onEditar }: Props) {
             </View>
             {bloco.exercicios.map((exercicio) => (
               <View key={exercicio.id} style={estilos.exercicio}>
-                <Texto style={estilos.encolher}>{exercicio.nome}</Texto>
+                <Texto style={estilos.encolher}>{minusculaInicial(exercicio.nome)}</Texto>
                 <Texto variante="rotulo" secundario>
                   {resumoExercicio(exercicio)}
                 </Texto>
@@ -63,7 +63,7 @@ export function PreviaTreino({ treino, onComecar, onEditar }: Props) {
 
       {vazio ? (
         <>
-          <Texto secundario>Este treino ainda não tem exercícios.</Texto>
+          <Texto secundario>este treino ainda não tem exercícios.</Texto>
           <Botao titulo="adicionar exercícios" onPress={onEditar} />
         </>
       ) : (

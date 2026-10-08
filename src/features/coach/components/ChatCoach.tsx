@@ -26,11 +26,11 @@ import { useCoachStore, type MensagemChat } from '../store';
 import { CartaoProposta } from './CartaoProposta';
 
 const SUGESTOES = [
-  'Monta minha dieta',
-  'Troca o café da manhã',
-  'Monta meu treino',
-  'O que comer antes do treino?',
-  'Como estou na água hoje?',
+  'monta minha dieta',
+  'troca o café da manhã',
+  'monta meu treino',
+  'o que comer antes do treino?',
+  'como estou na água hoje?',
 ];
 
 const TAMANHO_BOTAO = 44;
@@ -92,7 +92,7 @@ function Bolha({ mensagem, digitando }: { mensagem: MensagemChat; digitando: boo
         selectable
         accessibilityLiveRegion={doUsuario ? undefined : 'polite'}
       >
-        {mensagem.texto || (digitando ? 'Pensando...' : '')}
+        {mensagem.texto || (digitando ? 'pensando...' : '')}
       </Texto>
       {mensagem.proposta ? (
         <CartaoProposta
@@ -162,7 +162,7 @@ export function ChatCoach() {
 
   async function apagarConversa() {
     if (
-      await confirmar('Apagar conversa?', 'O histórico com o coach some deste aparelho.', 'Apagar')
+      await confirmar('apagar conversa?', 'o histórico com o coach some deste aparelho.', 'apagar')
     ) {
       limpar();
     }
@@ -210,7 +210,7 @@ export function ChatCoach() {
             <View style={estilos.vazio}>
               <Texto variante="titulo">fala, {nome}!</Texto>
               <Texto secundario>
-                Sou seu coach. Sei suas metas, sua água, sua dieta e seus treinos. Pergunte o que
+                sou seu coach. sei suas metas, sua água, sua dieta e seus treinos. pergunte o que
                 quiser ou peça para eu montar ou mudar a dieta e os treinos: eu mostro a proposta e
                 você decide se aplica.
               </Texto>

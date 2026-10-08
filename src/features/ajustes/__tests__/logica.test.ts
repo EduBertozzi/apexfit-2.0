@@ -1,4 +1,4 @@
-import { ajustarMetaManual, metaAguaEfetiva, resolverEsquema } from '../logica';
+import { ajustarMetaManual, metaAguaEfetiva, migrarAjustes, resolverEsquema } from '../logica';
 import { useAjustesStore } from '../store';
 
 describe('resolverEsquema', () => {
@@ -57,9 +57,27 @@ describe('useAjustesStore', () => {
 
     restaurarPadrao();
     expect(useAjustesStore.getState()).toMatchObject({
-      tema: 'escuro',
+      tema: 'sistema',
       vibracao: true,
       metaAguaManualMl: null,
     });
+  });
+});
+
+describe('migrarAjustes', () => {
+  it('quem estava no escuro antigo (o padrão salvo) passa a seguir o celular', () => {
+    expect(migrarAjustes({ tema: 'escuro', vibracao: false }, 1)).toEqual({
+      tema: 'sistema',
+      vibracao: false,
+    });
+  });
+
+  it('mantém quem escolheu claro ou automático', () => {
+    expect(migrarAjustes({ tema: 'claro' }, 1)).toEqual({ tema: 'claro' });
+    expect(migrarAjustes({ tema: 'sistema' }, 0)).toEqual({ tema: 'sistema' });
+  });
+
+  it('não mexe em quem já está na versão nova', () => {
+    expect(migrarAjustes({ tema: 'escuro' }, 2)).toEqual({ tema: 'escuro' });
   });
 });

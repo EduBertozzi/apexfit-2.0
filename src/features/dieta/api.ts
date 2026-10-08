@@ -18,7 +18,7 @@ export async function pedirDietaComProvedor(
   const pedido = pedidoDietaSchema.safeParse({ perfil });
 
   if (!pedido.success) {
-    throw new Error('Complete seu perfil (sexo, atividade e objetivo) para gerar a dieta.');
+    throw new Error('complete seu perfil (sexo, atividade e objetivo) para gerar a dieta.');
   }
 
   let resposta: Response;
@@ -31,7 +31,7 @@ export async function pedirDietaComProvedor(
     });
   } catch {
     // Sem conexão com o servidor: o app monta o plano offline
-    throw new SemIa('Sem conexão com o servidor.');
+    throw new SemIa('sem conexão com o servidor.');
   }
 
   const corpo: unknown = await resposta.json().catch(() => null);
@@ -43,7 +43,7 @@ export async function pedirDietaComProvedor(
       throw new SemIa();
     }
 
-    throw new Error(typeof erro === 'string' ? erro : 'Não deu para gerar a dieta agora.');
+    throw new Error(typeof erro === 'string' ? erro : 'não deu para gerar a dieta agora.');
   }
 
   const validado = respostaDietaSchema.safeParse(corpo);

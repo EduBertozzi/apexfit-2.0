@@ -73,7 +73,7 @@ function ItemChecklist({ exercicio, feito, corGrupo, onAlternar }: ItemProps) {
             style={[estilos.nome, feito && { textDecorationLine: 'line-through' }]}
             secundario={feito}
           >
-            {exercicio.nome}
+            {minusculaInicial(exercicio.nome)}
           </Texto>
           <Texto variante="rotulo" secundario>
             {resumoExercicio(exercicio)}
@@ -157,7 +157,7 @@ export function ChecklistSessao({ treino, sessao }: Props) {
       </Cartao>
 
       {treino.exercicios.length === 0 ? (
-        <Texto secundario>Este treino ainda não tem exercícios. Volte e adicione alguns.</Texto>
+        <Texto secundario>este treino ainda não tem exercícios. volte e adicione alguns.</Texto>
       ) : null}
 
       {blocos.map((bloco) => {
@@ -199,7 +199,7 @@ export function ChecklistSessao({ treino, sessao }: Props) {
       />
       {!liberado ? (
         <Texto variante="legenda" secundario>
-          Marque pelo menos um exercício para finalizar.
+          marque pelo menos um exercício para finalizar.
         </Texto>
       ) : null}
     </View>

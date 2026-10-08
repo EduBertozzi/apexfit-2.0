@@ -75,8 +75,8 @@ export function HeroiTreinoHoje() {
         <>
           <Texto style={{ color: c.textoHeroiSecundario }}>
             {situacao.proximo
-              ? `Mandou bem. Próximo: ${minusculaInicial(situacao.proximo.nome)}.`
-              : 'Mandou bem. Descansa e volta amanhã.'}
+              ? `mandou bem. próximo: ${minusculaInicial(situacao.proximo.nome)}.`
+              : 'mandou bem. descansa e volta amanhã.'}
           </Texto>
           <Botao
             titulo="ver resumo"
@@ -88,7 +88,7 @@ export function HeroiTreinoHoje() {
         <>
           {semExercicios ? (
             <Texto variante="legenda" style={{ color: c.textoHeroiSecundario }}>
-              Adicione exercícios a este treino para começar.
+              adicione exercícios a este treino para começar.
             </Texto>
           ) : null}
           <Botao

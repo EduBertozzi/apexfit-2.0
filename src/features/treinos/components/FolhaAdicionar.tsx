@@ -178,7 +178,7 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
               {regioesComMisto(grupo).map((item) => (
                 <Pilula
                   key={item.id}
-                  rotulo={item.nome}
+                  rotulo={minusculaInicial(item.nome)}
                   selecionada={regiao === item.id}
                   onPress={() => escolher(grupo, item.id)}
                   testID={`regiao-${item.id}`}
@@ -201,7 +201,7 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
               itens={disponiveis}
               selecionados={selecionados}
               cor={cat.fundo[grupo]}
-              vazio="Todos os exercícios desta região já estão no treino."
+              vazio="todos os exercícios desta região já estão no treino."
               onAlternar={(nome) => setSelecionados(alternarSelecao(selecionados, nome))}
             />
 
@@ -237,7 +237,7 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
               onChangeText={setNomeLivre}
               placeholder="ex: supino reto"
               erro={erroNome}
-              dica={`Entra em ${NOME_GRUPO[grupo]}, com as mesmas séries e repetições.`}
+              dica={`entra em ${NOME_GRUPO[grupo]}, com as mesmas séries e repetições.`}
               returnKeyType="done"
               testID="nome-livre"
             />
@@ -251,7 +251,7 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
               itens={opcoesCardio}
               selecionados={cardio}
               cor={cat.fundo.cardio}
-              vazio="Todos os cardios já estão no treino."
+              vazio="todos os cardios já estão no treino."
               onAlternar={(nome) => setCardio(alternarSelecao(cardio, nome))}
             />
             <ContadorCompacto
@@ -270,8 +270,8 @@ export function FolhaAdicionar({ treino, treinos, aba: abaInicial, onSalvar, onC
         {aba === 'plano' ? (
           <>
             <Texto secundario>
-              Em quais dias da semana o {minusculaInicial(treino.nome)} acontece? No dia marcado,
-              ele vira o treino de hoje. Sem dia marcado, segue o rodízio.
+              em quais dias da semana o {minusculaInicial(treino.nome)} acontece? no dia marcado,
+              ele vira o treino de hoje. sem dia marcado, segue o rodízio.
             </Texto>
             <View style={estilos.dias}>
               {SIGLAS_DIA.map((sigla, dia) => {
@@ -408,7 +408,7 @@ function ListaMarcavel({
             </View>
             <View style={estilos.textoItem}>
               <Texto variante="corpo" style={estilos.nomeItem}>
-                {item.nome}
+                {minusculaInicial(item.nome)}
               </Texto>
               <Texto variante="legenda" secundario>
                 {NOME_LOCAL[item.local]}

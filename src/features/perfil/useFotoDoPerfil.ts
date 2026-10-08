@@ -27,7 +27,7 @@ export function useFotoDoPerfil() {
         AccessibilityInfo.announceForAccessibility('Foto do perfil trocada');
       }
     } catch {
-      setErro('Não deu para salvar a foto. Tente outra imagem.');
+      setErro('não deu para salvar a foto. tente outra imagem.');
     } finally {
       setCarregando(false);
     }
@@ -35,9 +35,9 @@ export function useFotoDoPerfil() {
 
   async function remover() {
     const confirmado = await confirmar(
-      'Remover a foto?',
-      'O perfil volta a mostrar a inicial do seu nome.',
-      'Remover',
+      'remover a foto?',
+      'o perfil volta a mostrar a inicial do seu nome.',
+      'remover',
     );
 
     if (!confirmado) {

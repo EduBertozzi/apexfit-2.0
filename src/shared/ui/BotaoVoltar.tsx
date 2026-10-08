@@ -4,7 +4,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { raio } from '../theme/tokens';
 import { useCores } from '../theme/useCores';
 
-const TAMANHO = 44;
+export const TAMANHO_BOTAO_VOLTAR = 44;
 
 /** Botão redondo de voltar do cabeçalho: círculo na cor de superfície com a seta. */
 export function BotaoVoltar({ onPress }: { onPress: () => void }) {
@@ -29,8 +29,8 @@ export function BotaoVoltar({ onPress }: { onPress: () => void }) {
 
 const estilos = StyleSheet.create({
   botao: {
-    width: TAMANHO,
-    height: TAMANHO,
+    width: TAMANHO_BOTAO_VOLTAR,
+    height: TAMANHO_BOTAO_VOLTAR,
     borderRadius: raio.total,
     alignItems: 'center',
     justifyContent: 'center',

@@ -560,7 +560,7 @@ export function sequenciaDeTreinos(sessoes: readonly Sessao[], hoje: string): nu
 
 export function textoTreinosNaSemana(quantidade: number): string {
   if (quantidade === 0) {
-    return 'Nenhum treino nesta semana ainda';
+    return 'nenhum treino nesta semana ainda';
   }
 
   return quantidade === 1 ? '1 treino nesta semana' : `${quantidade} treinos nesta semana`;
@@ -595,12 +595,12 @@ export function resumoExercicioAcessivel(
     : `${base}, ${textoCarga(exercicio.cargaKg)} quilos`;
 }
 
-/** "Peito e tríceps, 6 exercícios" */
+/** "peito e tríceps, 6 exercícios" (o foco pode vir com maiúscula da IA ou do modelo) */
 export function resumoTreino(treino: Treino): string {
   const quantidade = treino.exercicios.length;
   const exercicios = quantidade === 1 ? '1 exercício' : `${quantidade} exercícios`;
 
-  return treino.foco ? `${treino.foco}, ${exercicios}` : exercicios;
+  return treino.foco ? `${minusculaInicial(treino.foco)}, ${exercicios}` : exercicios;
 }
 
 /** Linha embaixo de "treino de hoje": qual treino e como ele está. */

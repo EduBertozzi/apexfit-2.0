@@ -53,7 +53,7 @@ export default function SessaoDoDia() {
   return (
     <Tela bordas={['bottom']}>
       <Cartao titulo="nenhum treino ainda" variante="tracejado">
-        <Texto>Monte uma ficha com um modelo pronto ou peça para a IA montar.</Texto>
+        <Texto>monte uma ficha com um modelo pronto ou peça para a IA montar.</Texto>
         <Botao titulo="ver treinos" onPress={() => router.replace('/treinos')} />
       </Cartao>
     </Tela>

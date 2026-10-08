@@ -10,22 +10,22 @@ export const FATOR_ATIVIDADE: Record<NivelAtividade, number> = {
 };
 
 export const NOME_NIVEL_ATIVIDADE: Record<NivelAtividade, string> = {
-  sedentario: 'Sedentário',
-  leve: 'Leve (1 a 2 treinos/semana)',
-  moderado: 'Moderado (3 a 4 treinos/semana)',
-  alto: 'Alto (5 a 6 treinos/semana)',
-  atleta: 'Atleta (treino 2x por dia)',
+  sedentario: 'sedentário',
+  leve: 'leve (1 a 2 treinos/semana)',
+  moderado: 'moderado (3 a 4 treinos/semana)',
+  alto: 'alto (5 a 6 treinos/semana)',
+  atleta: 'atleta (treino 2x por dia)',
 };
 
 export const NOME_OBJETIVO: Record<Objetivo, string> = {
-  perder: 'Perder gordura',
-  manter: 'Manter o peso',
-  ganhar: 'Ganhar massa',
+  perder: 'perder gordura',
+  manter: 'manter o peso',
+  ganhar: 'ganhar massa',
 };
 
 export const NOME_SEXO: Record<Sexo, string> = {
-  masculino: 'Masculino',
-  feminino: 'Feminino',
+  masculino: 'masculino',
+  feminino: 'feminino',
 };
 
 /** Ajuste de calorias sobre o gasto diário, por objetivo. */

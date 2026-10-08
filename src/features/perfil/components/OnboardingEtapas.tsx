@@ -20,9 +20,9 @@ const DESTAQUES: {
   icone: ComponentProps<typeof Ionicons>['name'];
   cor: CorCategoria;
 }[] = [
-  { texto: 'Meta de água pelo seu peso', icone: 'water', cor: 'agua' },
-  { texto: 'Calorias e macros do seu objetivo', icone: 'flame', cor: 'braco' },
-  { texto: 'Dieta montada por IA em segundos', icone: 'sparkles', cor: 'aquecimento' },
+  { texto: 'meta de água pelo seu peso', icone: 'water', cor: 'agua' },
+  { texto: 'calorias e macros do seu objetivo', icone: 'flame', cor: 'braco' },
+  { texto: 'dieta montada por IA em segundos', icone: 'sparkles', cor: 'aquecimento' },
 ];
 
 function BoasVindas({ onComecar }: { onComecar: () => void }) {
@@ -53,7 +53,7 @@ function BoasVindas({ onComecar }: { onComecar: () => void }) {
       </View>
 
       <Texto variante="legenda" secundario style={estilos.legenda}>
-        São 6 perguntas rápidas. Seus dados ficam no seu celular.
+        são 6 perguntas rápidas. seus dados ficam no seu celular.
       </Texto>
       <Botao titulo="começar" onPress={onComecar} />
     </View>

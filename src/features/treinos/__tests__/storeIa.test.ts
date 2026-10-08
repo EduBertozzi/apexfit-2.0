@@ -77,7 +77,7 @@ describe('pedirTreinosIa', () => {
 
     await expect(
       pedirTreinosIa({ ...PERFIL, objetivo: undefined }, PREFERENCIAS_PADRAO),
-    ).rejects.toThrow(/Complete seu perfil/);
+    ).rejects.toThrow(/complete seu perfil/);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 });

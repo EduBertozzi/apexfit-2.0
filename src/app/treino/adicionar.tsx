@@ -6,7 +6,8 @@ import { FolhaEditarExercicio } from '@/features/treinos/components/FolhaEditarE
 import { abaInicial } from '@/features/treinos/montagem';
 import { useTreinosStore } from '@/features/treinos/store';
 import { confirmar } from '@/shared/lib/confirmar';
-import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
+import { minusculaInicial } from '@/shared/lib/texto';
+import { Botao, Cartao, DialogoConfirmacao, Tela, Texto } from '@/shared/ui';
 
 /**
  * Folha nativa (formSheet) para montar o treino.
@@ -37,7 +38,7 @@ export default function FolhaTreino() {
     return (
       <Tela bordas={['bottom']}>
         <Cartao titulo="não encontrado" variante="tracejado">
-          <Texto>Ele pode ter sido apagado.</Texto>
+          <Texto>ele pode ter sido apagado.</Texto>
           <Botao titulo="voltar" onPress={() => router.back()} />
         </Cartao>
       </Tela>
@@ -46,27 +47,31 @@ export default function FolhaTreino() {
 
   if (exercicio) {
     return (
-      <FolhaEditarExercicio
-        exercicio={exercicio}
-        onCancelar={() => router.back()}
-        onSalvar={(dados) => {
-          editarExercicio(treino.id, exercicio.id, dados);
-          router.back();
-        }}
-        onRemover={async () => {
-          const confirmado = await confirmar(
-            `Remover ${exercicio.nome}?`,
-            'O exercício sai deste treino.',
-            'remover',
-          );
-
-          if (confirmado) {
+      <>
+        {/* A folha nativa cobre o diálogo da raiz no iPhone: esta tem o seu */}
+        <DialogoConfirmacao />
+        <FolhaEditarExercicio
+          exercicio={exercicio}
+          onCancelar={() => router.back()}
+          onSalvar={(dados) => {
+            editarExercicio(treino.id, exercicio.id, dados);
             router.back();
-            removerExercicio(treino.id, exercicio.id);
-            AccessibilityInfo.announceForAccessibility(`${exercicio.nome} removido`);
-          }
-        }}
-      />
+          }}
+          onRemover={async () => {
+            const confirmado = await confirmar(
+              `remover ${minusculaInicial(exercicio.nome)}?`,
+              'o exercício sai deste treino.',
+              'remover',
+            );
+
+            if (confirmado) {
+              router.back();
+              removerExercicio(treino.id, exercicio.id);
+              AccessibilityInfo.announceForAccessibility(`${exercicio.nome} removido`);
+            }
+          }}
+        />
+      </>
     );
   }
 

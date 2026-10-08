@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const pedido = pedidoCoachSchema.safeParse(await request.json().catch(() => null));
 
   if (!pedido.success) {
-    return Response.json({ erro: 'Mensagem inválida.' }, { status: 400 });
+    return Response.json({ erro: 'mensagem inválida.' }, { status: 400 });
   }
 
   // Decide a IA antes de abrir o stream, para o app receber o erro certo
@@ -38,10 +38,10 @@ export async function POST(request: Request) {
       } catch (erro) {
         const mensagem =
           erro instanceof Anthropic.RateLimitError
-            ? 'Muita gente falando com o coach agora. Tente em um minuto.'
+            ? 'muita gente falando com o coach agora. tente em um minuto.'
             : erro instanceof ErroServidor
               ? erro.message
-              : 'O coach caiu no meio da resposta. Tente de novo.';
+              : 'o coach caiu no meio da resposta. tente de novo.';
 
         console.error('[api/coach]', erro);
         enviar(escreverEvento({ tipo: 'erro', mensagem }));

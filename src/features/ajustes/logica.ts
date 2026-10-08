@@ -3,9 +3,9 @@ export type PreferenciaTema = 'sistema' | 'claro' | 'escuro';
 export type Esquema = 'claro' | 'escuro';
 
 export const NOME_TEMA: Record<PreferenciaTema, string> = {
-  sistema: 'Automático',
-  claro: 'Claro',
-  escuro: 'Escuro',
+  sistema: 'automático',
+  claro: 'claro',
+  escuro: 'escuro',
 };
 
 /** Faixa e passo da meta de água quando a pessoa escolhe na mão. */
@@ -38,4 +38,21 @@ export function ajustarMetaManual(atualMl: number, direcao: 1 | -1): number {
       : Math.ceil(atualMl / passo) * passo - passo;
 
   return Math.min(Math.max(proximo, min), max);
+}
+
+/**
+ * Migra os ajustes salvos. Até a versão 1 o padrão era "escuro" e ficava salvo igual
+ * a uma escolha de verdade; como não dá para distinguir, "escuro" vira "sistema".
+ * "claro" só existe se a pessoa escolheu, então fica.
+ */
+export function migrarAjustes(salvo: unknown, versao: number): unknown {
+  if (versao < 2 && salvo && typeof salvo === 'object') {
+    const ajustes = salvo as { tema?: unknown };
+
+    if (ajustes.tema === 'escuro') {
+      return { ...ajustes, tema: 'sistema' };
+    }
+  }
+
+  return salvo;
 }

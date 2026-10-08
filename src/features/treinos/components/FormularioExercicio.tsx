@@ -96,7 +96,7 @@ export function FormularioExercicio({
               testID="exercicio-grupo"
             />
             <Texto variante="legenda" secundario>
-              Define o card e a cor na tela inicial. Se não escolher, o app adivinha pelo nome.
+              define o card e a cor na tela inicial. se não escolher, o app adivinha pelo nome.
             </Texto>
           </View>
         )}
@@ -115,7 +115,7 @@ export function FormularioExercicio({
         </View>
       </View>
       <Texto variante="legenda" secundario>
-        No cardio, escreva o tempo: 10 min.
+        no cardio, escreva o tempo: 10 min.
       </Texto>
 
       {campo('cargaKg', {
@@ -124,7 +124,7 @@ export function FormularioExercicio({
         sufixo: 'kg',
         placeholder: '22,5',
         opcional: true,
-        dica: 'Deixe em branco se for com o peso do corpo.',
+        dica: 'deixe em branco se for com o peso do corpo.',
         proximo: 'observacao',
       })}
 

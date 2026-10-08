@@ -34,7 +34,7 @@ describe('montarPromptDieta', () => {
   it('manda as metas calculadas pelo app quando o perfil está completo', () => {
     const prompt = montarPromptDieta(COMPLETO);
 
-    expect(prompt).toContain('Objetivo: Perder gordura');
+    expect(prompt).toContain('Objetivo: perder gordura');
     expect(prompt).toContain('Calorias: ');
     expect(prompt).toContain('Proteína: 117 g'); // 2 g/kg × 58,5
   });

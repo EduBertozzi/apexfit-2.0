@@ -253,7 +253,7 @@ export const useCoachStore = create<CoachState>()(
             if (erro instanceof SemIa) {
               await responderSemIa(limpo, dados);
             } else {
-              set({ erro: erro instanceof Error ? erro.message : 'Erro inesperado.' });
+              set({ erro: erro instanceof Error ? erro.message : 'erro inesperado.' });
             }
           } finally {
             // Resposta vazia (deu erro antes de chegar texto) some da conversa

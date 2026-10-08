@@ -22,10 +22,10 @@ export function calcularImc(pesoKg: number, alturaCm: number): number {
 export type FaixaImc = 'abaixo' | 'normal' | 'sobrepeso' | 'obesidade';
 
 export const NOME_FAIXA_IMC: Record<FaixaImc, string> = {
-  abaixo: 'Abaixo do peso',
-  normal: 'Peso adequado',
-  sobrepeso: 'Sobrepeso',
-  obesidade: 'Obesidade',
+  abaixo: 'abaixo do peso',
+  normal: 'peso adequado',
+  sobrepeso: 'sobrepeso',
+  obesidade: 'obesidade',
 };
 
 /**

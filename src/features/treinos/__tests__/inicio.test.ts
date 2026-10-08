@@ -83,7 +83,7 @@ describe('acaoTreinoHoje', () => {
     expect(acaoTreinoHoje({ tipo: 'sugerido', treino: A })).toEqual({
       tipo: 'comecar',
       texto: 'começar treino',
-      acessivel: 'começar treino, Pernas, 3 exercícios',
+      acessivel: 'começar treino, pernas, 3 exercícios',
     });
     expect(
       acaoTreinoHoje({ tipo: 'em-andamento', treino: A, sessao: sessao({ treinoId: 'a' }) }),

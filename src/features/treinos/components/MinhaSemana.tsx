@@ -29,11 +29,11 @@ export function MinhaSemana() {
         <Texto variante="subtitulo" accessibilityRole="header">
           cada dia com seu treino
         </Texto>
-        <Texto secundario>Dias sem treino viram descanso. Toque num dia para trocar.</Texto>
+        <Texto secundario>dias sem treino viram descanso. toque num dia para trocar.</Texto>
         {semPlano && temTreinos ? (
           <Texto variante="legenda" secundario>
-            Agora o app usa o rodízio A, B, C: depois do último treino feito, vem o próximo da
-            lista. Distribua para cada dia ter o seu.
+            agora o app usa o rodízio A, B, C: depois do último treino feito, vem o próximo da
+            lista. distribua para cada dia ter o seu.
           </Texto>
         ) : null}
         <Texto variante="rotulo" accessibilityLiveRegion="polite">

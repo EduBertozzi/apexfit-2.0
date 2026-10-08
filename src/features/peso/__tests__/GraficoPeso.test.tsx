@@ -32,6 +32,6 @@ describe('<GraficoPeso />', () => {
   it('avisa quando não há registros no período', async () => {
     await render(<GraficoPeso registros={[]} />);
 
-    expect(screen.getByText('Sem registros neste período.')).toBeOnTheScreen();
+    expect(screen.getByText('sem registros neste período.')).toBeOnTheScreen();
   });
 });

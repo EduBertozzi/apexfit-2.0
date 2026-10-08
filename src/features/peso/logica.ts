@@ -233,11 +233,11 @@ export function rotuloDia(chave: string, hoje: string): string {
   const diferenca = diasEntre(chave, hoje);
 
   if (diferenca === 0) {
-    return 'Hoje';
+    return 'hoje';
   }
 
   if (diferenca === 1) {
-    return 'Ontem';
+    return 'ontem';
   }
 
   return rotuloData(chave);
@@ -257,14 +257,14 @@ export function textoVariacao(kg: number): string {
 /** Variação em palavras, para o leitor de tela e legendas. */
 export function variacaoPorExtenso(kg: number | null, dias: number): string {
   if (kg === null) {
-    return `Sem registros suficientes para comparar os últimos ${dias} dias.`;
+    return `sem registros suficientes para comparar os últimos ${dias} dias.`;
   }
 
   if (kg === 0) {
-    return `Peso estável nos últimos ${dias} dias.`;
+    return `peso estável nos últimos ${dias} dias.`;
   }
 
-  const sentido = kg < 0 ? 'Queda' : 'Alta';
+  const sentido = kg < 0 ? 'queda' : 'alta';
 
   return `${sentido} de ${formatarKg(Math.abs(kg))} nos últimos ${dias} dias.`;
 }
