@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { NIVEIS_ATIVIDADE, OBJETIVOS, SEXOS } from '@/features/perfil/schema';
 import { PROVEDORES_IA } from '@/shared/lib/semIa';
 
+import { preferenciasDietaSchema } from './preferencias';
+
 /**
  * Contrato entre o app e a rota /api/dieta. Os dois lados validam com estes
  * mesmos schemas: o servidor confere o que chega, o app confere o que volta.
@@ -28,6 +30,8 @@ export const pedidoDietaSchema = z.object({
   dia: z.number().int().min(0).max(6).optional(),
   /** Treino marcado para o dia, se houver (ex: "Treino A, pernas"). Ajuda a IA a ajustar o dia. */
   treinoDoDia: z.string().max(120).optional(),
+  /** Opções da central de IA: refeições, estilo, o que tirar, orçamento, preparo e observações. */
+  preferencias: preferenciasDietaSchema.optional(),
 });
 
 export type PedidoDieta = z.infer<typeof pedidoDietaSchema>;

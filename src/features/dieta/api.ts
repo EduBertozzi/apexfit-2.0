@@ -2,10 +2,15 @@ import type { Perfil } from '@/features/perfil/types';
 import { CODIGO_SEM_IA, SemIa, type ProvedorIa } from '@/shared/lib/semIa';
 
 import { pedidoDietaSchema, respostaDietaSchema, type PlanoDieta } from './contrato';
+import type { PreferenciasDieta } from './preferencias';
 import { limparPlano } from './texto';
 
 /** Plano de um dia só (0 = domingo) e o treino desse dia. Sem `dia`, vale a semana toda. */
-export type OpcoesPedidoDieta = { dia?: number; treinoDoDia?: string };
+export type OpcoesPedidoDieta = {
+  dia?: number;
+  treinoDoDia?: string;
+  preferencias?: PreferenciasDieta;
+};
 
 /**
  * Pede a dieta para o NOSSO servidor (rota /api/dieta), nunca direto para a IA.
@@ -24,6 +29,7 @@ export async function pedirDietaComProvedor(
     perfil,
     ...(opcoes.dia === undefined ? {} : { dia: opcoes.dia }),
     ...(opcoes.treinoDoDia ? { treinoDoDia: opcoes.treinoDoDia.slice(0, 120) } : {}),
+    ...(opcoes.preferencias ? { preferencias: opcoes.preferencias } : {}),
   });
 
   if (!pedido.success) {

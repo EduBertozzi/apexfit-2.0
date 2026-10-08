@@ -7,6 +7,12 @@ import {
 import type { Perfil } from '@/features/perfil/types';
 import { formatarNumero } from '@/shared/lib/numero';
 
+import {
+  linhasPreferencias,
+  quantidadeDeRefeicoesEscolhida,
+  type PreferenciasDieta,
+} from './preferencias';
+
 /**
  * Instruções fixas para a IA. Ficam separadas dos dados do usuário
  * (que mudam a cada pedido) para o servidor poder usar cache de prompt.
@@ -30,22 +36,30 @@ export const SISTEMA_DIETA = [
 /** Como dividir as calorias do dia entre as refeições. Mais calorias, mais refeições. */
 export function distribuirRefeicoes(
   metaCalorias: number,
+  escolhida?: 3 | 4 | 5,
 ): { nome: string; horario: string; kcal: number }[] {
+  const quantidade = escolhida ?? (metaCalorias > 2600 ? 5 : 4);
   const divisao =
-    metaCalorias > 2600
+    quantidade === 3
       ? [
-          ['Café da manhã', '07:00', 0.2],
-          ['Almoço', '12:00', 0.3],
-          ['Lanche da tarde', '16:00', 0.15],
-          ['Jantar', '20:00', 0.25],
-          ['Ceia', '22:00', 0.1],
+          ['Café da manhã', '07:00', 0.3],
+          ['Almoço', '12:00', 0.4],
+          ['Jantar', '20:00', 0.3],
         ]
-      : [
-          ['Café da manhã', '07:00', 0.25],
-          ['Almoço', '12:00', 0.35],
-          ['Lanche da tarde', '16:00', 0.15],
-          ['Jantar', '20:00', 0.25],
-        ];
+      : quantidade === 5
+        ? [
+            ['Café da manhã', '07:00', 0.2],
+            ['Almoço', '12:00', 0.3],
+            ['Lanche da tarde', '16:00', 0.15],
+            ['Jantar', '20:00', 0.25],
+            ['Ceia', '22:00', 0.1],
+          ]
+        : [
+            ['Café da manhã', '07:00', 0.25],
+            ['Almoço', '12:00', 0.35],
+            ['Lanche da tarde', '16:00', 0.15],
+            ['Jantar', '20:00', 0.25],
+          ];
 
   return divisao.map(([nome, horario, fracao]) => ({
     nome: nome as string,
@@ -61,6 +75,8 @@ export type OpcoesPromptDieta = {
   dia?: number;
   /** Treino marcado para o dia. */
   treinoDoDia?: string;
+  /** Opções escolhidas na central de IA (refeições, estilo, observações...). */
+  preferencias?: PreferenciasDieta;
 };
 
 /** Dados do usuário + metas calculadas. Vai como mensagem do usuário. */
@@ -100,6 +116,12 @@ export function montarPromptDieta(perfil: Perfil, opcoes: OpcoesPromptDieta = {}
     `Restrições/Saúde: ${perfil.restricoes ?? naoInformado}`,
   ];
 
+  const preferencias = opcoes.preferencias ? linhasPreferencias(opcoes.preferencias) : [];
+
+  if (preferencias.length > 0) {
+    linhas.push('', 'Preferências do usuário (siga todas):', ...preferencias);
+  }
+
   if (necessidades) {
     const { metaCalorias, macros } = necessidades;
 
@@ -112,7 +134,10 @@ export function montarPromptDieta(perfil: Perfil, opcoes: OpcoesPromptDieta = {}
       `Gordura: ${macros.gorduraG} g`,
       '',
       'Divisão das refeições (siga estes horários e calorias):',
-      ...distribuirRefeicoes(metaCalorias).map(
+      ...distribuirRefeicoes(
+        metaCalorias,
+        opcoes.preferencias ? quantidadeDeRefeicoesEscolhida(opcoes.preferencias) : undefined,
+      ).map(
         (refeicao) => `${refeicao.horario} ${refeicao.nome}: ${formatarNumero(refeicao.kcal)} kcal`,
       ),
     );

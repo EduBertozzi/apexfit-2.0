@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -11,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { primeiroNome } from '@/features/perfil/calculos';
@@ -185,7 +185,8 @@ export function ChatCoach() {
     <SafeAreaView edges={['top', 'bottom']} style={[estilos.raiz, { backgroundColor: c.fundo }]}>
       <KeyboardAvoidingView
         style={estilos.raiz}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Android de ponta a ponta não encolhe a tela sozinho: o padding vale nos dois
+        behavior="padding"
       >
         <View style={estilos.topo}>
           <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={voltar} />

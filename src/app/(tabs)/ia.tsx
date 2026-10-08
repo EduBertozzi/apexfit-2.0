@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { OpcoesDieta } from '@/features/dieta/components/OpcoesDieta';
+import { resumoPreferencias } from '@/features/dieta/preferencias';
 import { useDietaStore } from '@/features/dieta/store';
 import {
   resumoDieta,
@@ -51,6 +53,8 @@ export default function Ia() {
   const [pronto, setPronto] = useState(false);
   // O montador é grande: abre no primeiro uso e começa fechado depois de já ter gerado
   const [montadorAberto, setMontadorAberto] = useState(() => !ultima);
+  const [opcoesDietaAbertas, setOpcoesDietaAbertas] = useState(false);
+  const preferenciasDieta = useDietaStore((state) => state.preferencias);
 
   const plano = useDietaStore((state) => state.plano);
   const origemDieta = useDietaStore((state) => state.origem);
@@ -162,6 +166,35 @@ export default function Ia() {
             {origemPlano}
           </Texto>
         ) : null}
+        <Pressable
+          onPress={() => setOpcoesDietaAbertas((aberto) => !aberto)}
+          accessibilityRole="button"
+          accessibilityLabel="opções da dieta"
+          accessibilityHint={opcoesDietaAbertas ? 'fecha as opções' : 'abre as opções'}
+          accessibilityState={{ expanded: opcoesDietaAbertas }}
+          hitSlop={4}
+          style={({ pressed }) => [
+            estilos.cabecalhoMontador,
+            estilos.opcoesDieta,
+            { backgroundColor: c.superficieSecundaria },
+            pressed && { opacity: 0.75 },
+          ]}
+        >
+          <View style={estilos.textosMontador}>
+            <Texto variante="rotulo">opções da dieta</Texto>
+            <Texto variante="legenda" secundario>
+              {resumoPreferencias(preferenciasDieta)}
+            </Texto>
+          </View>
+          <Ionicons
+            name={opcoesDietaAbertas ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={c.texto}
+          />
+        </Pressable>
+
+        {opcoesDietaAbertas ? <OpcoesDieta /> : null}
+
         {erroDieta ? (
           <Texto variante="legenda" style={{ color: c.erro }} accessibilityLiveRegion="polite">
             {erroDieta}
@@ -202,6 +235,11 @@ const estilos = StyleSheet.create({
   textosMontador: {
     flex: 1,
     gap: espaco.xs,
+  },
+  opcoesDieta: {
+    paddingHorizontal: espaco.md,
+    paddingVertical: espaco.sm + 4,
+    borderRadius: raio.lg,
   },
   seta: {
     width: 40,

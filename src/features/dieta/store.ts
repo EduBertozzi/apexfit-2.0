@@ -7,6 +7,15 @@ import { SemIa, type ProvedorIa } from '@/shared/lib/semIa';
 
 import { pedirDietaComProvedor, type OpcoesPedidoDieta } from './api';
 import type { PlanoDieta } from './contrato';
+import {
+  alternarSem,
+  PREFERENCIAS_DIETA_PADRAO,
+  preferenciasValidas,
+  quantidadeDeRefeicoesEscolhida,
+  restricoesComPreferencias,
+  type PreferenciasDieta,
+  type SemDieta,
+} from './preferencias';
 import { montarDietaPorRegras } from './regras';
 import {
   definirDias,
@@ -36,6 +45,10 @@ type DietaState = {
   /** Dia que está sendo montado (plano de um dia só); `null` quando é a semana toda. */
   diaGerando: number | null;
   erro: string | null;
+  /** Opções da central de IA. Valem em todo pedido de dieta (IA e offline). */
+  preferencias: PreferenciasDieta;
+  mudarPreferencias: (parcial: Partial<PreferenciasDieta>) => void;
+  alternarSem: (item: SemDieta) => void;
   /** Sem `dia`: plano novo para a semana toda. Com `dia`: plano só daquele dia. */
   gerar: (perfil: Perfil, opcoes?: OpcoesPedidoDieta) => Promise<void>;
   /** O dia deixa de ter plano próprio e volta a seguir o plano da semana. */
@@ -58,6 +71,15 @@ export const useDietaStore = create<DietaState>()(
       gerando: false,
       diaGerando: null,
       erro: null,
+      preferencias: PREFERENCIAS_DIETA_PADRAO,
+
+      mudarPreferencias: (parcial) =>
+        set((state) => ({ preferencias: { ...state.preferencias, ...parcial } })),
+
+      alternarSem: (item) =>
+        set((state) => ({
+          preferencias: { ...state.preferencias, sem: alternarSem(state.preferencias.sem, item) },
+        })),
 
       gerar: async (perfil, opcoes = {}) => {
         if (get().gerando) {
@@ -65,11 +87,15 @@ export const useDietaStore = create<DietaState>()(
         }
 
         const { dia } = opcoes;
+        const { preferencias } = get();
 
         set({ gerando: true, diaGerando: dia ?? null, erro: null });
 
         try {
-          const { plano, provedor } = await pedirDietaComProvedor(perfil, opcoes);
+          const { plano, provedor } = await pedirDietaComProvedor(perfil, {
+            ...opcoes,
+            preferencias,
+          });
 
           set({
             ...semanaCom(get(), plano, dia),
@@ -82,7 +108,15 @@ export const useDietaStore = create<DietaState>()(
         } catch (erro) {
           // Sem IA (ou sem internet): o app monta o plano sozinho, offline
           const offline =
-            erro instanceof SemIa ? montarDietaPorRegras(perfil, { semente: Date.now() }) : null;
+            erro instanceof SemIa
+              ? montarDietaPorRegras(
+                  {
+                    ...perfil,
+                    restricoes: restricoesComPreferencias(perfil.restricoes, preferencias),
+                  },
+                  { semente: Date.now(), refeicoes: quantidadeDeRefeicoesEscolhida(preferencias) },
+                )
+              : null;
 
           if (offline) {
             set({
@@ -121,13 +155,20 @@ export const useDietaStore = create<DietaState>()(
       // 2: dieta da semana (plano padrão + dias com plano próprio)
       version: 2,
       migrate: (salvo, versao) => migrarDieta(salvo, versao) as unknown as DietaState,
-      partialize: ({ plano, porDia, geradoEm, origem, provedor }) => ({
+      partialize: ({ plano, porDia, geradoEm, origem, provedor, preferencias }) => ({
         plano,
         porDia,
         geradoEm,
         origem,
         provedor,
+        preferencias,
       }),
+      // Preferências salvas antigas ou estragadas voltam ao padrão sem perder o plano
+      merge: (salvo, atual) => {
+        const dados = (salvo ?? {}) as Partial<DietaState>;
+
+        return { ...atual, ...dados, preferencias: preferenciasValidas(dados.preferencias) };
+      },
     },
   ),
 );

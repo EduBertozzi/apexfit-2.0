@@ -8,6 +8,7 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect } from 'react';
 import { Appearance, Platform } from 'react-native';
 
@@ -83,93 +84,96 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={temaNavegacao}>
-      <StatusBar style={esquema === 'escuro' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          // Cabeçalho próprio, igual nas 3 plataformas: voltar redondo e título
-          // centralizado com folga (o nativo do Android colava o título no botão)
-          header: (props) => <CabecalhoPilha {...props} />,
-          contentStyle: { backgroundColor: c.fundo },
-        }}
-      >
-        {/* Sem perfil: só o onboarding existe */}
-        <Stack.Protected guard={!temPerfil}>
-          <Stack.Screen name="onboarding" />
-        </Stack.Protected>
+    // Teclado: o Android de ponta a ponta não encolhe a tela; quem cuida é o keyboard-controller
+    <KeyboardProvider>
+      <ThemeProvider value={temaNavegacao}>
+        <StatusBar style={esquema === 'escuro' ? 'light' : 'dark'} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            // Cabeçalho próprio, igual nas 3 plataformas: voltar redondo e título
+            // centralizado com folga (o nativo do Android colava o título no botão)
+            header: (props) => <CabecalhoPilha {...props} />,
+            contentStyle: { backgroundColor: c.fundo },
+          }}
+        >
+          {/* Sem perfil: só o onboarding existe */}
+          <Stack.Protected guard={!temPerfil}>
+            <Stack.Screen name="onboarding" />
+          </Stack.Protected>
 
-        {/* Com perfil: o app. Se o perfil for apagado, volta sozinho para o onboarding */}
-        <Stack.Protected guard={temPerfil}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="editar-perfil"
-            options={{ presentation: 'modal', headerShown: true, title: 'editar perfil' }}
-          />
-          <Stack.Screen
-            name="treinos"
-            options={{ headerShown: true, title: 'treinos', headerBackTitle: 'voltar' }}
-          />
-          <Stack.Screen
-            name="perfil"
-            options={{ headerShown: true, title: 'perfil', headerBackTitle: 'início' }}
-          />
-          <Stack.Screen name="coach" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="dieta"
-            options={{ headerShown: true, title: 'sua dieta', headerBackTitle: 'início' }}
-          />
-          <Stack.Screen
-            name="agua"
-            options={{ headerShown: true, title: 'água', headerBackTitle: 'início' }}
-          />
-          <Stack.Screen
-            name="sequencia"
-            options={{ headerShown: true, title: 'sequência', headerBackTitle: 'início' }}
-          />
-          <Stack.Screen
-            name="peso"
-            options={{ headerShown: true, title: 'peso', headerBackTitle: 'perfil' }}
-          />
-          <Stack.Screen
-            name="treino/[id]"
-            options={{ headerShown: true, title: 'editar treino', headerBackTitle: 'treinos' }}
-          />
-          <Stack.Screen
-            name="treino/adicionar"
-            options={{
-              presentation: 'formSheet',
-              sheetGrabberVisible: true,
-              sheetAllowedDetents: [0.75, 1],
-              sheetCornerRadius: raio.lg,
-              contentStyle: { backgroundColor: c.superficie },
-            }}
-          />
-          <Stack.Screen
-            name="treino/semana"
-            options={{ headerShown: true, title: 'minha semana', headerBackTitle: 'voltar' }}
-          />
-          <Stack.Screen
-            name="treino/escolher-dia"
-            options={{
-              presentation: 'formSheet',
-              sheetGrabberVisible: true,
-              sheetAllowedDetents: [0.6, 1],
-              sheetCornerRadius: raio.lg,
-              contentStyle: { backgroundColor: c.superficie },
-            }}
-          />
-          <Stack.Screen
-            name="treino/sessao"
-            options={{ headerShown: true, title: 'treino de hoje', headerBackTitle: 'voltar' }}
-          />
-          <Stack.Screen
-            name="treino/modelos"
-            options={{ headerShown: true, title: 'modelos prontos', headerBackTitle: 'treinos' }}
-          />
-        </Stack.Protected>
-      </Stack>
-      <DialogoConfirmacao />
-    </ThemeProvider>
+          {/* Com perfil: o app. Se o perfil for apagado, volta sozinho para o onboarding */}
+          <Stack.Protected guard={temPerfil}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="editar-perfil"
+              options={{ presentation: 'modal', headerShown: true, title: 'editar perfil' }}
+            />
+            <Stack.Screen
+              name="treinos"
+              options={{ headerShown: true, title: 'treinos', headerBackTitle: 'voltar' }}
+            />
+            <Stack.Screen
+              name="perfil"
+              options={{ headerShown: true, title: 'perfil', headerBackTitle: 'início' }}
+            />
+            <Stack.Screen name="coach" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="dieta"
+              options={{ headerShown: true, title: 'sua dieta', headerBackTitle: 'início' }}
+            />
+            <Stack.Screen
+              name="agua"
+              options={{ headerShown: true, title: 'água', headerBackTitle: 'início' }}
+            />
+            <Stack.Screen
+              name="sequencia"
+              options={{ headerShown: true, title: 'sequência', headerBackTitle: 'início' }}
+            />
+            <Stack.Screen
+              name="peso"
+              options={{ headerShown: true, title: 'peso', headerBackTitle: 'perfil' }}
+            />
+            <Stack.Screen
+              name="treino/[id]"
+              options={{ headerShown: true, title: 'editar treino', headerBackTitle: 'treinos' }}
+            />
+            <Stack.Screen
+              name="treino/adicionar"
+              options={{
+                presentation: 'formSheet',
+                sheetGrabberVisible: true,
+                sheetAllowedDetents: [0.75, 1],
+                sheetCornerRadius: raio.lg,
+                contentStyle: { backgroundColor: c.superficie },
+              }}
+            />
+            <Stack.Screen
+              name="treino/semana"
+              options={{ headerShown: true, title: 'minha semana', headerBackTitle: 'voltar' }}
+            />
+            <Stack.Screen
+              name="treino/escolher-dia"
+              options={{
+                presentation: 'formSheet',
+                sheetGrabberVisible: true,
+                sheetAllowedDetents: [0.6, 1],
+                sheetCornerRadius: raio.lg,
+                contentStyle: { backgroundColor: c.superficie },
+              }}
+            />
+            <Stack.Screen
+              name="treino/sessao"
+              options={{ headerShown: true, title: 'treino de hoje', headerBackTitle: 'voltar' }}
+            />
+            <Stack.Screen
+              name="treino/modelos"
+              options={{ headerShown: true, title: 'modelos prontos', headerBackTitle: 'treinos' }}
+            />
+          </Stack.Protected>
+        </Stack>
+        <DialogoConfirmacao />
+      </ThemeProvider>
+    </KeyboardProvider>
   );
 }

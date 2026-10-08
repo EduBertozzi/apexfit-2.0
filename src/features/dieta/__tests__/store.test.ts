@@ -1,6 +1,7 @@
 import type { Perfil } from '@/features/perfil/types';
 
 import type { PlanoDieta } from '../contrato';
+import { PREFERENCIAS_DIETA_PADRAO } from '../preferencias';
 import { useDietaStore } from '../store';
 
 const PERFIL: Perfil = {
@@ -39,7 +40,14 @@ function responder(status: number, corpo: unknown) {
 }
 
 beforeEach(() => {
-  useDietaStore.setState({ plano: null, porDia: {}, geradoEm: null, gerando: false, erro: null });
+  useDietaStore.setState({
+    plano: null,
+    porDia: {},
+    geradoEm: null,
+    gerando: false,
+    erro: null,
+    preferencias: PREFERENCIAS_DIETA_PADRAO,
+  });
 });
 
 describe('useDietaStore.gerar', () => {
@@ -62,7 +70,10 @@ describe('useDietaStore.gerar', () => {
 
     const [url, opcoes] = (global.fetch as jest.Mock).mock.calls[0];
     expect(url).toBe('/api/dieta');
-    expect(JSON.parse(opcoes.body)).toEqual({ perfil: PERFIL });
+    expect(JSON.parse(opcoes.body)).toEqual({
+      perfil: PERFIL,
+      preferencias: PREFERENCIAS_DIETA_PADRAO,
+    });
   });
 
   it('mostra a mensagem do servidor quando dá erro e mantém o plano antigo', async () => {
@@ -139,7 +150,12 @@ describe('dieta da semana', () => {
     await useDietaStore.getState().gerar(PERFIL, { dia: 5, treinoDoDia: 'Treino B' });
 
     const [, opcoes] = (global.fetch as jest.Mock).mock.calls[0];
-    expect(JSON.parse(opcoes.body)).toEqual({ perfil: PERFIL, dia: 5, treinoDoDia: 'Treino B' });
+    expect(JSON.parse(opcoes.body)).toEqual({
+      perfil: PERFIL,
+      dia: 5,
+      treinoDoDia: 'Treino B',
+      preferencias: PREFERENCIAS_DIETA_PADRAO,
+    });
     expect(useDietaStore.getState().plano).toEqual(PLANO);
     expect(useDietaStore.getState().porDia[5]).toEqual(SEXTA);
   });
@@ -174,5 +190,27 @@ describe('dieta da semana', () => {
     await useDietaStore.getState().gerar(PERFIL);
 
     expect(useDietaStore.getState().plano?.refeicoes[0].itens[0].alimento).toBe('Ovos');
+  });
+});
+
+describe('opções da dieta', () => {
+  it('as opções escolhidas vão junto no pedido', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ plano: PLANO, provedor: 'openai' }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    useDietaStore.getState().mudarPreferencias({ refeicoes: '3', observacoes: 'treino de manhã' });
+    useDietaStore.getState().alternarSem('gluten');
+    await useDietaStore.getState().gerar(PERFIL);
+
+    const corpo = JSON.parse(fetchMock.mock.calls[0][1].body);
+
+    expect(corpo.preferencias).toMatchObject({
+      refeicoes: '3',
+      sem: ['gluten'],
+      observacoes: 'treino de manhã',
+    });
   });
 });

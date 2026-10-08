@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { espaco } from '../theme/tokens';
@@ -19,7 +20,8 @@ export function Tela({ children, bordas = ['top'] }: Props) {
     <SafeAreaView edges={bordas} style={[estilos.raiz, { backgroundColor: c.fundo }]}>
       <KeyboardAvoidingView
         style={estilos.raiz}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Android de ponta a ponta não encolhe a tela sozinho: o padding vale nos dois
+        behavior="padding"
       >
         <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
           <View style={estilos.limiteLargura}>{children}</View>

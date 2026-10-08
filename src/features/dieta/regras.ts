@@ -35,6 +35,8 @@ export type OpcoesDietaRegras = {
   /** Troca só essa refeição, mantendo o resto de `planoAtual`. */
   trocarRefeicao?: SlotTrocavel;
   planoAtual?: PlanoDieta;
+  /** Quantas refeições a pessoa escolheu. Sem o campo, decide pelas calorias. */
+  refeicoes?: 3 | 4 | 5;
 };
 
 /** Acima disso a dieta ganha uma ceia (5 refeições). */
@@ -48,6 +50,12 @@ export function quantidadeDeRefeicoes(metaCalorias: number): number {
 }
 
 type Divisao = Partial<Record<Slot, { kcal: number; proteina: number }>>;
+
+const DIVISAO_3: Divisao = {
+  cafe: { kcal: 0.3, proteina: 0.25 },
+  almoco: { kcal: 0.4, proteina: 0.4 },
+  jantar: { kcal: 0.3, proteina: 0.35 },
+};
 
 const DIVISAO_4: Divisao = {
   cafe: { kcal: 0.25, proteina: 0.2 },
@@ -371,14 +379,22 @@ function paraPlano(refeicao: Refeicao, restricoes: Restricoes): RefeicaoPlano {
   };
 }
 
-function slotsDoDia(metaCalorias: number): Slot[] {
+function slotsDoDia(metaCalorias: number, escolhida?: 3 | 4 | 5): Slot[] {
+  const quantidade = escolhida ?? quantidadeDeRefeicoes(metaCalorias);
+
+  if (quantidade === 3) {
+    return ['cafe', 'almoco', 'jantar'];
+  }
+
   const slots: Slot[] = ['cafe', 'almoco', 'lanche', 'jantar'];
 
-  return quantidadeDeRefeicoes(metaCalorias) === 5 ? [...slots, 'ceia'] : slots;
+  return quantidade === 5 ? [...slots, 'ceia'] : slots;
 }
 
-function divisaoDoDia(metaCalorias: number): Divisao {
-  return quantidadeDeRefeicoes(metaCalorias) === 5 ? DIVISAO_5 : DIVISAO_4;
+function divisaoDoDia(metaCalorias: number, escolhida?: 3 | 4 | 5): Divisao {
+  const quantidade = escolhida ?? quantidadeDeRefeicoes(metaCalorias);
+
+  return quantidade === 3 ? DIVISAO_3 : quantidade === 5 ? DIVISAO_5 : DIVISAO_4;
 }
 
 /** Monta e escala uma refeição a partir do modelo escolhido. */
@@ -641,8 +657,8 @@ export function montarDietaPorRegras(
 
   const { metaCalorias } = necessidades;
   const proteinaMeta = necessidades.macros.proteinaG;
-  const divisao = divisaoDoDia(metaCalorias);
-  const slots = slotsDoDia(metaCalorias);
+  const divisao = divisaoDoDia(metaCalorias, opcoes.refeicoes);
+  const slots = slotsDoDia(metaCalorias, opcoes.refeicoes);
 
   const refeicoes = slots.map((slot, ordem) => {
     const modelos = MODELOS[slot];
