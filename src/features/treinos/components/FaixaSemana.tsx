@@ -29,6 +29,8 @@ const ESPACO_SEMANA_UNICA = 6;
 /** Abaixo disso a pílula fica espremida: a faixa volta a rolar. */
 const LARGURA_MINIMA_PILULA = 40;
 const CIRCULO_COMPACTO = 36;
+/** Quanto a pílula de hoje passa das outras, em cima e embaixo. */
+const ALTURA_EXTRA_HOJE = 5;
 /** Anel de progresso por dentro do círculo do número. */
 const ESPESSURA_ANEL = 3.5;
 const MARGEM_ANEL = 2.5;
@@ -176,6 +178,8 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
         onLayout={(evento) => setLargura(evento.nativeEvent.layout.width)}
         scrollEnabled={!cabe}
         contentContainerStyle={[estilos.faixa, { gap: espacoPilulas }]}
+        // Respiro em cima e embaixo para a pílula de hoje, que é mais alta, não ser cortada
+        style={estilos.rolagem}
         accessibilityLabel={cabe ? 'dias da semana' : 'dias, role para o lado'}
       >
         {dias.map((dia, indice) => {
@@ -209,6 +213,8 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
                 { backgroundColor: cor.fundo },
                 // Dia tocado ganha um contorno, sem mudar o tamanho da pílula
                 marcado && dia.estado !== 'hoje' && { borderColor: c.texto },
+                // Hoje sobra um pouco para cima e para baixo: dá para achar de relance
+                dia.estado === 'hoje' && estilos.pilulaHoje,
                 pressed && { opacity: 0.8 },
               ]}
             >
@@ -264,6 +270,7 @@ const estilos = StyleSheet.create({
   faixa: {
     flexDirection: 'row',
     gap: ESPACO_PILULAS,
+    paddingVertical: ALTURA_EXTRA_HOJE,
   },
   pilula: {
     width: LARGURA_PILULA,
@@ -276,6 +283,13 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: espaco.sm,
     gap: espaco.sm,
+  },
+  rolagem: {
+    marginVertical: -ALTURA_EXTRA_HOJE,
+  },
+  pilulaHoje: {
+    marginVertical: -ALTURA_EXTRA_HOJE,
+    paddingVertical: espaco.xs + ALTURA_EXTRA_HOJE,
   },
   pilulaCompacta: {
     minHeight: 0,

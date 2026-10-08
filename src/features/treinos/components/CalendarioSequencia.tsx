@@ -208,11 +208,14 @@ function CasaDoDia({
       trilho: 'transparent',
       numero: c.texto,
     },
-    hoje: { arco: c.texto, trilho: c.superficieSecundaria, numero: c.texto },
+    // Hoje em branco (o inverso no claro), como na faixa da semana da tela inicial
+    hoje: { fundo: c.texto, arco: c.fundo, trilho: 'transparent', numero: c.fundo },
     futuro: { arco: c.textoSecundario, trilho: c.superficieSecundaria, numero: c.textoSecundario },
     vazio: { arco: 'transparent', trilho: 'transparent', numero: c.textoSecundario },
   };
-  const cor = cores[dia.estado];
+  // Hoje fica em branco enquanto não tem treino registrado (mesmo sendo descanso)
+  const semTreinoAinda = !['completo', 'parcial', 'fraco', 'congelado'].includes(dia.estado);
+  const cor = dia.hoje && semTreinoAinda ? cores.hoje : cores[dia.estado];
 
   return (
     <View
