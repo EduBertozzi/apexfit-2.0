@@ -7,7 +7,7 @@ import { useCategorias, useCores } from '@/shared/theme/useCores';
 import { Cartao, Texto } from '@/shared/ui';
 
 import { agruparPorGrupo, NOME_GRUPO } from '../grupos';
-import { proximoTreino, resumoTreino } from '../logica';
+import { proximoTreino, resumoTreino, temDias } from '../logica';
 import { useTreinosStore } from '../store';
 import { BotoesOrdem } from './BotoesOrdem';
 import { minusculaInicial } from '@/shared/lib/texto';
@@ -32,7 +32,9 @@ export function ListaTreinos() {
         seus treinos
       </Texto>
       <Texto variante="legenda" secundario>
-        o app segue esta ordem: depois do último treino feito, vem o próximo da lista.
+        {treinos.some(temDias)
+          ? 'cada treino vale nos dias marcados em "minha semana". os sem dia entram num rodízio, nesta ordem.'
+          : 'o app segue esta ordem: depois do último treino feito, vem o próximo da lista.'}
       </Texto>
 
       {treinos.map((treino, indice) => {

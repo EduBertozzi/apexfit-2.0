@@ -60,7 +60,7 @@ export default function Ajustes() {
 
       <Secao
         titulo="privacidade"
-        rodape="seus dados ficam salvos neste aparelho. quando você pede a dieta ou conversa com o coach, seu perfil e suas metas vão para o servidor do ApexFit e para a Anthropic (empresa da IA) só para responder."
+        rodape="seus dados ficam salvos neste aparelho. quando você pede a dieta ou conversa com o coach, seu perfil e suas metas vão para o servidor do ApexFit e para a OpenAI (empresa do ChatGPT, a IA que responde) só para responder."
       >
         <Botao titulo="apagar meus dados" variante="perigo" onPress={apagarDados} />
       </Secao>

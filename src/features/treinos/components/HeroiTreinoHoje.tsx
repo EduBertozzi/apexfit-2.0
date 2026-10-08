@@ -29,8 +29,10 @@ export function HeroiTreinoHoje() {
     router.push('/treino/sessao');
   }
 
+  // Dia de descanso: o cartão mostra o próximo treino, não "o de hoje"
+  const descanso = situacao.tipo === 'sugerido' && situacao.descanso === true;
   const rotulo = {
-    sugerido: 'treino de hoje',
+    sugerido: descanso ? 'hoje é descanso. próximo treino' : 'treino de hoje',
     'em-andamento': 'treino em andamento',
     concluido: 'treino de hoje feito',
   }[situacao.tipo];
