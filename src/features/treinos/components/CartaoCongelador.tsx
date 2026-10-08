@@ -62,9 +62,7 @@ export function CartaoCongelador({ congeladores, texto, proximo }: Props) {
 
 const estilos = StyleSheet.create({
   linha: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: espaco.md,
+    gap: espaco.sm,
   },
   flocos: {
     flexDirection: 'row',
@@ -78,7 +76,6 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
   },
   textos: {
-    flex: 1,
     gap: 2,
   },
 });

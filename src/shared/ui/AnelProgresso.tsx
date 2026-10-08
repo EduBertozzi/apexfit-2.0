@@ -64,9 +64,8 @@ export function AnelProgresso({
             // Ponta redonda só no arco aberto; cheio fecha sem emenda
             strokeLinecap={cheio ? 'butt' : 'round'}
             strokeDasharray={cheio ? undefined : `${circunferencia * parte} ${circunferencia}`}
-            rotation={-90}
-            originX={centro}
-            originY={centro}
+            // Começa no topo; o atributo SVG evita o transform-origin que o navegador rejeita
+            transform={`rotate(-90 ${centro} ${centro})`}
           />
         ) : null}
       </Svg>
