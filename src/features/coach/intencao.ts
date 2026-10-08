@@ -1,7 +1,7 @@
 import type { PlanoDieta } from '@/features/dieta/contrato';
 import type { SlotRefeicao } from '@/features/dieta/mesclar';
 import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
-import { textoDosDias } from '@/features/treinos/diasIa';
+import { diasDoTexto, textoDosDias } from '@/features/treinos/diasIa';
 import { formatarNumero } from '@/shared/lib/numero';
 import { minusculaInicial } from '@/shared/lib/texto';
 
@@ -18,7 +18,7 @@ function normalizar(texto: string): string {
 const ASSUNTO_DIETA =
   /\b(dieta|cardapio|plano alimentar|refeic(ao|oes)|cafe da manha|cafe|almoco|lanche|jantar|ceia)\b/;
 const ACAO =
-  /\b(mont\w*|cri\w*|fa(z|ca|zer)|gera\w*|refa\w*|nova|novo|outr[ao]|troc\w*|mud\w*|substitu\w*|tir\w*|sem|tira|coloca\w*|adicion\w*|ajust\w*|aument\w*|diminu\w*)\b/;
+  /\b(mont\w*|cri\w*|fa(z|ca|zer)|gera\w*|refa\w*|nova|novo|outr[ao]|troc\w*|troqu\w*|mud\w*|substitu\w*|tir\w*|sem|tira|coloca\w*|adicion\w*|ajust\w*|aument\w*|diminu\w*)\b/;
 /** Perguntas sobre a dieta, sem pedir mudança ("o que como antes do treino?"). */
 const SO_PERGUNTA =
   /^(o que|qual|quais|quanto|quantas?|como|por ?que|posso|pode|e se|tem problema)\b/;
@@ -41,7 +41,12 @@ const ASSUNTO_TREINO = /\b(treinos?|ficha|divisao|exercicios?|musculacao|academi
 
 /** Nomes de exercício comuns: "troca o leg press por agachamento" é pedido de treino. */
 const EXERCICIO =
-  /\b(supino|agachamentos?|leg ?press|remadas?|puxadas?|pulldown|roscas?|triceps|biceps|flexao|flexoes|abdominais?|prancha|esteira|bike|bicicleta|corrida|eliptico|elevacao (lateral|frontal|pelvica)|desenvolvimento|stiff|afundos?|cadeira (extensora|flexora|abdutora|adutora)|mesa flexora|panturrilhas?|crucifixo|crossover|burpees?|polichinelos?|levantamento terra|hack|smith|graviton|mergulho|extensora|flexora|abdutora|adutora|gluteos?)\b/;
+  /\b(supino|agachamentos?|leg ?press|remadas?|puxadas?|pulldown|roscas?|triceps|biceps|flexao|flexoes|abdominais?|prancha|esteira|bike|bicicleta|corrida|eliptico|elevacao (lateral|frontal|pelvica)|desenvolvimento|stiff|afundos?|cadeira (extensora|flexora|abdutora|adutora)|mesa flexora|panturrilhas?|crucifixo|crossover|burpees?|polichinelos?|levantamento terra|hack|smith|graviton|mergulho|extensora|flexora|abdutora|adutora|gluteos?|cardio|hiit|escada|pular corda)\b/;
+
+/** O texto cita um exercício conhecido ("supino", "leg press", "cardio")? */
+export function citaExercicio(mensagem: string): boolean {
+  return EXERCICIO.test(normalizar(mensagem));
+}
 
 /**
  * A mensagem pede para criar ou mudar os treinos? ("monta meu treino",
@@ -63,6 +68,40 @@ export function pedeMudancaDeTreino(mensagem: string): boolean {
     !SO_PERGUNTA.test(texto) ||
     /\b(pode|podes|consegue) (montar|criar|fazer|trocar|mudar|refazer)\b/.test(texto)
   );
+}
+
+/**
+ * Dias da semana citados no pedido ("troca o supino da sexta" vira [5];
+ * "muda o almoço de segunda e quarta" vira [1, 3]). "Segunda série" ou
+ * "segunda opção" não é dia. Sem dia, lista vazia.
+ */
+export function diasCitados(mensagem: string): number[] {
+  const texto = normalizar(mensagem).replace(
+    /\bsegunda (serie|vez|opcao|refeicao|parte|semana|metade|feira do mes)\b/g,
+    ' ',
+  );
+
+  return diasDoTexto(texto);
+}
+
+/**
+ * Dias que delimitam um ajuste de treino ("troca o supino da sexta" vira [5]).
+ * Se o pedido nomeia o treino ("treino A") ou muda o dia dele ("passa o
+ * treino para sexta"), o dia não é filtro: vazio.
+ */
+export function diasDoAjusteDeTreino(mensagem: string): number[] {
+  const texto = normalizar(mensagem);
+
+  if (
+    /\btreino [a-f]\b/.test(texto) ||
+    /\b(pass\w*|move\w*|mud\w*|joga\w*) .*\bpara (o |a )?(dia )?(dom|seg|ter|qua|qui|sex|sab)/.test(
+      texto,
+    )
+  ) {
+    return [];
+  }
+
+  return diasCitados(mensagem);
 }
 
 /** Plano novo do zero ou só um ajuste no que já existe. */

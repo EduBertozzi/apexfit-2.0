@@ -63,8 +63,16 @@ export const pedidoCoachSchema = z.object({
       message: 'A última mensagem precisa ser do usuário.',
     }),
   contexto: z.string().max(LIMITES_COACH.contexto),
-  /** Plano salvo hoje: o servidor muda só a refeição pedida ("troca o café da manhã"). */
+  /**
+   * Plano da semana salvo hoje (vale em todo dia sem plano próprio): o
+   * servidor muda só a refeição pedida ("troca o café da manhã").
+   */
   planoAtual: planoDietaSchema.optional(),
+  /** Dias com plano próprio ("dieta de sexta"), 0 = domingo. Vai em todo pedido. */
+  dietaPorDia: z
+    .array(z.object({ dia: diaSchema, plano: planoDietaSchema }))
+    .max(7)
+    .optional(),
   /** Treinos salvos hoje: o servidor muda só o exercício ou treino pedido. */
   treinosAtuais: z.array(treinoAtualSchema).max(LIMITES_COACH.treinos).optional(),
 });
@@ -84,6 +92,8 @@ export const eventoCoachSchema = z.discriminatedUnion('tipo', [
     plano: planoDietaSchema,
     modo: modoSchema.optional(),
     refeicoes: z.array(z.enum(SLOTS_REFEICAO)).optional(),
+    /** Dias da semana citados ("muda o almoço de quarta"): só eles mudam. Sem o campo, a semana. */
+    dias: z.array(diaSchema).max(7).optional(),
   }),
   /**
    * O coach montou ou ajustou treinos: o app mostra a proposta. `diasPedidos`:
@@ -94,6 +104,8 @@ export const eventoCoachSchema = z.discriminatedUnion('tipo', [
     resultado: respostaTreinosIaSchema,
     modo: modoSchema.optional(),
     diasPedidos: z.array(diaSchema).max(7).optional(),
+    /** Num ajuste: dias citados ("troca o supino da sexta"). Só o treino desses dias muda. */
+    diasAlvo: z.array(diaSchema).max(7).optional(),
   }),
   z.object({ tipo: z.literal('erro'), mensagem: z.string() }),
   z.object({ tipo: z.literal('fim') }),

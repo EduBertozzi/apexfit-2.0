@@ -115,16 +115,70 @@ function mudancasDoTreino(antes: Treino, depois: Treino): string[] {
   return partes;
 }
 
+function noDia(treino: Pick<Treino, 'dias'> | undefined, dias: readonly number[]): number[] {
+  return (treino?.dias ?? []).filter((dia) => dias.includes(dia));
+}
+
+/**
+ * Pedido com dia da semana ("troca o supino da sexta"): só o treino daquele
+ * dia pode mudar. Os outros voltam exatamente como estavam (mesmo objeto),
+ * treino novo que a IA inventou não entra e treino que sumiu volta.
+ * `novos` já passou por `mesclarTreinos` (ids preservados).
+ */
+export function restringirAosDias(
+  atuais: readonly Treino[],
+  novos: readonly Treino[],
+  dias: readonly number[],
+): Treino[] {
+  if (dias.length === 0) {
+    return [...novos];
+  }
+
+  return atuais.map((atual) => {
+    const novo = novos.find((treino) => treino.id === atual.id);
+
+    if (!novo) {
+      return atual;
+    }
+
+    const alvo = noDia(atual, dias).length > 0 || noDia(novo, dias).length > 0;
+
+    return alvo ? novo : atual;
+  });
+}
+
+/** Treinos marcados em algum dos dias. */
+export function treinosNosDias<T extends Pick<Treino, 'dias'>>(
+  treinos: readonly T[],
+  dias: readonly number[],
+): T[] {
+  return treinos.filter((treino) => noDia(treino, dias).length > 0);
+}
+
 /**
  * Resumo do que mudou, uma linha por treino:
  * "treino A: leg press trocado por agachamento livre". Sem mudança, lista vazia.
+ * Com `diasAlvo` (pedido citou o dia), a linha começa pelo dia:
+ * "sexta: supino reto trocado por supino inclinado".
  */
-export function resumoMudancas(atuais: readonly Treino[], novos: readonly Treino[]): string[] {
+export function resumoMudancas(
+  atuais: readonly Treino[],
+  novos: readonly Treino[],
+  opcoes: { diasAlvo?: readonly number[] } = {},
+): string[] {
   const linhas: string[] = [];
+  const diasAlvo = opcoes.diasAlvo ?? [];
 
   for (const treino of novos) {
     const antes = atuais.find((atual) => atual.id === treino.id);
-    const nome = minusculaInicial(treino.nome);
+    const dosDias = noDia(antes ?? treino, diasAlvo);
+    const nome = dosDias.length > 0 ? textoDosDias(dosDias) : minusculaInicial(treino.nome);
+    // Treino que também cai em outro dia muda lá também: avisa
+    const outros = (antes?.dias ?? []).filter((dia) => !diasAlvo.includes(dia));
+    const aviso =
+      dosDias.length > 0 && outros.length > 0
+        ? ` (${minusculaInicial(treino.nome)}, vale também para ${textoDosDias(outros)})`
+        : '';
 
     if (!antes) {
       const quantidade = treino.exercicios.length;
@@ -135,7 +189,7 @@ export function resumoMudancas(atuais: readonly Treino[], novos: readonly Treino
     const partes = mudancasDoTreino(antes, treino);
 
     if (partes.length > 0) {
-      linhas.push(`${nome}: ${partes.join('; ')}`);
+      linhas.push(`${nome}: ${partes.join('; ')}${aviso}`);
     }
   }
 

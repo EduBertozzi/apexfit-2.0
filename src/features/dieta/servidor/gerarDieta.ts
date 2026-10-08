@@ -6,14 +6,14 @@ import { planoDietaSchema, type PedidoDieta, type PlanoDieta } from '../contrato
 import { montarPromptDieta, SISTEMA_DIETA } from '../prompt';
 
 /** Roda SÓ no servidor (rota /api/dieta). Nunca importe isto de uma tela. */
-export async function gerarDieta({ perfil }: PedidoDieta): Promise<PlanoDieta> {
+export async function gerarDieta({ perfil, dia, treinoDoDia }: PedidoDieta): Promise<PlanoDieta> {
   const resposta = await obterCliente().beta.messages.parse({
     model: MODELO_CLAUDE,
     max_tokens: 16000,
     ...FALLBACK,
     betas: [...FALLBACK.betas],
     system: SISTEMA_DIETA,
-    messages: [{ role: 'user', content: montarPromptDieta(perfil) }],
+    messages: [{ role: 'user', content: montarPromptDieta(perfil, { dia, treinoDoDia }) }],
     output_config: {
       effort: 'medium',
       format: betaZodOutputFormat(planoDietaSchema),

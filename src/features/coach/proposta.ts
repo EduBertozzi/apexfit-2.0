@@ -1,10 +1,11 @@
 import type { PlanoDieta } from '@/features/dieta/contrato';
 import { mesclarPlano, resumoMudancasDieta, type SlotRefeicao } from '@/features/dieta/mesclar';
+import type { DietaPorDia } from '@/features/dieta/semana';
 import type { OrigemPlano } from '@/features/dieta/store';
 import { textoDosDias } from '@/features/treinos/diasIa';
 import { comDias } from '@/features/treinos/ia';
 import { novoId } from '@/features/treinos/logica';
-import { mesclarTreinos, resumoMudancas } from '@/features/treinos/mesclar';
+import { mesclarTreinos, restringirAosDias, resumoMudancas } from '@/features/treinos/mesclar';
 import type { DadosTreino, GeradorId, Treino } from '@/features/treinos/types';
 import { formatarNumero } from '@/shared/lib/numero';
 import { minusculaInicial } from '@/shared/lib/texto';
@@ -30,6 +31,8 @@ export type ResumoProposta = {
 
 export type AnteriorDieta = {
   plano: PlanoDieta | null;
+  /** Dias com plano próprio antes de aplicar (propostas antigas não têm). */
+  porDia?: DietaPorDia;
   origem: OrigemPlano | null;
   geradoEm: string | null;
 };
@@ -40,6 +43,12 @@ export type PropostaDieta = {
   resumo: ResumoProposta;
   plano: PlanoDieta;
   origem: OrigemPlano;
+  /** Plano novo ou ajuste (propostas antigas não têm: valem como plano novo). */
+  modo?: ModoMudanca;
+  /** Dias da semana que a proposta muda ("almoço de quarta"). Sem o campo, a semana. */
+  dias?: number[];
+  /** Num ajuste: as refeições pedidas (o resto de cada dia fica igual). */
+  alvos?: SlotRefeicao[];
   /** Só depois de aplicar, até a próxima proposta de dieta ser aplicada. */
   anterior?: AnteriorDieta;
 };
@@ -59,32 +68,55 @@ function plural(quantidade: number, um: string, varios: string): string {
   return `${quantidade} ${quantidade === 1 ? um : varios}`;
 }
 
-/** Plano proposto pela IA ou pelo modo demonstração. Ajuste sem mudança: `null`. */
+/** "sexta: almoço trocado" quando a proposta é de dias específicos. */
+function prefixoDias(linha: string, dias: readonly number[]): string {
+  return dias.length > 0 ? `${textoDosDias(dias)}: ${linha}` : linha;
+}
+
+/**
+ * Plano proposto pela IA ou pelo modo demonstração. `atual`: o plano que vale
+ * hoje no alvo (o do dia citado ou o da semana). `dias`: dias citados no
+ * pedido; só eles mudam. Ajuste sem mudança: `null`.
+ */
 export function propostaDeDieta(
   atual: PlanoDieta | null,
   proposto: PlanoDieta,
-  opcoes: { modo: ModoMudanca; alvos: readonly SlotRefeicao[]; origem: OrigemPlano },
+  opcoes: {
+    modo: ModoMudanca;
+    alvos: readonly SlotRefeicao[];
+    origem: OrigemPlano;
+    dias?: readonly number[];
+  },
 ): PropostaDieta | null {
+  const dias = [...new Set(opcoes.dias ?? [])].sort((a, b) => a - b);
   const ajuste = opcoes.modo === 'ajuste' && atual !== null;
   const plano = ajuste ? mesclarPlano(atual, proposto, opcoes.alvos) : proposto;
+  const umDia = dias.length === 1 ? 'esse dia' : 'esses dias';
   const mudancas = ajuste
-    ? resumoMudancasDieta(atual, plano)
-    : atual
-      ? ['plano novo no lugar do atual']
-      : [];
+    ? resumoMudancasDieta(atual, plano).map((linha) => prefixoDias(linha, dias))
+    : dias.length > 0
+      ? [prefixoDias(`plano novo só para ${umDia}`, dias)]
+      : atual
+        ? ['plano novo no lugar do atual']
+        : [];
 
   // Ajuste que não mudou nada não vira proposta
   if (ajuste && mudancas.length === 0) {
     return null;
   }
 
+  const titulo = `${formatarNumero(plano.caloriasDia)} kcal em ${plural(plano.refeicoes.length, 'refeição', 'refeições')}`;
+
   return {
     tipo: 'dieta',
     estado: 'pendente',
     plano,
     origem: opcoes.origem,
+    modo: ajuste ? 'ajuste' : 'novo',
+    ...(dias.length > 0 ? { dias } : {}),
+    ...(ajuste && opcoes.alvos.length > 0 ? { alvos: [...opcoes.alvos] } : {}),
     resumo: {
-      titulo: `${formatarNumero(plano.caloriasDia)} kcal em ${plural(plano.refeicoes.length, 'refeição', 'refeições')}`,
+      titulo: prefixoDias(titulo, dias),
       mudancas,
       linhas: plano.refeicoes.map(
         (refeicao) =>
@@ -102,7 +134,7 @@ export function propostaDeDieta(
 export function propostaDeTreinos(
   atuais: readonly Treino[],
   propostos: readonly DadosTreino[],
-  opcoes: { modo: ModoMudanca; diasPedidos?: readonly number[] },
+  opcoes: { modo: ModoMudanca; diasPedidos?: readonly number[]; diasAlvo?: readonly number[] },
   gerarId: GeradorId = novoId,
 ): PropostaTreinos | null {
   if (propostos.length === 0) {
@@ -111,9 +143,11 @@ export function propostaDeTreinos(
 
   const ajuste = opcoes.modo === 'ajuste' && atuais.length > 0;
   const dados = ajuste ? propostos : comDias(propostos, opcoes.diasPedidos);
-  const treinos = mesclarTreinos(atuais, dados, gerarId);
+  // Pedido com dia ("o supino da sexta"): só o treino daquele dia pode mudar
+  const diasAlvo = ajuste ? (opcoes.diasAlvo ?? []) : [];
+  const treinos = restringirAosDias(atuais, mesclarTreinos(atuais, dados, gerarId), diasAlvo);
   const mudancas = ajuste
-    ? resumoMudancas(atuais, treinos)
+    ? resumoMudancas(atuais, treinos, { diasAlvo })
     : atuais.length > 0
       ? [`substitui ${plural(atuais.length, 'treino atual', 'treinos atuais')}`]
       : [];

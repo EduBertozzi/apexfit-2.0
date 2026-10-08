@@ -26,11 +26,12 @@ import { useCoachStore, type MensagemChat } from '../store';
 import { CartaoProposta } from './CartaoProposta';
 
 const SUGESTOES = [
-  'Monta minha dieta',
-  'Troca o café da manhã',
-  'Monta meu treino',
-  'O que comer antes do treino?',
-  'Como estou na água hoje?',
+  'monta minha dieta',
+  'troca o café da manhã',
+  'monta meu treino',
+  'troca o supino da sexta',
+  'o que comer antes do treino?',
+  'como estou na água hoje?',
 ];
 
 const TAMANHO_BOTAO = 44;

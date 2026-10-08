@@ -61,7 +61,9 @@ src/
 │   │   ├── prompt.ts         ← instruções e dados enviados para a IA
 │   │   ├── servidor/         ← SÓ servidor: chamada à IA (nunca importe numa tela)
 │   │   ├── api.ts            ← o app chamando /api/dieta
-│   │   ├── store.ts          ← plano salvo no aparelho
+│   │   ├── store.ts          ← plano salvo no aparelho (da semana + dias com plano próprio)
+│   │   ├── semana.ts         ← dieta da semana: plano do dia, seletor de dias, migração
+│   │   ├── texto.ts          ← limpa markdown da IA e separa "250 g" da medida caseira
 │   │   └── __tests__/
 │   ├── coach/
 │   │   ├── contexto.ts       ← resumo do usuário (perfil, metas, água, peso, treinos, dieta) para a IA
@@ -149,6 +151,12 @@ Na aba do cérebro (`src/app/(tabs)/ia.tsx`) a pessoa escolhe dias por semana, a
 O coach nunca salva dieta ou treinos sozinho. O plano ou os treinos que chegam (IA ou modo demonstração) viram uma **proposta** dentro da mensagem (`coach/proposta.ts`, salva com a conversa): resumo, "aplicar" e "não, obrigado". Aplicar guarda o que havia antes para o "desfazer" (só na última proposta aplicada de cada tipo).
 
 Pedido pequeno muda só o que foi pedido. `coach/intencao.ts` separa plano novo ("monta", "refaz", "novo treino") de ajuste ("troca o leg press por agachamento", "troca o café da manhã"). No ajuste, o app manda `planoAtual` e `treinosAtuais` no pedido, a IA devolve uma cópia editada e as funções puras `mesclarPlano` (`dieta/mesclar.ts`, as outras refeições voltam idênticas) e `mesclarTreinos` (`treinos/mesclar.ts`, exercício com o mesmo nome mantém o id, então sessões e marcas continuam valendo) montam o resultado e o resumo do que mudou.
+
+### Dieta da semana e pedidos com dia
+
+A dieta tem um **plano da semana** (`plano`) e, se a pessoa quiser, **dias com plano próprio** (`porDia`, 0 = domingo, igual a `Treino.dias`). `dieta/semana.ts` decide o plano de cada dia (`planoDoDia`) e aplica propostas (`aplicarNaSemana`); a store migrou da versão 1 (um plano só) para a 2. A tela de dieta abre no dia de hoje, com um seletor de dias; `/api/dieta` aceita `dia` para montar o plano de um dia só.
+
+Todo pedido ao coach leva a dieta de todos os dias (`planoAtual` + `dietaPorDia`) e os treinos com dias (`treinosAtuais`). Dia citado no pedido (`intencao.diasCitados`) delimita a mudança: "muda o almoço de quarta" muda só a dieta de quarta; "troca o supino da sexta" muda só o treino marcado na sexta (`treinos/mesclar.restringirAosDias`), e o resumo começa pelo dia ("sexta: supino reto trocado por supino inclinado"). O modo demonstração resolve trocas simples de exercício sem IA (`coach/trocaExercicio.ts`).
 
 ### Design system "Bento"
 

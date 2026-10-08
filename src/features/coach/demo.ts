@@ -9,11 +9,15 @@ import {
   type Restricoes,
 } from '@/features/dieta/restricoes';
 import { primeiroNome } from '@/features/perfil/calculos';
+import { planoDoDia } from '@/features/dieta/semana';
 import type { LocalTreino } from '@/features/treinos/contratoIa';
-import { diasDoTexto } from '@/features/treinos/diasIa';
+import { diasDoTexto, textoDosDias } from '@/features/treinos/diasIa';
+import type { DadosTreino, Treino } from '@/features/treinos/types';
 import { formatarNumero } from '@/shared/lib/numero';
 
 import type { DadosContexto } from './contexto';
+import { citaExercicio, diasCitados } from './intencao';
+import { aplicarPedidoExercicio, lerPedidoExercicio, type PedidoExercicio } from './trocaExercicio';
 
 /**
  * Coach em "modo demonstração": responde sem IA e sem internet, com regras
@@ -23,6 +27,8 @@ import type { DadosContexto } from './contexto';
 export type DadosDemo = DadosContexto & {
   treinos?: { proximo?: string; naSemana: number; sequenciaSemanas: number };
   peso?: { variacao30Dias: number | null; ultimoKg?: number };
+  /** Treinos salvos (com dias), para trocar um exercício sem IA. */
+  listaTreinos?: readonly Treino[];
 };
 
 /**
@@ -30,8 +36,10 @@ export type DadosDemo = DadosContexto & {
  * pessoa aplica ou não). `diasPedidos`: dias citados ("segunda, quarta e sexta").
  */
 export type AcaoDemo =
-  | { tipo: 'dieta'; trocarRefeicao?: SlotTrocavel; novo?: boolean }
-  | { tipo: 'treinos'; diasPorSemana: number; local: LocalTreino; diasPedidos: number[] };
+  | { tipo: 'dieta'; trocarRefeicao?: SlotTrocavel; novo?: boolean; dias?: number[] }
+  | { tipo: 'treinos'; diasPorSemana: number; local: LocalTreino; diasPedidos: number[] }
+  /** Troca ou tira um exercício: `treinos` já editados (sem ids), só os dos `diasAlvo` mudam. */
+  | { tipo: 'ajusteTreino'; treinos: DadosTreino[]; diasAlvo: number[] };
 
 export type RespostaDemo = { texto: string; acao?: AcaoDemo };
 
@@ -39,6 +47,7 @@ export type Intencao =
   | 'dor'
   | 'seguranca'
   | 'trocarRefeicao'
+  | 'ajustarExercicio'
   | 'evitarAlimento'
   | 'montarDieta'
   | 'preTreino'
@@ -69,7 +78,7 @@ const PADROES = {
   dor: /\b(dor|dores|doi|doendo|doeu|lesao|lesionei|machu\w*|contusao|torci|tendinite|inflamad\w*)\b/,
   seguranca:
     /\b(jejum|remedio\w*|suplement\w*|whey|creatina|termogenic\w*|anabolizante\w*|bomba|hormonio\w*|laxante\w*|diuretico\w*|sibutramina|ozempic)\b/,
-  troca: /\b(troc\w*|mud\w*|substitu\w*|outr[oa]|diferente|nova opcao)\b/,
+  troca: /\b(troc\w*|troqu\w*|mud\w*|substitu\w*|outr[oa]|diferente|nova opcao)\b/,
   dieta: /\b(dieta|plano|cardapio|refeic\w*|comer|comida|alimentacao)\b/,
   montar: /\b(mont\w*|cri\w*|ger\w*|faz|fazer|faca|nov[oa]|quero|preciso)\b/,
   pre: /\b(pre[\s-]?treino|antes do treino|antes de treinar|antes da academia)\b/,
@@ -127,6 +136,22 @@ function slotPedido(normal: string): SlotTrocavel | null {
   return SLOTS.find(([, padrao]) => padrao.test(normal))?.[0] ?? null;
 }
 
+/**
+ * "troca o supino da sexta por supino inclinado", "tira cardio de segunda":
+ * pedido de exercício (cita um exercício ou o treino, e não fala de comida).
+ */
+function pedidoDeExercicio(pergunta: string): PedidoExercicio | null {
+  const normal = normalizarAlinhado(pergunta);
+
+  if (slotPedido(normal) || PADROES.dieta.test(normal)) {
+    return null;
+  }
+
+  const pedido = lerPedidoExercicio(pergunta);
+
+  return pedido && (citaExercicio(pergunta) || /\btreino/.test(normal)) ? pedido : null;
+}
+
 /** Qual assunto a pergunta trata. A ordem importa: segurança vem primeiro. */
 export function detectarIntencao(pergunta: string): Intencao {
   const normal = normalizarAlinhado(pergunta);
@@ -134,6 +159,7 @@ export function detectarIntencao(pergunta: string): Intencao {
   if (PADROES.dor.test(normal)) return 'dor';
   if (PADROES.seguranca.test(normal)) return 'seguranca';
   if (PADROES.troca.test(normal) && slotPedido(normal)) return 'trocarRefeicao';
+  if (pedidoDeExercicio(pergunta)) return 'ajustarExercicio';
   if (alimentoEvitado(pergunta)) return 'evitarAlimento';
   if (
     PADROES.dieta.test(normal) &&
@@ -346,12 +372,19 @@ function responderMontarDieta({ dados, nome, semente }: Contexto): RespostaDemo 
 function responderTrocar(ctx: Contexto, slot: SlotTrocavel): RespostaDemo {
   const { dados, nome, semente, pergunta } = ctx;
   const evitado = alimentoEvitado(pergunta);
+  // "muda o almoço de quarta": só a dieta de quarta
+  const dias = diasCitados(pergunta);
+  const deQuando = dias.length > 0 ? ` de ${textoDosDias(dias)}` : '';
 
   if (!dados.necessidades) {
     return { texto: COMPLETAR_PERFIL };
   }
 
-  const refeicao = refeicaoDoPlano(dados.plano, slot);
+  const plano =
+    dias.length > 0
+      ? planoDoDia({ plano: dados.plano, porDia: dados.porDia ?? {} }, dias[0])
+      : dados.plano;
+  const refeicao = refeicaoDoPlano(plano, slot);
 
   if (!refeicao) {
     return {
@@ -367,17 +400,19 @@ function responderTrocar(ctx: Contexto, slot: SlotTrocavel): RespostaDemo {
     texto: frases(
       escolher(
         [
-          `Bora trocar o ${NOME_REFEICAO[slot]}${vocativo(nome)}.`,
-          `Fechado, novo ${NOME_REFEICAO[slot]} saindo.`,
+          `Bora trocar o ${NOME_REFEICAO[slot]}${deQuando}${vocativo(nome)}.`,
+          `Fechado, novo ${NOME_REFEICAO[slot]}${deQuando} saindo.`,
         ],
         semente,
       ),
       `Hoje ele tem ${alimentosDaRefeicao(refeicao)}, com ${kcal(refeicao.calorias)}.`,
       `Vou montar outra opção com calorias parecidas${evitado ? `, sem ${evitado}` : ''}.`,
-      'O resto do plano continua igual.',
+      dias.length > 0
+        ? 'Os outros dias e as outras refeições continuam iguais.'
+        : 'O resto do plano continua igual.',
       APLICAR,
     ),
-    acao: { tipo: 'dieta', trocarRefeicao: slot },
+    acao: { tipo: 'dieta', trocarRefeicao: slot, ...(dias.length > 0 ? { dias } : {}) },
   };
 }
 
@@ -467,7 +502,7 @@ function responderAgua({ dados, nome, semente }: Contexto): RespostaDemo {
           semente,
         ),
         `Foram ${ml(hojeMl)} de ${ml(metaMl)}.`,
-        sequencia > 1 ? `Sua sequência está em ${sequencia} dias seguidos.` : null,
+        sequencia > 1 ? `Sua sequência está em ${sequencia} dias.` : null,
       ),
     };
   }
@@ -665,6 +700,60 @@ function responderMontarTreino({ nome, semente, pergunta }: Contexto): RespostaD
   };
 }
 
+function responderExercicio(ctx: Contexto, pedido: PedidoExercicio): RespostaDemo {
+  const { dados, nome, semente } = ctx;
+  const treinos = dados.listaTreinos ?? [];
+  const quando = pedido.dias.length > 0 ? ` de ${textoDosDias(pedido.dias)}` : '';
+  const citado = pedido.tipo === 'trocar' ? pedido.de : pedido.alvo;
+
+  if (treinos.length === 0) {
+    return {
+      texto: frases(
+        `Você ainda não tem treinos salvos${vocativo(nome)}.`,
+        'Peça "monta meu treino" ou escolha um modelo na aba Treinos, e depois eu troco o que quiser.',
+      ),
+    };
+  }
+
+  const resultado = aplicarPedidoExercicio(treinos, pedido);
+
+  if (!resultado.ok) {
+    if (resultado.motivo === 'sem-substituto') {
+      return {
+        texto: frases(
+          `Achei ${minuscula(resultado.encontrado)} no seu treino${quando}${vocativo(nome)}.`,
+          `Por qual exercício você quer trocar? Ex: "troca o ${citado}${quando} por ${citado.startsWith('supino') ? 'supino inclinado' : 'agachamento'}".`,
+        ),
+      };
+    }
+
+    return {
+      texto:
+        resultado.motivo === 'sem-treino-no-dia'
+          ? frases(
+              `Você não tem treino marcado ${pedido.dias.length === 1 ? (pedido.dias[0] === 0 || pedido.dias[0] === 6 ? 'no' : 'na') : 'em'} ${textoDosDias(pedido.dias)}${vocativo(nome)}.`,
+              'Me diz de qual treino é o exercício, ou marque os dias na aba Treinos.',
+            )
+          : frases(
+              `Não achei "${citado}" nos seus treinos${quando}${vocativo(nome)}.`,
+              'Me diz o nome do exercício como está no treino.',
+            ),
+    };
+  }
+
+  return {
+    texto: frases(
+      escolher([`Fechado${vocativo(nome)}!`, `Bora${vocativo(nome)}!`], semente),
+      pedido.tipo === 'trocar'
+        ? `Troquei ${citado} por ${minuscula(pedido.para)}${quando}, com as mesmas séries e repetições.`
+        : `Tirei ${citado}${quando}.`,
+      'O resto dos treinos fica igual.',
+      APLICAR,
+    ),
+    acao: { tipo: 'ajusteTreino', treinos: resultado.treinos, diasAlvo: pedido.dias },
+  };
+}
+
 function responderTreino({ dados, nome, semente }: Contexto): RespostaDemo {
   const treinos = dados.treinos;
 
@@ -726,7 +815,7 @@ function responderDesconhecida({ nome, semente }: Contexto): RespostaDemo {
         semente,
       ),
       'Posso ajudar com água, calorias e metas, proteína, pré e pós-treino, treino e motivação.',
-      'Também monto sua dieta ou troco uma refeição, é só pedir: "troca meu almoço".',
+      'Também monto sua dieta, troco uma refeição ou um exercício, é só pedir: "troca o almoço de quarta" ou "troca o supino da sexta por supino inclinado".',
     ),
   };
 }
@@ -757,6 +846,8 @@ export function responderModoDemo(
       return responderSeguranca(ctx);
     case 'trocarRefeicao':
       return responderTrocar(ctx, slotPedido(normalizarAlinhado(pergunta)) ?? 'almoco');
+    case 'ajustarExercicio':
+      return responderExercicio(ctx, pedidoDeExercicio(pergunta)!);
     case 'evitarAlimento':
       return responderEvitar(ctx);
     case 'montarDieta':

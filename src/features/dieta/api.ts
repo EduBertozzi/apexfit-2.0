@@ -2,6 +2,10 @@ import type { Perfil } from '@/features/perfil/types';
 import { CODIGO_SEM_IA, SemIa, type ProvedorIa } from '@/shared/lib/semIa';
 
 import { pedidoDietaSchema, respostaDietaSchema, type PlanoDieta } from './contrato';
+import { limparPlano } from './texto';
+
+/** Plano de um dia só (0 = domingo) e o treino desse dia. Sem `dia`, vale a semana toda. */
+export type OpcoesPedidoDieta = { dia?: number; treinoDoDia?: string };
 
 /**
  * Pede a dieta para o NOSSO servidor (rota /api/dieta), nunca direto para a IA.
@@ -14,8 +18,13 @@ export async function pedirDieta(perfil: Perfil): Promise<PlanoDieta> {
 /** Igual a `pedirDieta`, mas diz também qual IA montou o plano. */
 export async function pedirDietaComProvedor(
   perfil: Perfil,
+  opcoes: OpcoesPedidoDieta = {},
 ): Promise<{ plano: PlanoDieta; provedor?: ProvedorIa }> {
-  const pedido = pedidoDietaSchema.safeParse({ perfil });
+  const pedido = pedidoDietaSchema.safeParse({
+    perfil,
+    ...(opcoes.dia === undefined ? {} : { dia: opcoes.dia }),
+    ...(opcoes.treinoDoDia ? { treinoDoDia: opcoes.treinoDoDia.slice(0, 120) } : {}),
+  });
 
   if (!pedido.success) {
     throw new Error('Complete seu perfil (sexo, atividade e objetivo) para gerar a dieta.');
@@ -52,5 +61,6 @@ export async function pedirDietaComProvedor(
     throw new Error('O servidor devolveu um plano em formato inesperado.');
   }
 
-  return validado.data;
+  // A IA às vezes manda markdown ("**Arroz**"): o app guarda só texto puro
+  return { ...validado.data, plano: limparPlano(validado.data.plano) };
 }

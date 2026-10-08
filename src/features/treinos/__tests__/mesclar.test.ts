@@ -1,4 +1,10 @@
-import { mesclarTreinos, resumoMudancas, sessoesValidas } from '../mesclar';
+import {
+  mesclarTreinos,
+  restringirAosDias,
+  resumoMudancas,
+  sessoesValidas,
+  treinosNosDias,
+} from '../mesclar';
 import type { DadosTreino, Sessao, Treino } from '../types';
 
 function contador() {
@@ -181,5 +187,61 @@ describe('sessoesValidas', () => {
 
   it('nada mudou: devolve a mesma sessão', () => {
     expect(sessoesValidas([sessoes[1]], ATUAIS)[0]).toBe(sessoes[1]);
+  });
+});
+
+describe('pedido com dia da semana', () => {
+  const SEMANA: Treino[] = [
+    { ...ATUAIS[0], dias: [1, 4] },
+    { ...ATUAIS[1], dias: [5] },
+  ];
+
+  it('treinosNosDias acha o treino do dia', () => {
+    expect(treinosNosDias(SEMANA, [5]).map((t) => t.id)).toEqual(['t2']);
+    expect(treinosNosDias(SEMANA, [0])).toEqual([]);
+  });
+
+  it('só o treino do dia muda; os outros voltam iguais', () => {
+    const propostos = semIds(SEMANA);
+    // A IA trocou o supino (sexta) e, sem pedir, mexeu no treino A
+    propostos[1].exercicios![0] = {
+      nome: 'Supino inclinado',
+      grupo: 'peito',
+      series: 3,
+      repeticoes: '10',
+    };
+    propostos[0].exercicios!.pop();
+    propostos.push({ nome: 'Treino C', exercicios: [] });
+
+    const mesclados = mesclarTreinos(SEMANA, propostos, contador());
+    const final = restringirAosDias(SEMANA, mesclados, [5]);
+
+    expect(final[0]).toBe(SEMANA[0]);
+    expect(final[1].exercicios[0].nome).toBe('Supino inclinado');
+    expect(final).toHaveLength(2);
+    expect(resumoMudancas(SEMANA, final, { diasAlvo: [5] })).toEqual([
+      'sexta: supino reto com barra trocado por supino inclinado',
+    ]);
+  });
+
+  it('treino que cai em outros dias avisa que muda lá também', () => {
+    const propostos = semIds(SEMANA);
+    propostos[0].exercicios![1] = {
+      nome: 'Agachamento hack',
+      grupo: 'perna',
+      series: 3,
+      repeticoes: '12',
+    };
+    const final = restringirAosDias(SEMANA, mesclarTreinos(SEMANA, propostos, contador()), [4]);
+
+    expect(resumoMudancas(SEMANA, final, { diasAlvo: [4] })).toEqual([
+      'quinta: leg press 45 trocado por agachamento hack (treino A, vale também para segunda)',
+    ]);
+  });
+
+  it('sem dias, não restringe nada', () => {
+    const mesclados = mesclarTreinos(SEMANA, semIds(SEMANA), contador());
+
+    expect(restringirAosDias(SEMANA, mesclados, [])).toEqual(mesclados);
   });
 });

@@ -5,20 +5,26 @@ import { gerarPlanoComIa } from '@/features/dieta/servidor/gerarDietaLocal';
 import { diasDoTexto, distribuirDias, textoDosDias } from '@/features/treinos/diasIa';
 import { inferirGrupo } from '@/features/treinos/grupos';
 import { paraDadosTreino } from '@/features/treinos/ia';
-import { mesclarTreinos, resumoMudancas } from '@/features/treinos/mesclar';
+import {
+  mesclarTreinos,
+  restringirAosDias,
+  resumoMudancas,
+  treinosNosDias,
+} from '@/features/treinos/mesclar';
+import { nomeDoDiaSemana, treinoNoDia } from '@/features/dieta/semana';
 import { gerarTreinos } from '@/features/treinos/servidor/gerarTreinos';
 import type { ProvedorJson } from '@/shared/servidor/json';
 
+import { alvoDaDieta, comPrefixoDias } from '../alvos';
 import type { EventoCoach, PedidoCoach, TreinoAtual } from '../contrato';
 import {
   confirmarPlano,
   confirmarTreinos,
+  diasDoAjusteDeTreino,
   metaDoContexto,
-  modoDaDieta,
   modoDoTreino,
   pedeMudancaDeDieta,
   pedeMudancaDeTreino,
-  refeicoesPedidas,
 } from '../intencao';
 
 /**
@@ -34,7 +40,8 @@ export const FERRAMENTAS_COACH = {
   atualizar_dieta: {
     descricao:
       'Cria ou muda o plano alimentar salvo no app. Use só quando a pessoa pedir para criar ou mudar a dieta.',
-    exemplo: 'Ex: "trocar o café da manhã por algo sem ovo".',
+    exemplo:
+      'Ex: "trocar o café da manhã por algo sem ovo" ou "trocar o almoço de quarta". Cite o dia da semana se a pessoa citou.',
   },
   atualizar_treinos: {
     descricao:
@@ -44,7 +51,8 @@ export const FERRAMENTAS_COACH = {
   ajustar_treino: {
     descricao:
       'Muda só uma parte dos treinos salvos (trocar, tirar ou incluir um exercício, mudar séries de um treino). O resto fica igual. Use para pedidos pequenos.',
-    exemplo: 'Ex: "trocar o leg press do treino A por agachamento livre".',
+    exemplo:
+      'Ex: "trocar o leg press do treino A por agachamento livre" ou "trocar o supino da sexta por supino inclinado". Cite o dia da semana se a pessoa citou.',
   },
 } as const;
 
@@ -75,9 +83,9 @@ export async function* montarDietaEConfirmar(
   pedidoDieta: string,
   textoAntes: string,
 ): AsyncGenerator<EventoCoach> {
-  const atual = pedido.planoAtual ?? null;
-  const modo = modoDaDieta(pedidoDieta, atual !== null);
-  const alvos = modo === 'ajuste' ? refeicoesPedidas(pedidoDieta) : [];
+  // "muda o almoço de quarta": o alvo é o plano de quarta (os outros dias ficam)
+  const { modo, alvos, dias, atual } = alvoDaDieta(pedido, pedidoDieta, ultimaMensagem(pedido));
+  const nomeDias = textoDosDias(dias);
 
   yield {
     tipo: 'texto',
@@ -95,12 +103,12 @@ export async function* montarDietaEConfirmar(
     const nomes = alvos.map((slot) => NOME_SLOT[slot].toLowerCase()).join(', ');
 
     instrucoes =
-      `${pedido.contexto}\n\nDieta atual (JSON):\n${JSON.stringify(atual)}\n\n` +
+      `${pedido.contexto}\n\nDieta atual${dias.length > 0 ? ` de ${nomeDias}` : ''} (JSON):\n${JSON.stringify(atual)}\n\n` +
       `Pedido do usuário para a dieta: ${pedidoDieta}\n` +
       (alvos.length > 0
         ? `Mude SOMENTE estas refeições: ${nomes}. Copie todas as outras exatamente iguais, com os mesmos alimentos, quantidades, horários e calorias. A refeição nova deve ter calorias parecidas com a antiga.`
         : 'Mude só o que foi pedido e copie todo o resto exatamente igual.') +
-      ' Devolva o plano completo.';
+      ' Reaproveite os alimentos que já estão no plano sempre que der. Devolva o plano completo.';
   } else {
     const divisao = meta
       ? '\nDivisão das refeições (siga estes horários e calorias):\n' +
@@ -108,13 +116,25 @@ export async function* montarDietaEConfirmar(
           .map((refeicao) => `${refeicao.horario} ${refeicao.nome}: ${refeicao.kcal} kcal`)
           .join('\n')
       : '';
+    const treinoDoDia =
+      dias.length === 1 ? treinoNoDia(pedido.treinosAtuais ?? [], dias[0]) : undefined;
+    const doDia =
+      dias.length > 0
+        ? `\nEste plano vale só para ${nomeDias}.` +
+          (treinoDoDia ? ` Neste dia a pessoa treina: ${treinoDoDia}.` : '')
+        : '';
 
-    instrucoes = `${pedido.contexto}\n${divisao}\n\nPedido do usuário para a dieta: ${pedidoDieta}`;
+    instrucoes = `${pedido.contexto}\n${divisao}${doDia}\n\nPedido do usuário para a dieta: ${pedidoDieta}`;
   }
 
   const gerado = await gerarPlanoComIa(provedor, instrucoes, meta);
-  const plano = mesclarPlano(atual, gerado, alvos);
-  const mudancas = modo === 'ajuste' ? resumoMudancasDieta(atual, plano) : [];
+  const plano = modo === 'ajuste' ? mesclarPlano(atual, gerado, alvos) : gerado;
+  const mudancas =
+    modo === 'ajuste'
+      ? comPrefixoDias(resumoMudancasDieta(atual, plano), dias)
+      : dias.length > 0
+        ? [`${nomeDias}: plano novo só para ${dias.length === 1 ? 'esse dia' : 'esses dias'}`]
+        : [];
 
   if (modo === 'ajuste' && mudancas.length === 0) {
     yield {
@@ -125,7 +145,13 @@ export async function* montarDietaEConfirmar(
     return;
   }
 
-  yield { tipo: 'dieta', plano, modo, ...(alvos.length > 0 ? { refeicoes: alvos } : {}) };
+  yield {
+    tipo: 'dieta',
+    plano,
+    modo,
+    ...(alvos.length > 0 ? { refeicoes: alvos } : {}),
+    ...(dias.length > 0 ? { dias } : {}),
+  };
   yield { tipo: 'texto', texto: confirmarPlano(plano, mudancas) };
 }
 
@@ -169,6 +195,8 @@ function paraIa(treinos: readonly TreinoAtual[]) {
   return treinos.map((treino) => ({
     nome: treino.nome,
     foco: treino.foco ?? '',
+    // Só para a IA saber o dia de cada treino; ela não devolve este campo
+    ...(treino.dias && treino.dias.length > 0 ? { dias: textoDosDias(treino.dias) } : {}),
     exercicios: treino.exercicios.map((exercicio) => ({
       nome: exercicio.nome,
       grupo: exercicio.grupo ?? inferirGrupo(exercicio.nome),
@@ -193,29 +221,63 @@ export async function* ajustarTreinoEConfirmar(
     return;
   }
 
+  // "troca o supino da sexta": só o treino de sexta pode mudar
+  // Aqui já é um ajuste: o dia citado é sempre o alvo
+  const diasAlvo = [
+    ...new Set([
+      ...diasDoAjusteDeTreino(pedidoTreinos),
+      ...diasDoAjusteDeTreino(ultimaMensagem(pedido)),
+    ]),
+  ].sort((a, b) => a - b);
+  const doDia = treinosNosDias(atuais, diasAlvo);
+
+  if (diasAlvo.length > 0 && doDia.length === 0) {
+    yield {
+      tipo: 'texto',
+      texto:
+        `${separador(textoAntes)}Você não tem treino marcado ${diasAlvo.length === 1 ? (diasAlvo[0] === 0 || diasAlvo[0] === 6 ? 'no' : 'na') : 'em'} ${textoDosDias(diasAlvo)}. ` +
+        'Me diz de qual treino é o exercício, ou marque os dias na aba Treinos.',
+    };
+    return;
+  }
+
   yield {
     tipo: 'texto',
     texto: `${separador(textoAntes)}Bora! Mudando só o que você pediu. Leva uns 20 segundos.\n\n`,
   };
 
+  const soDoDia =
+    doDia.length > 0
+      ? `Mude SOMENTE ${doDia.map((treino) => `o ${treino.nome}`).join(' e ')} (o treino de ${diasAlvo.map(nomeDoDiaSemana).join(' e ')}). Copie todos os outros treinos exatamente iguais.\n`
+      : '';
+
   const resultado = await gerarTreinos(
     provedor,
     `${pedido.contexto}\n\nTreinos atuais (JSON):\n${JSON.stringify({ treinos: paraIa(atuais) })}\n\n` +
-      `Pedido do usuário: ${pedidoTreinos}\n` +
-      'Devolva todos os treinos, mudando só o que foi pedido.',
+      `Pedido do usuário: ${pedidoTreinos}\n${soDoDia}` +
+      'Devolva todos os treinos, mudando só o que foi pedido. Mantenha os nomes dos exercícios que não mudam exatamente iguais.',
     'ajuste',
   );
 
   // Ids só para comparar: o app junta de novo com os ids reais
   let contador = 0;
-  const mesclados = mesclarTreinos(atuais, paraDadosTreino(resultado), () => {
-    contador += 1;
-    return `novo-${contador}`;
-  });
-  const mudancas = resumoMudancas(atuais, mesclados);
+  const mesclados = restringirAosDias(
+    atuais,
+    mesclarTreinos(atuais, paraDadosTreino(resultado), () => {
+      contador += 1;
+      return `novo-${contador}`;
+    }),
+    diasAlvo,
+  );
+  const mudancas = resumoMudancas(atuais, mesclados, { diasAlvo });
 
   if (mudancas.length > 0) {
-    yield { tipo: 'treinos', resultado, modo: 'ajuste' };
+    yield {
+      tipo: 'treinos',
+      resultado,
+      modo: 'ajuste',
+      ...(diasAlvo.length > 0 ? { diasAlvo } : {}),
+    };
   }
 
   yield { tipo: 'texto', texto: confirmarTreinos(resultado, { mudancas }) };

@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { textoDietaInicio } from '@/features/dieta/logica';
-import { useDietaStore } from '@/features/dieta/store';
+import { usePlanoDeHoje } from '@/features/dieta/store';
 import type { Perfil } from '@/features/perfil/types';
 import { espaco, familia, fonte, raio } from '@/shared/theme/tokens';
 import { useCategorias, useCores } from '@/shared/theme/useCores';
@@ -25,7 +25,7 @@ export function CartaoDietaInicio({
 }) {
   const c = useCores();
   const cat = useCategorias();
-  const plano = useDietaStore((state) => state.plano);
+  const plano = usePlanoDeHoje();
   const meta = calcularNecessidades(perfil)?.metaCalorias ?? null;
   const texto = textoDietaInicio(plano, meta);
 
