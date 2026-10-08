@@ -13,6 +13,8 @@ export type PaletaBolinhas = {
   contorno: string;
   /** Sigla embaixo e ícone do descanso. */
   rotulo: string;
+  /** Fundo do dia congelado (azul gelo do tema). */
+  congelado: string;
 };
 
 type Props = {
@@ -26,13 +28,14 @@ type Props = {
 
 /**
  * A semana em 7 bolinhas, como no Duolingo: check verde nos dias que contaram,
- * lua no descanso do plano (neutro, não quebra) e hoje contornado.
+ * lua no descanso (neutro, conta), floco de neve no dia congelado e hoje contornado.
  */
 export function BolinhasSemana({ bolinhas, paleta, tamanho = 36, tamanhoFixo = false }: Props) {
   return (
     <View style={estilos.linha}>
       {bolinhas.map((bolinha) => {
         const feito = bolinha.estado === 'feito';
+        const congelado = bolinha.estado === 'congelado';
 
         return (
           <View
@@ -47,13 +50,19 @@ export function BolinhasSemana({ bolinhas, paleta, tamanho = 36, tamanhoFixo = f
                 {
                   width: tamanho,
                   height: tamanho,
-                  backgroundColor: feito ? semana.completo : paleta.vazio,
+                  backgroundColor: feito
+                    ? semana.completo
+                    : congelado
+                      ? paleta.congelado
+                      : paleta.vazio,
                   borderColor: bolinha.hoje ? paleta.contorno : 'transparent',
                 },
               ]}
             >
               {feito ? (
                 <Ionicons name="checkmark" size={tamanho * 0.6} color={semana.texto} />
+              ) : congelado ? (
+                <Ionicons name="snow" size={tamanho * 0.5} color={semana.texto} />
               ) : bolinha.estado === 'descanso' ? (
                 <Ionicons name="moon" size={tamanho * 0.42} color={paleta.rotulo} />
               ) : null}

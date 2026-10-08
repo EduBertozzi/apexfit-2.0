@@ -150,6 +150,18 @@ O coach nunca salva dieta ou treinos sozinho. O plano ou os treinos que chegam (
 
 Pedido pequeno muda só o que foi pedido. `coach/intencao.ts` separa plano novo ("monta", "refaz", "novo treino") de ajuste ("troca o leg press por agachamento", "troca o café da manhã"). No ajuste, o app manda `planoAtual` e `treinosAtuais` no pedido, a IA devolve uma cópia editada e as funções puras `mesclarPlano` (`dieta/mesclar.ts`, as outras refeições voltam idênticas) e `mesclarTreinos` (`treinos/mesclar.ts`, exercício com o mesmo nome mantém o id, então sessões e marcas continuam valendo) montam o resultado e o resumo do que mudou.
 
+### Sequência: descanso, congelador e última chance
+
+A chama da tela inicial e a página `/sequencia` usam uma regra só, em `treinos/regraSequencia.ts` (pura, testada em `regraSequencia.test.ts` e `congelador.test.ts`). Ninguém é o super-homem: descansar faz parte.
+
+- **Conta (+1)**: dia com pelo menos 50% do treino; dia de **descanso do plano** semanal (dia sem treino marcado) também conta, desde que já exista uma sequência (descanso nunca começa uma sozinho).
+- **Folga do rodízio**: num dia sem treino marcado (rodízio, ou dia livre de um plano misto), **um** dia sem treino logo depois de um dia treinado não quebra. Ele aparece como descanso e conta quando o próximo dia é treinado. Dois dias seguidos sem treino quebram. Falta em dia marcado do plano nunca é folga.
+- **Congelador**: a cada 7 dias de sequência (7, 14, 21...) ganha 1, guardando no máximo 2; começa com 0 e quebrar não tira os guardados. A falta que quebraria a sequência gasta um sozinho: o dia fica **congelado** (azul gelo `c.congelado` e floco de neve), a sequência segue, mas o dia não soma. Sem sequência (0), nada é gasto.
+- **Hoje** ainda não acabou: sem treino, não conta nem quebra; descanso do plano de hoje já conta. `risco` diz o que aconteceria se hoje passar em branco (`quebra`, `ultimo-congelador`, `congela` ou `nenhum`).
+- **Dias congelados ficam salvos** em `useTreinosStore.congelados` (persist versão 2, `migrarTreinos`). Um dia salvo continua congelado mesmo que o plano mude depois, então a sequência nunca quebra para trás. Quem salva é o efeito de `useUltimaChance`.
+- **Última chance**: com sequência em jogo e risco `quebra` ou `ultimo-congelador`, aparece o aviso "última chance" na tela inicial (acima da faixa da semana) e na página de sequência, e uma notificação local é agendada para as 20:00 de hoje, só se a permissão já foi dada (o app não pede só por isso). O plano é puro (`treinos/ultimaChance.ts`, `planejarAvisoUltimaChance`); o efeito fino é `treinos/useUltimaChance.ts`, que cancela o aviso quando o treino de hoje é feito. A conversa com o expo-notifications continua toda em `lembretes/notificacoes.ts` (`agendarAvisoUnico`, `cancelarAviso`, `podeNotificar`).
+- **Calendários**: na faixa da semana e no calendário da sequência, um anel (`shared/ui/AnelProgresso`, react-native-svg) em volta do número mostra quanto do treino foi feito (cheio = 100%), com as cores da regra do calendário (arco na versão forte `semana.anel`). Hoje fica em branco e o futuro só com o trilho cinza. O calendário da sequência é um mês por página, deslizando para o lado (ou pelas setas), sempre com 6 linhas.
+
 ### Design system "Bento"
 
 Tudo visual sai de `src/shared/theme/tokens.ts` (cores, `espaco`, `raio`, `familia`, `fonte`). Nada de cor ou medida escrita direto no componente. Regras que valem para qualquer tela nova:

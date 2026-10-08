@@ -1,52 +1,64 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { borda, espaco, familia, fonte, raio, semana } from '@/shared/theme/tokens';
+import { espaco, familia, fonte, raio, semana } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
-import { Cartao, Texto } from '@/shared/ui';
+import { AnelProgresso, Cartao, Texto } from '@/shared/ui';
 
+import type { MarcasDosDias } from '../semana';
 import {
-  mesVizinho,
   rotuloDoDiaDoCalendario,
   textoTreinosNoMes,
   type DiaDoCalendario,
   type EstadoDoCalendario,
 } from '../sequencia';
-import { useMesDaSequencia } from '../useSequencia';
+import { useMesDaSequencia, useMesesDaSequencia } from '../useSequencia';
 
 const INICIAIS = ['d', 's', 't', 'q', 'q', 's', 's'];
+/** Sempre 6 linhas: todas as páginas têm a mesma altura ao deslizar. */
+const CASAS = 42;
+/** Largura usada até a medida real chegar (cartão num celular de 360 px). */
+const LARGURA_INICIAL = 296;
+const ANEL_MAXIMO = 46;
+/** Respiro entre as linhas (e lugar para o ponto de hoje). */
+const RESPIRO_LINHA = 8;
 
 type Props = {
   hoje: Date;
 };
 
-/** Calendário do mês com as cores da faixa da semana. Volta até o mês do primeiro treino. */
+/**
+ * Calendário da sequência: um mês por página, deslizando para o lado (ou pelas
+ * setas), do mês do primeiro treino até o de hoje. Cada dia tem um anel com
+ * quanto do treino foi feito, nas cores da faixa da semana.
+ */
 export function CalendarioSequencia({ hoje }: Props) {
   const c = useCores();
-  const [visivel, setVisivel] = useState({ ano: hoje.getFullYear(), mes: hoje.getMonth() });
-  const mes = useMesDaSequencia(visivel.ano, visivel.mes, hoje);
-  const ir = (delta: number) => setVisivel(mesVizinho(visivel.ano, visivel.mes, delta));
+  const { meses, marcas } = useMesesDaSequencia(hoje);
+  const [indice, setIndice] = useState(meses.length - 1);
+  const [largura, setLargura] = useState(0);
+  const lista = useRef<FlatList<{ ano: number; mes: number }>>(null);
+  const atual = Math.min(Math.max(indice, 0), meses.length - 1);
+  const visivel = meses[atual];
+  const mes = useMesDaSequencia(visivel.ano, visivel.mes, hoje, marcas);
+  const larguraPagina = largura > 0 ? largura : LARGURA_INICIAL;
+  const casa = Math.floor(larguraPagina / 7);
 
-  const fundoDe: Record<EstadoDoCalendario, string> = {
-    completo: semana.completo,
-    parcial: semana.parcial,
-    fraco: semana.fraco,
-    descanso: c.superficieSecundaria,
-    hoje: 'transparent',
-    futuro: 'transparent',
-    vazio: 'transparent',
+  const ir = (delta: number) => {
+    const novo = Math.min(Math.max(atual + delta, 0), meses.length - 1);
+
+    setIndice(novo);
+    lista.current?.scrollToIndex({ index: novo, animated: true });
   };
-  const pintado = (dia: DiaDoCalendario) =>
-    dia.estado === 'completo' || dia.estado === 'parcial' || dia.estado === 'fraco';
 
   return (
-    <Cartao>
+    <Cartao style={estilos.cartao}>
       <View style={estilos.topo}>
         <SetaMes
           icone="chevron-back"
           rotulo="mês anterior"
-          ativo={mes.temAnterior}
+          ativo={atual > 0}
           onPress={() => ir(-1)}
         />
         <Texto
@@ -60,18 +72,18 @@ export function CalendarioSequencia({ hoje }: Props) {
         <SetaMes
           icone="chevron-forward"
           rotulo="próximo mês"
-          ativo={mes.temProximo}
+          ativo={atual < meses.length - 1}
           onPress={() => ir(1)}
         />
       </View>
 
       <View
-        style={estilos.grade}
+        style={estilos.linha}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        {INICIAIS.map((inicial, indice) => (
-          <View key={indice} style={estilos.casa}>
+        {INICIAIS.map((inicial, posicao) => (
+          <View key={posicao} style={[estilos.inicialCasa, { width: casa }]}>
             <Text
               maxFontSizeMultiplier={1.3}
               style={[estilos.inicial, { color: c.textoSecundario }]}
@@ -82,44 +94,46 @@ export function CalendarioSequencia({ hoje }: Props) {
         ))}
       </View>
 
-      <View style={estilos.grade}>
-        {Array.from({ length: mes.deslocamento }, (_, indice) => (
-          <View key={`vazio-${indice}`} style={estilos.casa} />
-        ))}
-        {mes.dias.map((dia) => (
-          <View
-            key={dia.chave}
-            accessible
-            accessibilityLabel={rotuloDoDiaDoCalendario(dia, mes.mes)}
-            style={estilos.casa}
-          >
-            <View
-              style={[
-                estilos.dia,
-                {
-                  backgroundColor: fundoDe[dia.estado],
-                  borderColor: dia.hoje ? c.texto : 'transparent',
-                },
-              ]}
-            >
-              <Text
-                maxFontSizeMultiplier={1.3}
-                style={[
-                  estilos.numero,
-                  {
-                    color: pintado(dia)
-                      ? semana.texto
-                      : dia.estado === 'hoje' || dia.estado === 'descanso'
-                        ? c.texto
-                        : c.textoSecundario,
-                  },
-                ]}
-              >
-                {dia.dia}
-              </Text>
-            </View>
-          </View>
-        ))}
+      <View onLayout={(evento) => setLargura(Math.floor(evento.nativeEvent.layout.width))}>
+        {largura > 0 ? (
+          <FlatList
+            ref={lista}
+            data={meses}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => `${item.ano}-${item.mes}`}
+            getItemLayout={(_, posicao) => ({
+              length: largura,
+              offset: largura * posicao,
+              index: posicao,
+            })}
+            initialScrollIndex={atual}
+            initialNumToRender={2}
+            windowSize={3}
+            onMomentumScrollEnd={(evento) =>
+              setIndice(Math.round(evento.nativeEvent.contentOffset.x / largura))
+            }
+            accessibilityLabel="meses, deslize para o lado"
+            renderItem={({ item }) => (
+              <PaginaMes
+                ano={item.ano}
+                mes={item.mes}
+                hoje={hoje}
+                marcas={marcas}
+                largura={largura}
+              />
+            )}
+          />
+        ) : (
+          <PaginaMes
+            ano={visivel.ano}
+            mes={visivel.mes}
+            hoje={hoje}
+            marcas={marcas}
+            largura={larguraPagina}
+          />
+        )}
       </View>
 
       <Texto variante="legenda" secundario accessibilityLiveRegion="polite">
@@ -127,6 +141,112 @@ export function CalendarioSequencia({ hoje }: Props) {
       </Texto>
       <Legenda />
     </Cartao>
+  );
+}
+
+function PaginaMes({
+  ano,
+  mes,
+  hoje,
+  marcas,
+  largura,
+}: {
+  ano: number;
+  mes: number;
+  hoje: Date;
+  marcas: MarcasDosDias;
+  largura: number;
+}) {
+  const dados = useMesDaSequencia(ano, mes, hoje, marcas);
+  const casa = Math.floor(largura / 7);
+  const anel = Math.min(casa - 4, ANEL_MAXIMO);
+  const sobra = CASAS - dados.deslocamento - dados.dias.length;
+
+  return (
+    <View style={[estilos.grade, { width: largura }]}>
+      {Array.from({ length: dados.deslocamento }, (_, posicao) => (
+        <View key={`antes-${posicao}`} style={{ width: casa, height: casa + RESPIRO_LINHA }} />
+      ))}
+      {dados.dias.map((dia) => (
+        <CasaDoDia key={dia.chave} dia={dia} mes={dados.mes} casa={casa} anel={anel} />
+      ))}
+      {Array.from({ length: Math.max(sobra, 0) }, (_, posicao) => (
+        <View key={`depois-${posicao}`} style={{ width: casa, height: casa + RESPIRO_LINHA }} />
+      ))}
+    </View>
+  );
+}
+
+type CoresCasa = { fundo?: string; arco: string; trilho: string; numero: string };
+
+function CasaDoDia({
+  dia,
+  mes,
+  casa,
+  anel,
+}: {
+  dia: DiaDoCalendario;
+  mes: number;
+  casa: number;
+  anel: number;
+}) {
+  const c = useCores();
+  const pastel = (fundo: string, arco: string): CoresCasa => ({
+    fundo,
+    arco,
+    trilho: semana.trilho,
+    numero: semana.texto,
+  });
+  const cores: Record<EstadoDoCalendario, CoresCasa> = {
+    completo: pastel(semana.completo, semana.anel.completo),
+    parcial: pastel(semana.parcial, semana.anel.parcial),
+    fraco: pastel(semana.fraco, semana.anel.fraco),
+    congelado: pastel(c.congelado, semana.anel.congelado),
+    descanso: {
+      fundo: c.superficieSecundaria,
+      arco: c.textoSecundario,
+      trilho: 'transparent',
+      numero: c.texto,
+    },
+    hoje: { arco: c.texto, trilho: c.superficieSecundaria, numero: c.texto },
+    futuro: { arco: c.textoSecundario, trilho: c.superficieSecundaria, numero: c.textoSecundario },
+    vazio: { arco: 'transparent', trilho: 'transparent', numero: c.textoSecundario },
+  };
+  const cor = cores[dia.estado];
+
+  return (
+    <View
+      accessible
+      accessibilityLabel={rotuloDoDiaDoCalendario(dia, mes)}
+      style={[estilos.casa, { width: casa, height: casa + RESPIRO_LINHA }]}
+    >
+      <AnelProgresso
+        tamanho={anel}
+        espessura={3}
+        margem={2}
+        fracao={dia.fracao}
+        corArco={cor.arco}
+        corTrilho={cor.trilho}
+        fundo={cor.fundo}
+      >
+        <Text
+          maxFontSizeMultiplier={1.2}
+          style={[
+            estilos.numero,
+            dia.hoje && estilos.numeroHoje,
+            { color: cor.numero, fontSize: Math.min(fonte.rotulo, anel * 0.4) },
+          ]}
+        >
+          {dia.dia}
+        </Text>
+      </AnelProgresso>
+      {dia.estado === 'congelado' ? (
+        <View style={[estilos.selo, { backgroundColor: semana.circulo }]}>
+          <Ionicons name="snow" size={10} color={semana.anel.congelado} />
+        </View>
+      ) : null}
+      {dia.hoje ? <View style={[estilos.pontoHoje, { backgroundColor: c.texto }]} /> : null}
+    </View>
   );
 }
 
@@ -170,6 +290,7 @@ function Legenda() {
     { cor: semana.parcial, texto: 'metade' },
     { cor: semana.fraco, texto: 'pouco ou nada' },
     { cor: c.superficieSecundaria, texto: 'descanso' },
+    { cor: c.congelado, texto: 'congelado' },
   ];
 
   return (
@@ -186,16 +307,24 @@ function Legenda() {
           </Texto>
         </View>
       ))}
+      <Texto variante="legenda" secundario>
+        o anel mostra quanto do treino foi feito
+      </Texto>
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
+  // Um pouco menos de respiro nas laterais: sobra espaço para as casas do mês
+  cartao: {
+    paddingHorizontal: espaco.md - 4,
+  },
   topo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: espaco.sm,
+    paddingHorizontal: 4,
   },
   titulo: {
     flexShrink: 1,
@@ -208,22 +337,17 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  linha: {
+    flexDirection: 'row',
+  },
+  inicialCasa: {
+    alignItems: 'center',
+  },
   grade: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   casa: {
-    width: `${100 / 7}%`,
-    aspectRatio: 1,
-    padding: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dia: {
-    width: '100%',
-    height: '100%',
-    borderRadius: raio.total,
-    borderWidth: borda.grossa,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -233,12 +357,33 @@ const estilos = StyleSheet.create({
   },
   numero: {
     fontFamily: familia.corpoMedio,
-    fontSize: fonte.rotulo,
+  },
+  numeroHoje: {
+    fontFamily: familia.display,
+  },
+  selo: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: raio.total,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pontoHoje: {
+    position: 'absolute',
+    bottom: 0,
+    width: 4,
+    height: 4,
+    borderRadius: raio.total,
   },
   legenda: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: espaco.md,
+    columnGap: espaco.md,
+    rowGap: espaco.xs,
+    paddingHorizontal: 4,
   },
   itemLegenda: {
     flexDirection: 'row',

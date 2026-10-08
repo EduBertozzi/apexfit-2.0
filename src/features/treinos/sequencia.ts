@@ -1,20 +1,20 @@
 /**
  * Página de sequência: recorde, calendário do mês, marcos e frases.
- * Usa as mesmas regras da chama da tela inicial (`semana.ts`): o dia conta
- * com pelo menos 50% do treino e o descanso do plano semanal não quebra.
+ * A regra de quem conta, descansa ou congela fica em `regraSequencia.ts`;
+ * aqui só se monta o que a página mostra a partir dela.
  */
-import { diasEntre } from '@/shared/lib/data';
-
+import { calcularSequencia } from './regraSequencia';
 import {
   detalheDoDia,
   diaDaSemana,
   ehDescanso,
-  estadoPelaFracao,
+  estadoDoDiaPassado,
   fracaoDoDia,
   MINIMO_PARCIAL,
   NOME_DIA,
   SIGLAS_DIA,
   somarDias,
+  type MarcasDosDias,
   type SiglaDia,
 } from './semana';
 import type { Sessao, Treino } from './types';
@@ -28,7 +28,7 @@ export function diaContou(
   return (fracaoDoDia(treinos, sessoes, chave) ?? 0) >= MINIMO_PARCIAL;
 }
 
-/** Descanso do plano sem treino feito: não conta, mas também não quebra. */
+/** Descanso do plano sem treino feito (a regra completa, que também conta o descanso, está em `regraSequencia.ts`). */
 export function diaPulavel(
   treinos: readonly Treino[],
   sessoes: readonly Sessao[],
@@ -51,36 +51,16 @@ export function primeiroDiaRegistrado(sessoes: readonly Sessao[]): string | null
 }
 
 /**
- * Maior sequência do histórico (o recorde), com a mesma regra da chama.
- * Hoje sem treino ainda não quebra nada: a sequência de ontem segue valendo.
+ * Maior sequência do histórico (o recorde), com a mesma regra da chama
+ * (`regraSequencia.ts`). Hoje sem treino ainda não quebra nada.
  */
 export function maiorSequencia(
   treinos: readonly Treino[],
   sessoes: readonly Sessao[],
   hoje: string,
+  salvos: readonly string[] = [],
 ): number {
-  const inicio = primeiroDiaRegistrado(sessoes);
-
-  if (inicio === null || inicio > hoje) {
-    return 0;
-  }
-
-  let recorde = 0;
-  let atual = 0;
-  const total = diasEntre(inicio, hoje);
-
-  for (let n = 0; n <= total; n++) {
-    const dia = somarDias(inicio, n);
-
-    if (diaContou(treinos, sessoes, dia)) {
-      atual++;
-      recorde = Math.max(recorde, atual);
-    } else if (!diaPulavel(treinos, sessoes, dia)) {
-      atual = 0;
-    }
-  }
-
-  return recorde;
+  return calcularSequencia(treinos, sessoes, hoje, salvos).recorde;
 }
 
 /** Quantos dias contaram desde sempre ("dias de treino no total"). */
@@ -100,12 +80,13 @@ export function diasDeTreinoNoTotal(
 
 /**
  * - feito: o dia contou (check)
- * - descanso: descanso do plano, neutro
+ * - descanso: descanso do plano ou folga do rodízio, neutro
+ * - congelado: falta coberta por um congelador (floco de neve)
  * - perdido: já passou e não contou
  * - pendente: hoje, ainda sem os 50%
  * - futuro: ainda não chegou
  */
-export type EstadoBolinha = 'feito' | 'descanso' | 'perdido' | 'pendente' | 'futuro';
+export type EstadoBolinha = 'feito' | 'descanso' | 'congelado' | 'perdido' | 'pendente' | 'futuro';
 
 export type BolinhaDaSemana = {
   chave: string;
@@ -118,6 +99,7 @@ export function semanaDaSequencia(
   treinos: readonly Treino[],
   sessoes: readonly Sessao[],
   hoje: string,
+  marcas: MarcasDosDias = {},
 ): BolinhaDaSemana[] {
   const domingo = somarDias(hoje, -diaDaSemana(hoje));
 
@@ -129,7 +111,9 @@ export function semanaDaSequencia(
       estado = 'futuro';
     } else if (diaContou(treinos, sessoes, chave)) {
       estado = 'feito';
-    } else if (diaPulavel(treinos, sessoes, chave)) {
+    } else if (marcas[chave] === 'congelado') {
+      estado = 'congelado';
+    } else if (marcas[chave] === 'descanso' || diaPulavel(treinos, sessoes, chave)) {
       estado = 'descanso';
     } else {
       estado = chave === hoje ? 'pendente' : 'perdido';
@@ -142,6 +126,7 @@ export function semanaDaSequencia(
 const DESCRICAO_BOLINHA: Record<EstadoBolinha, string> = {
   feito: 'treinou',
   descanso: 'descanso',
+  congelado: 'congelado, a sequência seguiu',
   perdido: 'não treinou',
   pendente: 'ainda sem treino',
   futuro: 'ainda não chegou',
@@ -161,19 +146,22 @@ export function rotuloDaBolinha(bolinha: BolinhaDaSemana): string {
 /**
  * Cor de cada dia no calendário (mesmas cores da faixa da semana):
  * - completo, parcial, fraco: pelo quanto foi feito
- * - descanso: descanso do plano
+ * - descanso: descanso do plano ou folga do rodízio
+ * - congelado: falta coberta por um congelador
  * - hoje: hoje ainda sem os 50% (neutro, só contornado)
  * - futuro: ainda não chegou
  * - vazio: antes do primeiro treino registrado (não pinta de vermelho)
  */
 export type EstadoDoCalendario =
-  'completo' | 'parcial' | 'fraco' | 'descanso' | 'hoje' | 'futuro' | 'vazio';
+  'completo' | 'parcial' | 'fraco' | 'descanso' | 'congelado' | 'hoje' | 'futuro' | 'vazio';
 
 export type DiaDoCalendario = {
   chave: string;
   dia: number;
   estado: EstadoDoCalendario;
   hoje: boolean;
+  /** De 0 a 1 (o anel em volta do número); `null` sem treino ou no futuro. */
+  fracao: number | null;
 };
 
 export type MesDoCalendario = {
@@ -231,6 +219,7 @@ export function diasDoMes(
   treinos: readonly Treino[],
   sessoes: readonly Sessao[],
   hoje: string,
+  marcas: MarcasDosDias = {},
 ): MesDoCalendario {
   const totalDias = new Date(ano, mes + 1, 0).getDate();
   const primeiro = primeiroDiaRegistrado(sessoes);
@@ -241,28 +230,25 @@ export function diasDoMes(
     const chave = chaveDe(ano, mes, dia);
     const ehHoje = chave === hoje;
     let estado: EstadoDoCalendario;
+    const fracao = chave > hoje ? null : fracaoDoDia(treinos, sessoes, chave);
 
     if (chave > hoje) {
       estado = 'futuro';
     } else {
-      const fracao = fracaoDoDia(treinos, sessoes, chave);
-
       if (fracao !== null && fracao >= MINIMO_PARCIAL) {
         treinosNoMes++;
       }
 
       if (fracao === null && !ehHoje && (primeiro === null || chave < primeiro)) {
         estado = 'vazio';
-      } else if (fracao === null && ehDescanso(treinos, sessoes, chave)) {
-        estado = 'descanso';
       } else if (ehHoje && (fracao ?? 0) < MINIMO_PARCIAL) {
-        estado = 'hoje';
+        estado = ehDescanso(treinos, [], chave) ? 'descanso' : 'hoje';
       } else {
-        estado = estadoPelaFracao(fracao);
+        estado = estadoDoDiaPassado(treinos, chave, fracao, marcas[chave]);
       }
     }
 
-    dias.push({ chave, dia, estado, hoje: ehHoje });
+    dias.push({ chave, dia, estado, hoje: ehHoje, fracao });
   }
 
   const indice = ano * 12 + mes;
@@ -289,17 +275,37 @@ const DESCRICAO_CALENDARIO: Record<EstadoDoCalendario, string> = {
   parcial: 'treino parcial',
   fraco: 'pouco ou nada feito',
   descanso: 'descanso',
+  congelado: 'congelado, a sequência seguiu',
   hoje: 'hoje, ainda sem treino',
   futuro: 'ainda não chegou',
   vazio: 'sem registro',
 };
 
-/** "7 de outubro, treino completo" */
+/** "7 de outubro, treino completo, 100% do treino feito" */
 export function rotuloDoDiaDoCalendario(dia: DiaDoCalendario, mes: number): string {
   const descricao = DESCRICAO_CALENDARIO[dia.estado];
   const prefixo = dia.hoje && dia.estado !== 'hoje' ? 'hoje, ' : '';
+  const feito = dia.fracao === null ? '' : `, ${Math.round(dia.fracao * 100)}% do treino feito`;
 
-  return `${dia.dia} de ${NOME_MES[mes]}, ${prefixo}${descricao}`;
+  return `${dia.dia} de ${NOME_MES[mes]}, ${prefixo}${descricao}${feito}`;
+}
+
+/**
+ * Meses que o calendário mostra, do mês do primeiro treino até o de hoje
+ * (só o de hoje sem histórico). Ordem do mais antigo para o mais novo.
+ */
+export function mesesDoCalendario(
+  sessoes: readonly Sessao[],
+  hoje: string,
+): { ano: number; mes: number }[] {
+  const primeiro = primeiroDiaRegistrado(sessoes);
+  const fim = indiceDoMes(hoje);
+  const inicio = primeiro === null || primeiro > hoje ? fim : indiceDoMes(primeiro);
+
+  return Array.from({ length: fim - inicio + 1 }, (_, n) => ({
+    ano: Math.floor((inicio + n) / 12),
+    mes: (inicio + n) % 12,
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -379,9 +385,9 @@ export function fraseDaSequencia(dias: number): string {
   return 'um ano inteiro, lenda';
 }
 
-/** "dia seguido" ou "dias seguidos", embaixo do número. */
+/** "dia de sequência" ou "dias de sequência", embaixo do número. */
 export function rotuloDiasSeguidos(dias: number): string {
-  return dias === 1 ? 'dia seguido' : 'dias seguidos';
+  return dias === 1 ? 'dia de sequência' : 'dias de sequência';
 }
 
 /** Linha do treino de hoje no cartão de compartilhar: "treino A: 5 de 6 exercícios". */

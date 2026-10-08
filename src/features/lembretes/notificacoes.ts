@@ -106,3 +106,61 @@ export async function agendarLembretes(lembretes: Lembrete[]): Promise<void> {
     });
   }
 }
+
+// ---------------------------------------------------------------------------
+// Avisos de um dia só (ex: "última chance" da sequência de treinos)
+// ---------------------------------------------------------------------------
+
+const CANAL_SEQUENCIA = 'sequencia-treinos';
+
+/** Aviso único, numa data e hora. O plano (quando e o texto) vem da lógica pura da feature. */
+export type AvisoUnico = {
+  /** O mesmo id substitui o agendamento anterior. */
+  id: string;
+  titulo: string;
+  corpo: string;
+  quando: Date;
+};
+
+/** Já tem permissão? Não pede nada: só confere (o pedido fica nos lembretes de água). */
+export async function podeNotificar(): Promise<boolean> {
+  if (!notificacoesSuportadas()) {
+    return false;
+  }
+
+  return permitido(await Notifications.getPermissionsAsync());
+}
+
+/** Agenda (ou reagenda) um aviso que toca uma vez só. */
+export async function agendarAvisoUnico(aviso: AvisoUnico): Promise<void> {
+  if (!notificacoesSuportadas()) {
+    return;
+  }
+
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(CANAL_SEQUENCIA, {
+      name: 'Sequência de treinos',
+      importance: Notifications.AndroidImportance.DEFAULT,
+    });
+  }
+
+  await Notifications.cancelScheduledNotificationAsync(aviso.id);
+  await Notifications.scheduleNotificationAsync({
+    identifier: aviso.id,
+    content: { title: aviso.titulo, body: aviso.corpo },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: aviso.quando,
+      channelId: CANAL_SEQUENCIA,
+    },
+  });
+}
+
+/** Cancela um aviso agendado pelo id (sem erro se não existir). */
+export async function cancelarAviso(id: string): Promise<void> {
+  if (!notificacoesSuportadas()) {
+    return;
+  }
+
+  await Notifications.cancelScheduledNotificationAsync(id);
+}

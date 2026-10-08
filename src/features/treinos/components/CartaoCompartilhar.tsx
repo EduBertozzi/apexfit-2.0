@@ -23,7 +23,7 @@ type Props = {
   /** Largura na tela (a altura sai da proporção 9:16). */
   largura: number;
   dias: number;
-  /** "dias seguidos" ou "dia seguido" */
+  /** "dias de sequência" ou "dia de sequência" */
   rotulo: string;
   frase: string;
   bolinhas: readonly BolinhaDaSemana[];
@@ -57,7 +57,7 @@ export function CartaoCompartilhar({
       collapsable={false}
       accessible
       accessibilityRole="image"
-      accessibilityLabel={`prévia da imagem para compartilhar: ${dias} ${rotulo} treinando, ${nome}`}
+      accessibilityLabel={`prévia da imagem para compartilhar: ${dias} ${rotulo}, ${nome}`}
       style={[
         estilos.cartao,
         {
@@ -98,7 +98,7 @@ export function CartaoCompartilhar({
           allowFontScaling={false}
           style={[estilos.rotulo, { color: escuro.texto, fontSize: tam(fonte.subtitulo + 1) }]}
         >
-          {rotulo} treinando
+          {rotulo}
         </Text>
         <Text
           allowFontScaling={false}
@@ -128,6 +128,7 @@ export function CartaoCompartilhar({
               vazio: escuro.superficieSecundaria,
               contorno: escuro.texto,
               rotulo: escuro.textoSecundario,
+              congelado: escuro.congelado,
             }}
           />
         </View>

@@ -20,7 +20,7 @@ type Props = {
   sequencia: number;
 };
 
-/** "quarta / treino de hoje" à esquerda e a chama com os dias seguidos à direita. */
+/** "quarta / treino de hoje" à esquerda e a chama com os dias de sequência à direita. */
 export function CabecalhoTreinoHoje({
   nomeDoDia,
   titulo,

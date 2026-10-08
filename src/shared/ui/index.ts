@@ -1,3 +1,4 @@
+export { AnelProgresso } from './AnelProgresso';
 export { BarraProgresso } from './BarraProgresso';
 export { Botao } from './Botao';
 export { CampoTexto } from './CampoTexto';

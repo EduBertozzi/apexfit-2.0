@@ -11,9 +11,17 @@ import { minusculaInicial } from '@/shared/lib/texto';
  * - fraco: não treinou ou fez menos de 50% (vermelho)
  * - hoje: o dia de hoje (branco), qualquer que seja o progresso
  * - futuro: dias que ainda não chegaram (cinza)
- * - descanso: dia que já passou, sem treino no plano semanal e sem treino feito (neutro)
+ * - descanso: dia que já passou e foi descanso (do plano ou folga do rodízio, neutro)
+ * - congelado: falta coberta por um congelador (azul gelo), a sequência seguiu
  */
-export type EstadoDia = 'completo' | 'parcial' | 'fraco' | 'hoje' | 'futuro' | 'descanso';
+export type EstadoDia =
+  'completo' | 'parcial' | 'fraco' | 'hoje' | 'futuro' | 'descanso' | 'congelado';
+
+/** Marca que a regra da sequência (`regraSequencia.ts`) põe num dia que já passou. */
+export type MarcaDoDia = 'descanso' | 'congelado';
+
+/** Marcas por dia (AAAA-MM-DD). */
+export type MarcasDosDias = Readonly<Record<string, MarcaDoDia>>;
 
 export type SiglaDia = 'dom' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sáb';
 
@@ -157,19 +165,45 @@ export function ehDescanso(
   return treinoDoDia(treinos, sessoes, chave).descanso;
 }
 
-/** Como um dia aparece na faixa: cor pelo quanto foi feito, hoje, futuro ou descanso. */
+/**
+ * Como um dia passado aparece: a marca da regra da sequência (descanso ou
+ * congelado) vale primeiro; sem marca, descanso do plano sem treino; senão a
+ * cor pelo quanto foi feito.
+ */
+export function estadoDoDiaPassado(
+  treinos: readonly Treino[],
+  chave: string,
+  fracao: number | null,
+  marca: MarcaDoDia | undefined,
+): 'completo' | 'parcial' | 'fraco' | 'descanso' | 'congelado' {
+  if (marca === 'congelado') {
+    return 'congelado';
+  }
+
+  if ((fracao ?? 0) < MINIMO_PARCIAL && (marca === 'descanso' || ehDescanso(treinos, [], chave))) {
+    return 'descanso';
+  }
+
+  return estadoPelaFracao(fracao);
+}
+
+/** Como um dia aparece na faixa: cor pelo quanto foi feito, hoje, futuro, descanso ou congelado. */
 function diaDaFaixa(
   treinos: readonly Treino[],
   sessoes: readonly Sessao[],
   chave: string,
   hoje: string,
+  marcas: MarcasDosDias,
 ): DiaDaSemana {
   const futuro = chave > hoje;
   const fracao = futuro ? null : fracaoDoDia(treinos, sessoes, chave);
   const detalhe = futuro ? null : detalheDoDia(treinos, sessoes, chave);
-  const descanso = fracao === null && ehDescanso(treinos, sessoes, chave);
   const estado: EstadoDia =
-    chave === hoje ? 'hoje' : futuro ? 'futuro' : descanso ? 'descanso' : estadoPelaFracao(fracao);
+    chave === hoje
+      ? 'hoje'
+      : futuro
+        ? 'futuro'
+        : estadoDoDiaPassado(treinos, chave, fracao, marcas[chave]);
 
   return {
     chave,
@@ -186,8 +220,9 @@ export function diasDaSemana(
   treinos: readonly Treino[],
   sessoes: readonly Sessao[],
   hoje: string,
+  marcas: MarcasDosDias = {},
 ): DiaDaSemana[] {
-  return diasDaFaixa(treinos, sessoes, hoje, 0, 0);
+  return diasDaFaixa(treinos, sessoes, hoje, 0, 0, marcas);
 }
 
 /**
@@ -200,44 +235,14 @@ export function diasDaFaixa(
   hoje: string,
   antes = 1,
   depois = 1,
+  marcas: MarcasDosDias = {},
 ): DiaDaSemana[] {
   const domingo = somarDias(hoje, -diaDaSemana(hoje) - 7 * antes);
   const total = 7 * (antes + 1 + depois);
 
   return Array.from({ length: total }, (_, indice) =>
-    diaDaFaixa(treinos, sessoes, somarDias(domingo, indice), hoje),
+    diaDaFaixa(treinos, sessoes, somarDias(domingo, indice), hoje, marcas),
   );
-}
-
-/**
- * Dias seguidos treinando (pelo menos 50% do treino), contando para trás até hoje.
- * Hoje só entra se já passou de 50%: de manhã, antes do treino, a sequência não zera.
- */
-export function sequenciaDeDias(
-  treinos: readonly Treino[],
-  sessoes: readonly Sessao[],
-  hoje: string,
-): number {
-  const contou = (chave: string) => (fracaoDoDia(treinos, sessoes, chave) ?? 0) >= MINIMO_PARCIAL;
-  // Dia de descanso do plano não conta, mas também não quebra a sequência
-  const pulavel = (chave: string) =>
-    fracaoDoDia(treinos, sessoes, chave) === null && ehDescanso(treinos, sessoes, chave);
-
-  let total = contou(hoje) ? 1 : 0;
-  let dia = somarDias(hoje, -1);
-
-  // Limite de segurança: o histórico guarda no máximo um ano
-  for (let n = 0; n < 400; n++) {
-    if (contou(dia)) {
-      total++;
-    } else if (!pulavel(dia)) {
-      break;
-    }
-
-    dia = somarDias(dia, -1);
-  }
-
-  return total;
 }
 
 const DESCRICAO_ESTADO: Record<EstadoDia, string> = {
@@ -247,6 +252,7 @@ const DESCRICAO_ESTADO: Record<EstadoDia, string> = {
   hoje: 'hoje',
   futuro: 'ainda não chegou',
   descanso: 'dia de descanso',
+  congelado: 'congelado, a sequência seguiu',
 };
 
 /** "quarta" */
@@ -263,6 +269,7 @@ export function resumoDaSemana(dias: readonly DiaDaSemana[]): string {
     `${contar('parcial')} com treino parcial`,
     `${contar('fraco')} com pouco ou nada feito`,
     ...(contar('descanso') > 0 ? [`${contar('descanso')} de descanso`] : []),
+    ...(contar('congelado') > 0 ? [`${contar('congelado')} congelado`] : []),
   ];
   const detalhe = dias
     .map(
@@ -274,13 +281,13 @@ export function resumoDaSemana(dias: readonly DiaDaSemana[]): string {
   return `Sua semana: ${partes.join(', ')}. ${detalhe}.`;
 }
 
-/** "sequência de 3 dias treinando" */
+/** "3 dias de sequência" (treinos e descansos contam; ver `regraSequencia.ts`). */
 export function textoSequencia(dias: number): string {
   if (dias === 0) {
-    return 'nenhum dia seguido treinando ainda';
+    return 'nenhum dia de sequência ainda';
   }
 
-  return dias === 1 ? '1 dia seguido treinando' : `${dias} dias seguidos treinando`;
+  return dias === 1 ? '1 dia de sequência' : `${dias} dias de sequência`;
 }
 
 function porcentagem(fracao: number | null): number {
@@ -303,8 +310,14 @@ export function rotuloDoDia(dia: DiaDaSemana): string {
     return `${inicio}, ainda não chegou`;
   }
 
+  const feito = dia.detalhe ? `, ${porcentagem(dia.fracao)}% do treino feito` : '';
+
   if (dia.estado === 'descanso') {
-    return `${inicio}, dia de descanso`;
+    return `${inicio}, dia de descanso${feito}`;
+  }
+
+  if (dia.estado === 'congelado') {
+    return `${inicio}, congelado, a sequência seguiu${feito}`;
   }
 
   const prefixo = dia.estado === 'hoje' ? `${inicio}, hoje` : inicio;
@@ -327,6 +340,10 @@ export function resumoDoDia(dia: DiaDaSemana): string {
 
   if (dia.estado === 'descanso') {
     return `${nome}: descanso`;
+  }
+
+  if (dia.estado === 'congelado') {
+    return `${nome}: congelado, a sequência seguiu`;
   }
 
   if (!dia.detalhe) {

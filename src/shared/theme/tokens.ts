@@ -47,6 +47,8 @@ export const cores = {
     textoSobreDestaque: paleta.preto,
     erro: paleta.vermelho600,
     agua: '#8FB5F2',
+    /** Dia congelado e congeladores (Catppuccin Latte sky; texto escuro por cima). */
+    congelado: '#04A5E5',
     // "Herói": card escuro de destaque, escuro nos dois temas
     heroi: paleta.grafite800,
     textoHeroi: paleta.branco,
@@ -73,6 +75,8 @@ export const cores = {
     textoSobreDestaque: paleta.preto,
     erro: paleta.vermelho300,
     agua: '#8FB5F2',
+    /** Dia congelado e congeladores (Catppuccin Mocha sky; texto escuro por cima). */
+    congelado: '#89DCEB',
     heroi: paleta.grafite700,
     textoHeroi: paleta.branco,
     textoHeroiSecundario: paleta.cinza400,
@@ -145,6 +149,19 @@ export const semana = {
   fraco: '#E88A8A',
   texto: paleta.preto,
   circulo: paleta.branco,
+  /**
+   * Anel de progresso em volta do número, desenhado sobre o círculo branco:
+   * versões fortes das mesmas cores (Catppuccin Latte green, yellow, red e sapphire),
+   * para o arco aparecer em cima do branco.
+   */
+  anel: {
+    completo: '#40A02B',
+    parcial: '#DF8E1D',
+    fraco: '#D20F39',
+    congelado: '#209FB5',
+  },
+  /** Trilho do anel sobre o círculo branco (o que falta para 100%). */
+  trilho: 'rgba(0, 0, 0, 0.12)',
 } as const;
 
 export const espaco = {
