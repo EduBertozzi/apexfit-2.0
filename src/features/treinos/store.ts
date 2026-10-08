@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -39,13 +40,19 @@ import {
   resumoDoPlano,
   semPlano,
 } from './planoSemana';
-import { diasDaFaixa, diasDaSemana, nomeDoDia, resumoDaSemana, sequenciaDeDias } from './semana';
+import { calcularSequencia } from './regraSequencia';
+import { diasDaFaixa, diasDaSemana, nomeDoDia, resumoDaSemana } from './semana';
 import type { DadosExercicio, DadosTreino, Sessao, Treino } from './types';
 import { visaoDoDia } from './visaoDoDia';
 
 type TreinosState = {
   treinos: Treino[];
   sessoes: Sessao[];
+  /**
+   * Dias (AAAA-MM-DD) em que um congelador já salvou a sequência. Ficam salvos
+   * para o dia continuar congelado mesmo se o plano mudar depois.
+   */
+  congelados: string[];
 
   /** Cria um treino vazio com o próximo nome livre e devolve o id dele. */
   novoTreino: () => string;
@@ -81,14 +88,23 @@ type TreinosState = {
   /** Troca todos os treinos (ex: os montados pela IA). O histórico fica. */
   substituirTreinos: (dados: DadosTreino[]) => void;
 
+  /** Guarda os dias que a regra da sequência acabou de congelar. */
+  registrarCongelados: (dias: readonly string[]) => void;
+
   apagarTudo: () => void;
 };
+
+/** Junta sem repetir, em ordem, e guarda no máximo um ano e pouco de dias. */
+export function juntarCongelados(atuais: readonly string[], novos: readonly string[]): string[] {
+  return [...new Set([...atuais, ...novos])].sort().slice(-400);
+}
 
 export const useTreinosStore = create<TreinosState>()(
   persist(
     (set, get) => ({
       treinos: [],
       sessoes: [],
+      congelados: [],
 
       novoTreino: () => {
         const treino = criarTreino({ nome: proximoNomeDeTreino(get().treinos) });
@@ -176,33 +192,81 @@ export const useTreinosStore = create<TreinosState>()(
 
       substituirTreinos: (dados) => set(substituirTreinos(get().sessoes, dados)),
 
-      apagarTudo: () => set({ treinos: [], sessoes: [] }),
+      registrarCongelados: (dias) => {
+        const atuais = get().congelados;
+
+        if (dias.every((dia) => atuais.includes(dia))) {
+          return;
+        }
+
+        set({ congelados: juntarCongelados(atuais, dias) });
+      },
+
+      apagarTudo: () => set({ treinos: [], sessoes: [], congelados: [] }),
     }),
     {
       name: 'apexfit/treinos',
       storage: armazenamento,
-      version: 1,
-      partialize: (state) => ({ treinos: state.treinos, sessoes: state.sessoes }),
+      version: 2,
+      partialize: (state) => ({
+        treinos: state.treinos,
+        sessoes: state.sessoes,
+        congelados: state.congelados,
+      }),
+      migrate: migrarTreinos,
     },
   ),
 );
+
+/**
+ * Versão 1 não tinha `congelados`. Versões futuras desconhecidas voltam como estão.
+ * Exportada para teste.
+ */
+export function migrarTreinos(persistido: unknown, versao: number) {
+  const estado = (persistido ?? {}) as Partial<
+    Pick<TreinosState, 'treinos' | 'sessoes' | 'congelados'>
+  >;
+
+  if (versao < 2) {
+    return { ...estado, congelados: [] };
+  }
+
+  return estado;
+}
+
+/** A regra da sequência inteira (dias, congeladores, marcas e risco de hoje), calculada uma vez. */
+export function useResultadoSequencia(data: Date = new Date()) {
+  const treinos = useTreinosStore((state) => state.treinos);
+  const sessoes = useTreinosStore((state) => state.sessoes);
+  const congelados = useTreinosStore((state) => state.congelados);
+  const hoje = chaveDoDia(data);
+
+  return useMemo(
+    () => calcularSequencia(treinos, sessoes, hoje, congelados),
+    [treinos, sessoes, hoje, congelados],
+  );
+}
 
 /** Hook da tela inicial: os 7 dias coloridos, a sequência de dias e o nome de hoje. */
 export function useSemanaDeTreinos(data: Date = new Date()) {
   const treinos = useTreinosStore((state) => state.treinos);
   const sessoes = useTreinosStore((state) => state.sessoes);
   const hoje = chaveDoDia(data);
-  const dias = diasDaSemana(treinos, sessoes, hoje);
+  const resultado = useResultadoSequencia(data);
 
-  return {
-    hoje,
-    dias,
-    /** Semana passada, atual e próxima, para a faixa rolar para o lado. */
-    faixa: diasDaFaixa(treinos, sessoes, hoje),
-    resumo: resumoDaSemana(dias),
-    sequencia: sequenciaDeDias(treinos, sessoes, hoje),
-    nomeDeHoje: nomeDoDia(hoje),
-  };
+  return useMemo(() => {
+    const dias = diasDaSemana(treinos, sessoes, hoje, resultado.marcas);
+
+    return {
+      hoje,
+      dias,
+      /** Semana passada, atual e próxima, para a faixa rolar para o lado. */
+      faixa: diasDaFaixa(treinos, sessoes, hoje, 1, 1, resultado.marcas),
+      resumo: resumoDaSemana(dias),
+      sequencia: resultado.atual,
+      nomeDeHoje: nomeDoDia(hoje),
+    };
+  }, [treinos, sessoes, hoje, resultado]);
 }
 
 /** O que mostrar para o dia escolhido no calendário (hoje, passado ou futuro). */

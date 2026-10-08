@@ -6,10 +6,10 @@ import {
   resumoDaSemana,
   resumoDoDia,
   rotuloDoDia,
-  sequenciaDeDias,
   sessaoQueVale,
   textoSequencia,
 } from '../semana';
+import { sequenciaDeDias } from '../regraSequencia';
 import type { Sessao, Treino } from '../types';
 
 // Quarta, 7 de outubro de 2026. A semana vai de domingo, 4, a sábado, 10.
@@ -154,8 +154,14 @@ describe('sequenciaDeDias', () => {
     expect(sequenciaDeDias([TREINO], sessoes, HOJE)).toBe(1);
   });
 
-  it('um dia sem treino quebra a sequência', () => {
+  it('no rodízio, um dia de folga entre dois treinos não quebra e conta', () => {
     const sessoes = [sessao('2026-10-04', 4), sessao('2026-10-06', 4)];
+
+    expect(sequenciaDeDias([TREINO], sessoes, HOJE)).toBe(3);
+  });
+
+  it('dois dias seguidos sem treino quebram (sem congelador)', () => {
+    const sessoes = [sessao('2026-10-03', 4), sessao('2026-10-06', 4)];
 
     expect(sequenciaDeDias([TREINO], sessoes, HOJE)).toBe(1);
   });
@@ -184,9 +190,9 @@ describe('textos', () => {
   });
 
   it('texto da sequência', () => {
-    expect(textoSequencia(0)).toBe('nenhum dia seguido treinando ainda');
-    expect(textoSequencia(1)).toBe('1 dia seguido treinando');
-    expect(textoSequencia(5)).toBe('5 dias seguidos treinando');
+    expect(textoSequencia(0)).toBe('nenhum dia de sequência ainda');
+    expect(textoSequencia(1)).toBe('1 dia de sequência');
+    expect(textoSequencia(5)).toBe('5 dias de sequência');
   });
 });
 

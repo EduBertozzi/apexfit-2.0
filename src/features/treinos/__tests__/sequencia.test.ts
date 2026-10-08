@@ -1,4 +1,5 @@
-import { sequenciaDeDias, somarDias } from '../semana';
+import { sequenciaDeDias } from '../regraSequencia';
+import { somarDias } from '../semana';
 import {
   diaContou,
   diaPulavel,
@@ -91,12 +92,12 @@ describe('maiorSequencia', () => {
     expect(maiorSequencia([TREINO], sessoes, HOJE)).toBe(3);
   });
 
-  it('descanso do plano não quebra nem conta', () => {
-    // seg 28/9, qua 30/9, sex 2/10, seg 5/10, qua 7/10 (hoje)
+  it('descanso do plano não quebra e conta', () => {
+    // seg 28/9, qua 30/9, sex 2/10, seg 5/10, qua 7/10 (hoje): 10 dias, todos na sequência
     const datas = ['2026-09-28', '2026-09-30', '2026-10-02', '2026-10-05', HOJE];
     const sessoes = datas.map((data) => sessao(data, 4));
 
-    expect(maiorSequencia([PLANO], sessoes, HOJE)).toBe(5);
+    expect(maiorSequencia([PLANO], sessoes, HOJE)).toBe(10);
     expect(maiorSequencia([PLANO], sessoes, HOJE)).toBe(sequenciaDeDias([PLANO], sessoes, HOJE));
   });
 
@@ -256,7 +257,9 @@ describe('diasDoMes', () => {
   it('rótulo do dia', () => {
     const mes = diasDoMes(2026, 9, [TREINO], [sessao(HOJE, 4)], HOJE);
 
-    expect(rotuloDoDiaDoCalendario(mes.dias[6], 9)).toBe('7 de outubro, hoje, treino completo');
+    expect(rotuloDoDiaDoCalendario(mes.dias[6], 9)).toBe(
+      '7 de outubro, hoje, treino completo, 100% do treino feito',
+    );
     expect(rotuloDoDiaDoCalendario(mes.dias[9], 9)).toBe('10 de outubro, ainda não chegou');
   });
 });
@@ -315,8 +318,8 @@ describe('fraseDaSequencia', () => {
   });
 
   it('singular e plural embaixo do número', () => {
-    expect(rotuloDiasSeguidos(1)).toBe('dia seguido');
-    expect(rotuloDiasSeguidos(5)).toBe('dias seguidos');
+    expect(rotuloDiasSeguidos(1)).toBe('dia de sequência');
+    expect(rotuloDiasSeguidos(5)).toBe('dias de sequência');
   });
 });
 

@@ -9,6 +9,7 @@ import { CartaoDietaInicio } from '@/features/nutricao/components/CartoesInicio'
 import { calcularMetaAguaMl, primeiroNome } from '@/features/perfil/calculos';
 import { Avatar } from '@/features/perfil/components/Avatar';
 import { usePerfilStore } from '@/features/perfil/store';
+import { AvisoUltimaChance } from '@/features/treinos/components/AvisoUltimaChance';
 import { BotaoTreinoHoje } from '@/features/treinos/components/BotaoTreinoHoje';
 import { CabecalhoTreinoHoje } from '@/features/treinos/components/CabecalhoTreinoHoje';
 import { FaixaSemana } from '@/features/treinos/components/FaixaSemana';
@@ -62,6 +63,8 @@ export default function Inicio() {
           <Text style={estilos.nome}>{nome}!</Text>
         </Text>
       </View>
+
+      <AvisoUltimaChance hoje={hoje} onPress={() => router.push('/sequencia')} />
 
       <FaixaSemana
         dias={semana.faixa}

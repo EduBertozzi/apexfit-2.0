@@ -15,6 +15,7 @@ jest.mock('@/features/lembretes/notificacoes', () => ({
   pedirPermissao: jest.fn(async () => true),
   agendarLembretes: jest.fn(async () => {}),
   cancelarLembretes: jest.fn(async () => {}),
+  cancelarAviso: jest.fn(async () => {}),
   configurarExibicaoComAppAberto: jest.fn(),
 }));
 

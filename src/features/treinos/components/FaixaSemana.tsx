@@ -1,8 +1,10 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { espaco, familia, fonte, raio, semana } from '@/shared/theme/tokens';
 import { useCores } from '@/shared/theme/useCores';
+import { AnelProgresso } from '@/shared/ui';
 
 import { rotuloDoDia, type DiaDaSemana, type EstadoDia } from '../semana';
 
@@ -22,17 +24,37 @@ const ESPACO_PILULAS = 10;
 /** Um respiro extra antes de cada domingo separa as semanas. */
 const ESPACO_SEMANA = 10;
 const TAMANHO_CIRCULO = 44;
+/** Anel de progresso por dentro do círculo do número. */
+const ESPESSURA_ANEL = 3.5;
+const MARGEM_ANEL = 2.5;
 
-type CoresDia = { fundo: string; rotulo: string; circulo: string; numero: string };
+type CoresDia = {
+  fundo: string;
+  rotulo: string;
+  circulo: string;
+  numero: string;
+  /** Arco do anel (quanto do treino foi feito) e trilho (o que falta). */
+  arco: string;
+  trilho: string;
+};
 
-function Legenda({ resumo, comDescanso }: { resumo: string; comDescanso: boolean }) {
+function Legenda({
+  resumo,
+  comDescanso,
+  comCongelado,
+}: {
+  resumo: string;
+  comDescanso: boolean;
+  comCongelado: boolean;
+}) {
   const c = useCores();
   const itens = [
     { cor: semana.completo, texto: 'completo' },
     { cor: semana.parcial, texto: 'metade' },
     { cor: semana.fraco, texto: 'pouco ou nada' },
-    // Só aparece quando a semana tem dia de descanso no plano
+    // Só aparecem quando a faixa tem esses dias
     ...(comDescanso ? [{ cor: c.superficieSecundaria, texto: 'descanso' }] : []),
+    ...(comCongelado ? [{ cor: c.congelado, texto: 'congelado' }] : []),
   ];
 
   return (
@@ -55,8 +77,9 @@ function Legenda({ resumo, comDescanso }: { resumo: string; comDescanso: boolean
 
 /**
  * Os dias em pílulas que rolam para o lado (semana passada, atual e próxima):
- * a cor diz o status (verde, amarelo, vermelho; hoje em branco; futuro em cinza)
- * e a legenda explica. Abre com o dia escolhido no meio; tocar num dia troca a
+ * a cor diz o status (verde, amarelo, vermelho; hoje em branco; futuro em cinza;
+ * congelado em azul gelo), o anel em volta do número mostra quanto do treino
+ * foi feito (cheio = 100%) e a legenda explica. Abre com o dia escolhido no meio; tocar num dia troca a
  * seção de treino logo abaixo para esse dia.
  */
 export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) {
@@ -83,30 +106,46 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
     jaCentralizou.current = true;
   }, [selecionado, largura, medidas]);
 
-  const doStatus = (fundo: string): CoresDia => ({
+  // Pílula pastel pelo status, círculo branco e o anel na versão forte da mesma cor
+  const doStatus = (fundo: string, arco: string): CoresDia => ({
     fundo,
     rotulo: semana.texto,
     circulo: semana.circulo,
     numero: semana.texto,
+    arco,
+    trilho: semana.trilho,
   });
   const cores: Record<EstadoDia, CoresDia> = {
-    completo: doStatus(semana.completo),
-    parcial: doStatus(semana.parcial),
-    fraco: doStatus(semana.fraco),
+    completo: doStatus(semana.completo, semana.anel.completo),
+    parcial: doStatus(semana.parcial, semana.anel.parcial),
+    fraco: doStatus(semana.fraco, semana.anel.fraco),
+    congelado: doStatus(c.congelado, semana.anel.congelado),
     // Hoje: "branco" no escuro (e o inverso no claro), com o círculo do número escuro
-    hoje: { fundo: c.texto, rotulo: c.fundo, circulo: c.fundo, numero: c.texto },
+    hoje: {
+      fundo: c.texto,
+      rotulo: c.fundo,
+      circulo: c.fundo,
+      numero: c.texto,
+      arco: c.texto,
+      trilho: c.superficieSecundaria,
+    },
+    // Futuro: só o trilho cinza, nada feito ainda
     futuro: {
       fundo: c.superficie,
       rotulo: c.textoSecundario,
       circulo: c.superficieSecundaria,
       numero: c.textoSecundario,
+      arco: c.textoSecundario,
+      trilho: c.bordaCampo,
     },
-    // Descanso do plano: neutro, mas com número legível (o dia já passou)
+    // Descanso: neutro, mas com número legível (o dia já passou)
     descanso: {
       fundo: c.superficieSecundaria,
       rotulo: c.textoSecundario,
       circulo: c.superficie,
       numero: c.texto,
+      arco: c.textoSecundario,
+      trilho: 'transparent',
     },
   };
 
@@ -157,21 +196,40 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
               >
                 {dia.sigla}
               </Text>
-              <View style={[estilos.circulo, { backgroundColor: cor.circulo }]}>
-                <Text
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={1.2}
-                  style={[estilos.numero, { color: cor.numero }]}
+              <View>
+                <AnelProgresso
+                  tamanho={TAMANHO_CIRCULO}
+                  espessura={ESPESSURA_ANEL}
+                  margem={MARGEM_ANEL}
+                  fracao={dia.estado === 'futuro' ? null : dia.fracao}
+                  corArco={cor.arco}
+                  corTrilho={cor.trilho}
+                  fundo={cor.circulo}
                 >
-                  {dia.dia}
-                </Text>
+                  <Text
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.2}
+                    style={[estilos.numero, { color: cor.numero }]}
+                  >
+                    {dia.dia}
+                  </Text>
+                </AnelProgresso>
+                {dia.estado === 'congelado' ? (
+                  <View style={[estilos.selo, { backgroundColor: semana.circulo }]}>
+                    <Ionicons name="snow" size={12} color={semana.anel.congelado} />
+                  </View>
+                ) : null}
               </View>
             </Pressable>
           );
         })}
       </ScrollView>
 
-      <Legenda resumo={resumo} comDescanso={dias.some((dia) => dia.estado === 'descanso')} />
+      <Legenda
+        resumo={resumo}
+        comDescanso={dias.some((dia) => dia.estado === 'descanso')}
+        comCongelado={dias.some((dia) => dia.estado === 'congelado')}
+      />
     </View>
   );
 }
@@ -200,9 +258,13 @@ const estilos = StyleSheet.create({
     fontFamily: familia.display,
     fontSize: 16,
   },
-  circulo: {
-    width: TAMANHO_CIRCULO,
-    height: TAMANHO_CIRCULO,
+  // Floco de neve no canto do círculo do dia congelado
+  selo: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    width: 20,
+    height: 20,
     borderRadius: raio.total,
     alignItems: 'center',
     justifyContent: 'center',

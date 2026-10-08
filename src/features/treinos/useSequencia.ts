@@ -2,28 +2,30 @@ import { useMemo } from 'react';
 
 import { chaveDoDia } from '@/shared/lib/data';
 
-import { sequenciaDeDias } from './semana';
+import { emUltimaChance, textoCongeladores, textoProximoCongelador } from './regraSequencia';
+import type { MarcasDosDias } from './semana';
 import {
   diasDeTreinoNoTotal,
   diasDoMes,
   fraseDaSequencia,
-  maiorSequencia,
   marcos,
+  mesesDoCalendario,
   resumoDoTreinoDeHoje,
   rotuloDiasSeguidos,
   semanaDaSequencia,
 } from './sequencia';
-import { useTreinosStore } from './store';
+import { useResultadoSequencia, useTreinosStore } from './store';
 
 /** Tudo o que a página de sequência mostra, calculado pela lógica pura. */
 export function useSequencia(data: Date) {
   const treinos = useTreinosStore((state) => state.treinos);
   const sessoes = useTreinosStore((state) => state.sessoes);
+  const resultado = useResultadoSequencia(data);
   const hoje = chaveDoDia(data);
 
   return useMemo(() => {
-    const atual = sequenciaDeDias(treinos, sessoes, hoje);
-    const recorde = Math.max(maiorSequencia(treinos, sessoes, hoje), atual);
+    const { atual, congeladores } = resultado;
+    const recorde = Math.max(resultado.recorde, atual);
 
     return {
       hoje,
@@ -31,7 +33,7 @@ export function useSequencia(data: Date) {
       recorde,
       frase: fraseDaSequencia(atual),
       rotulo: rotuloDiasSeguidos(atual),
-      semana: semanaDaSequencia(treinos, sessoes, hoje),
+      semana: semanaDaSequencia(treinos, sessoes, hoje, resultado.marcas),
       total: diasDeTreinoNoTotal(treinos, sessoes, hoje),
       noMes: diasDoMes(
         Number(hoje.slice(0, 4)),
@@ -39,21 +41,37 @@ export function useSequencia(data: Date) {
         treinos,
         sessoes,
         hoje,
+        resultado.marcas,
       ).treinos,
       marcos: marcos(atual, recorde),
       treinoDeHoje: resumoDoTreinoDeHoje(treinos, sessoes, hoje),
+      congeladores,
+      textoCongeladores: textoCongeladores(congeladores),
+      textoProximoCongelador: textoProximoCongelador(atual, congeladores),
+      ultimaChance: emUltimaChance(resultado),
+      risco: resultado.risco,
     };
-  }, [treinos, sessoes, hoje]);
+  }, [treinos, sessoes, hoje, resultado]);
 }
 
-/** Um mês do calendário (`mes` de 0 a 11). */
-export function useMesDaSequencia(ano: number, mes: number, data: Date) {
+/** Meses do calendário (do primeiro treino até hoje) e as marcas da regra da sequência. */
+export function useMesesDaSequencia(data: Date) {
+  const sessoes = useTreinosStore((state) => state.sessoes);
+  const hoje = chaveDoDia(data);
+  const { marcas } = useResultadoSequencia(data);
+  const meses = useMemo(() => mesesDoCalendario(sessoes, hoje), [sessoes, hoje]);
+
+  return { meses, marcas };
+}
+
+/** Um mês do calendário (`mes` de 0 a 11), pintado com as marcas da sequência. */
+export function useMesDaSequencia(ano: number, mes: number, data: Date, marcas: MarcasDosDias) {
   const treinos = useTreinosStore((state) => state.treinos);
   const sessoes = useTreinosStore((state) => state.sessoes);
   const hoje = chaveDoDia(data);
 
   return useMemo(
-    () => diasDoMes(ano, mes, treinos, sessoes, hoje),
-    [ano, mes, treinos, sessoes, hoje],
+    () => diasDoMes(ano, mes, treinos, sessoes, hoje, marcas),
+    [ano, mes, treinos, sessoes, hoje, marcas],
   );
 }

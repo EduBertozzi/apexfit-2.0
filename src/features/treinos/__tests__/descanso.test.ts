@@ -1,5 +1,6 @@
 import { acaoTreinoHoje, podeMarcarNoInicio, situacaoDoDia } from '../logica';
-import { diasDaSemana, resumoDoDia, rotuloDoDia, sequenciaDeDias } from '../semana';
+import { sequenciaDeDias } from '../regraSequencia';
+import { diasDaSemana, resumoDoDia, rotuloDoDia } from '../semana';
 import type { Sessao, Treino } from '../types';
 
 // Quarta, 7 de outubro de 2026. Plano: treino A na segunda (1) e quarta (3).
@@ -43,11 +44,11 @@ describe('dia de descanso no plano semanal', () => {
     expect(resumoDoDia(dias[3])).toBe('quarta: sem treino');
   });
 
-  it('a sequência atravessa dias de descanso sem quebrar', () => {
+  it('a sequência atravessa dias de descanso sem quebrar, e o descanso conta', () => {
     // segunda feita, terça descanso, quarta (hoje) feita
     const sessoes = [sessao('2026-10-05', ['e1', 'e2']), sessao(HOJE, ['e1', 'e2'])];
 
-    expect(sequenciaDeDias([A], sessoes, HOJE)).toBe(2);
+    expect(sequenciaDeDias([A], sessoes, HOJE)).toBe(3);
   });
 
   it('no dia de descanso, a tela inicial não marca e o botão oferece treinar mesmo assim', () => {

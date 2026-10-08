@@ -11,7 +11,7 @@ import { textoSequencia } from '../semana';
 
 type Props = {
   dias: number;
-  /** "dias seguidos" ou "dia seguido" */
+  /** "dias de sequência" ou "dia de sequência" */
   rotulo: string;
   /** "uma semana inteira" */
   frase: string;
