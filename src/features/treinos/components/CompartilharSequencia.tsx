@@ -71,7 +71,7 @@ export function CompartilharSequencia({
           opcoes={VARIANTES}
           valor={variante}
           onMudar={setVariante}
-          compacto
+          direcao="coluna"
         />
       ) : null}
 
