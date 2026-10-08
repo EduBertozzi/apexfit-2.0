@@ -160,7 +160,8 @@ export default function Ia() {
         <Selo icone="chat-processing" texto="coach" cor={categorias.fundo.costas} />
         <Texto variante="subtitulo">converse sobre treino, dieta e rotina</Texto>
         <Texto secundario>
-          peça para trocar um exercício ou uma refeição: o coach muda e salva para você.
+          peça para trocar um exercício ou uma refeição: o coach mostra a mudança e você decide se
+          aplica.
         </Texto>
         <Botao titulo="conversar" variante="secundario" onPress={() => router.push('/coach')} />
       </Cartao>
