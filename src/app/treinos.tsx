@@ -6,7 +6,7 @@ import { HeroiTreinoHoje } from '@/features/treinos/components/HeroiTreinoHoje';
 import { ListaModelos } from '@/features/treinos/components/ListaModelos';
 import { ListaTreinos } from '@/features/treinos/components/ListaTreinos';
 import { useTreinosStore } from '@/features/treinos/store';
-import { espaco, familia } from '@/shared/theme/tokens';
+import { espaco } from '@/shared/theme/tokens';
 import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
 
 export default function Treinos() {
@@ -20,10 +20,6 @@ export default function Treinos() {
 
   return (
     <Tela bordas={['bottom']}>
-      <Texto variante="titulo" style={estilos.titulo} accessibilityRole="header">
-        treinos
-      </Texto>
-
       {temTreinos ? (
         <>
           <CartaoMinhaSemana />
@@ -63,9 +59,6 @@ export default function Treinos() {
 }
 
 const estilos = StyleSheet.create({
-  titulo: {
-    fontFamily: familia.display,
-  },
   linha: {
     flexDirection: 'row',
     gap: espaco.sm,
