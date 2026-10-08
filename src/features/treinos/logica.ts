@@ -777,3 +777,73 @@ export function acaoTreinoHoje(situacao: SituacaoDoDia): AcaoTreinoHoje | null {
     acessivel: `continuar treino, ${feitos} de ${total} exercícios feitos`,
   };
 }
+
+function mesmosDiasDoPlano(a: readonly number[] | undefined, b: readonly number[] | undefined) {
+  const x = [...(a ?? [])].sort().join(',');
+  const y = [...(b ?? [])].sort().join(',');
+
+  return x === y;
+}
+
+/**
+ * Marca desde quando o plano de cada treino vale: treino novo com dias, ou com
+ * os dias trocados, ganha `planoDesde = hoje`; o resto mantém a data que tinha.
+ * Sem mudança nenhuma, devolve a mesma lista (dá para comparar por referência).
+ */
+export function carimbarPlano(
+  antigos: readonly Treino[],
+  novos: readonly Treino[],
+  hoje: string,
+): Treino[] {
+  let mudou = false;
+
+  const resultado = novos.map((treino) => {
+    if (!temDias(treino)) {
+      if (treino.planoDesde === undefined) {
+        return treino;
+      }
+
+      mudou = true;
+      const { planoDesde: _sem, ...semData } = treino;
+
+      return semData;
+    }
+
+    const antes = antigos.find((item) => item.id === treino.id);
+    const desde =
+      antes && temDias(antes) && mesmosDiasDoPlano(antes.dias, treino.dias)
+        ? (antes.planoDesde ?? treino.planoDesde ?? hoje)
+        : hoje;
+
+    if (treino.planoDesde === desde) {
+      return treino;
+    }
+
+    mudou = true;
+
+    return { ...treino, planoDesde: desde };
+  });
+
+  return mudou ? resultado : (novos as Treino[]);
+}
+
+/**
+ * Os treinos como o plano era numa data que já passou: quem só ganhou dias
+ * depois dela volta a ser do rodízio. Assim montar a semana hoje não pinta de
+ * vermelho, nem quebra a sequência, nos dias de antes.
+ */
+export function treinosNaData(treinos: readonly Treino[], chave: string): readonly Treino[] {
+  if (!treinos.some((treino) => treino.planoDesde !== undefined && treino.planoDesde > chave)) {
+    return treinos;
+  }
+
+  return treinos.map((treino) => {
+    if (treino.planoDesde === undefined || treino.planoDesde <= chave) {
+      return treino;
+    }
+
+    const { dias: _dias, planoDesde: _desde, ...doRodizio } = treino;
+
+    return doRodizio;
+  });
+}

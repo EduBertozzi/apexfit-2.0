@@ -25,6 +25,7 @@
  */
 import { diasEntre } from '@/shared/lib/data';
 
+import { treinosNaData } from './logica';
 import {
   diaDaSemana,
   ehDescanso,
@@ -242,17 +243,19 @@ export function entradaDoDia(
 ): EntradaDoDia {
   const fracao = fracaoDoDia(treinos, sessoesDoDia, chave);
   const semana = diaDaSemana(chave);
+  // O plano como era nesse dia: dias marcados depois não cobram treino para trás
+  const plano = treinosNaData(treinos, chave);
 
   if ((fracao ?? 0) >= MINIMO_PARCIAL) {
     return { chave, tipo: 'treino', folgaPermitida: false };
   }
 
   // O descanso só depende do plano: sem sessões a conta fica barata
-  if (ehDescanso(treinos, [], chave)) {
+  if (ehDescanso(plano, [], chave)) {
     return { chave, tipo: 'descanso', folgaPermitida: false };
   }
 
-  const diaMarcado = treinos.some((treino) => treino.dias?.includes(semana));
+  const diaMarcado = plano.some((treino) => treino.dias?.includes(semana));
 
   return { chave, tipo: 'falta', folgaPermitida: !diaMarcado };
 }

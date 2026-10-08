@@ -4,9 +4,11 @@ import {
   alternarExercicio,
   aplicarModelo,
   criarTreino,
+  carimbarPlano,
   descartarSessoesAbertas,
   guardarRegistros,
   treinoDaSessao,
+  treinosNaData,
   editarExercicio,
   editarTreino,
   finalizarSessao,
@@ -585,5 +587,45 @@ describe('legendaTreinoDoDia e concluidosDeHoje', () => {
     expect(concluidosDeHoje({ tipo: 'em-andamento', treino: A, sessao: emAndamento })).toEqual([
       'a1',
     ]);
+  });
+});
+
+describe('data do plano (planoDesde)', () => {
+  const A: Treino = { id: 'a', nome: 'treino A', exercicios: [], dias: [1, 3] };
+  const B: Treino = { id: 'b', nome: 'treino B', exercicios: [] };
+
+  it('treino novo com dias ganha a data de hoje; sem dias, nada', () => {
+    const [a, b] = carimbarPlano([], [A, B], HOJE);
+
+    expect(a.planoDesde).toBe(HOJE);
+    expect(b).toBe(B);
+  });
+
+  it('mesmos dias mantêm a data antiga; dias trocados ganham a de hoje', () => {
+    const antigo = { ...A, planoDesde: '2026-09-01' };
+
+    expect(carimbarPlano([antigo], [{ ...A, nome: 'outro nome' }], HOJE)[0].planoDesde).toBe(
+      '2026-09-01',
+    );
+    expect(carimbarPlano([antigo], [{ ...A, dias: [3, 1] }], HOJE)[0].planoDesde).toBe(
+      '2026-09-01',
+    );
+    expect(carimbarPlano([antigo], [{ ...A, dias: [2] }], HOJE)[0].planoDesde).toBe(HOJE);
+  });
+
+  it('sem mudança devolve a mesma lista; tirar os dias tira a data', () => {
+    const lista = [{ ...A, planoDesde: HOJE }];
+
+    expect(carimbarPlano(lista, lista, HOJE)).toBe(lista);
+    expect(
+      carimbarPlano(lista, [{ ...A, dias: undefined, planoDesde: HOJE }], HOJE)[0],
+    ).not.toHaveProperty('planoDesde');
+  });
+
+  it('numa data de antes do plano, o treino volta a ser do rodízio', () => {
+    const comData = { ...A, planoDesde: HOJE };
+
+    expect(treinosNaData([comData], '2026-10-01')[0].dias).toBeUndefined();
+    expect(treinosNaData([comData], HOJE)[0]).toBe(comData);
   });
 });

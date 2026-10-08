@@ -366,3 +366,18 @@ describe('calcularSequencia (com o histórico de verdade)', () => {
     });
   });
 });
+
+describe('plano montado hoje não cobra os dias de antes', () => {
+  // Treinou domingo e segunda; terça não. Hoje (quarta) montou um plano com terça marcada
+  const sessoes = [sessao('2026-10-04'), sessao('2026-10-05')];
+  const comTerca = (planoDesde?: string): Treino => ({ ...RODIZIO, dias: [2, 3], planoDesde });
+
+  it('com o plano de hoje, a terça vira folga e a sequência segue', () => {
+    // Domingo e segunda contam; a folga de terça só soma quando o próximo dia for treinado
+    expect(calcularSequencia([comTerca(HOJE)], sessoes, HOJE).atual).toBe(2);
+  });
+
+  it('com o plano já valendo, faltar na terça marcada quebra', () => {
+    expect(calcularSequencia([comTerca('2026-09-01')], sessoes, HOJE).atual).toBe(0);
+  });
+});

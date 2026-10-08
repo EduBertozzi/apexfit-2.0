@@ -34,6 +34,11 @@ export type Treino = {
    * Sem o campo (ou vazio), o treino entra no rodízio A, B, C.
    */
   dias?: number[];
+  /**
+   * Desde quando (AAAA-MM-DD) os `dias` valem. Dias que já passaram, de antes
+   * disso, não são cobrados: o plano ainda não existia. Ver `treinosNaData`.
+   */
+  planoDesde?: string;
 };
 
 export type Sessao = {

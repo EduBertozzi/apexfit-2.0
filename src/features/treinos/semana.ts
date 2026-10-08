@@ -1,6 +1,6 @@
 import { chaveDoDia } from '@/shared/lib/data';
 
-import { progressoDaSessao, treinoDaSessao, treinoDoDia } from './logica';
+import { progressoDaSessao, treinoDaSessao, treinoDoDia, treinosNaData } from './logica';
 import type { Sessao, Treino } from './types';
 import { minusculaInicial } from '@/shared/lib/texto';
 
@@ -169,7 +169,7 @@ export function ehDescanso(
 function temTreinoMarcado(treinos: readonly Treino[], chave: string): boolean {
   const dia = diaDaSemana(chave);
 
-  return treinos.some((treino) => treino.dias?.includes(dia));
+  return treinosNaData(treinos, chave).some((treino) => treino.dias?.includes(dia));
 }
 
 /**
@@ -184,15 +184,18 @@ export function estadoDoDiaPassado(
   fracao: number | null,
   marca: MarcaDoDia | undefined,
 ): 'completo' | 'parcial' | 'fraco' | 'descanso' | 'congelado' {
+  // O plano como era nesse dia: dias marcados depois não contam para trás
+  const plano = treinosNaData(treinos, chave);
+
   if (marca === 'congelado') {
     return 'congelado';
   }
 
-  if ((fracao ?? 0) < MINIMO_PARCIAL && (marca === 'descanso' || ehDescanso(treinos, [], chave))) {
+  if ((fracao ?? 0) < MINIMO_PARCIAL && (marca === 'descanso' || ehDescanso(plano, [], chave))) {
     return 'descanso';
   }
 
-  if (fracao === null && !temTreinoMarcado(treinos, chave)) {
+  if (fracao === null && !temTreinoMarcado(plano, chave)) {
     return 'descanso';
   }
 

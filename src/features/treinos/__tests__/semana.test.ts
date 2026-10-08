@@ -234,3 +234,31 @@ describe('toque e leitor de tela em cada dia', () => {
     expect(resumoDoDia(dia)).toBe('domingo: treino apagado, 3 exercícios');
   });
 });
+
+describe('plano só vale a partir de quando foi montado', () => {
+  // Plano montado na quarta (hoje): segunda e terça desta semana ainda não tinham plano
+  const PLANO_DE_HOJE: Treino = {
+    ...TREINO,
+    dias: [1, 2, 5],
+    planoDesde: HOJE,
+  };
+
+  it('dia marcado de antes do plano existir fica neutro, não vermelho', () => {
+    const dias = diasDaSemana([PLANO_DE_HOJE], [], HOJE);
+
+    expect(dias[1].estado).toBe('descanso');
+    expect(dias[2].estado).toBe('descanso');
+  });
+
+  it('com o plano já valendo, faltar no dia marcado fica vermelho', () => {
+    const antigo = { ...PLANO_DE_HOJE, planoDesde: '2026-09-01' };
+
+    expect(diasDaSemana([antigo], [], HOJE)[1].estado).toBe('fraco');
+  });
+
+  it('o que foi treinado aparece sempre, com ou sem plano', () => {
+    const dias = diasDaSemana([PLANO_DE_HOJE], [sessao('2026-10-05', 4)], HOJE);
+
+    expect(dias[1].estado).toBe('completo');
+  });
+});

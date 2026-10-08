@@ -100,6 +100,8 @@ describe('ajuste de treino pelo coach', () => {
       nome: 'Treino A',
       foco: 'Perna',
       dias: [1, 4],
+      // Já carimbado com hoje: a store não precisa mexer no treino ao recebê-lo
+      planoDesde: HOJE_DE_VERDADE,
       exercicios: [
         {
           id: 'e1',

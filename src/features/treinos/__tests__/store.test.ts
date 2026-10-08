@@ -1,5 +1,7 @@
+import { chaveDoDia } from '@/shared/lib/data';
+
 import { MODELOS } from '../modelos';
-import { useTreinosStore } from '../store';
+import { migrarTreinos, useTreinosStore } from '../store';
 
 const HOJE = new Date(2026, 9, 3, 10, 0);
 const AMANHA = new Date(2026, 9, 4, 10, 0);
@@ -120,5 +122,32 @@ describe('useTreinosStore', () => {
 
     expect(estado().treinos).toEqual([]);
     expect(estado().sessoes).toEqual([]);
+  });
+});
+
+describe('migração da data do plano', () => {
+  it('treinos salvos com dias ganham a data de hoje; sem dias, ficam iguais', () => {
+    const salvo = {
+      treinos: [
+        { id: 'a', nome: 'treino A', exercicios: [], dias: [1] },
+        { id: 'b', nome: 'treino B', exercicios: [] },
+      ],
+      sessoes: [],
+      congelados: [],
+    };
+    const migrado = migrarTreinos(salvo, 2) as typeof salvo & {
+      treinos: { planoDesde?: string }[];
+    };
+
+    expect(migrado.treinos[0].planoDesde).toBe(chaveDoDia(new Date()));
+    expect(migrado.treinos[1]).toBe(salvo.treinos[1]);
+  });
+
+  it('trocar os dias de um treino na store carimba a data sozinho', () => {
+    const id = estado().novoTreino();
+
+    estado().definirDias(id, [2, 4]);
+
+    expect(estado().treinos[0].planoDesde).toBe(chaveDoDia(new Date()));
   });
 });

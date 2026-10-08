@@ -5,6 +5,7 @@ import type { Perfil } from '@/features/perfil/types';
 import type { RespostaTreinosIa } from '@/features/treinos/contratoIa';
 import { useTreinosStore } from '@/features/treinos/store';
 import type { Treino } from '@/features/treinos/types';
+import { chaveDoDia } from '@/shared/lib/data';
 
 import type { EventoCoach } from '../contrato';
 import type { DadosDemo } from '../demo';
@@ -49,12 +50,16 @@ function plano(almoco: string, jantar = 'Frango'): PlanoDieta {
 const SEMANA = plano('Arroz e feijão');
 const SEXTA = plano('Pizza caseira');
 
+const HOJE_DE_VERDADE = chaveDoDia(new Date());
+
 const TREINOS: Treino[] = [
   {
     id: 'a',
     nome: 'Treino A',
     foco: 'Perna',
     dias: [1, 3],
+    // Já carimbado com hoje: a store não precisa mexer no treino ao recebê-lo
+    planoDesde: HOJE_DE_VERDADE,
     exercicios: [
       { id: 'a1', nome: 'Leg press 45', grupo: 'perna', series: 4, repeticoes: '12', cargaKg: 90 },
       { id: 'a2', nome: 'Esteira', grupo: 'cardio', series: 1, repeticoes: '15' },
@@ -65,6 +70,7 @@ const TREINOS: Treino[] = [
     nome: 'Treino B',
     foco: 'Peito',
     dias: [5],
+    planoDesde: HOJE_DE_VERDADE,
     exercicios: [
       { id: 'b1', nome: 'Supino reto', grupo: 'peito', series: 3, repeticoes: '10' },
       { id: 'b2', nome: 'Crucifixo', grupo: 'peito', series: 3, repeticoes: '12' },

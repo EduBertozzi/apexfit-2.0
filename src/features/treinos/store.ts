@@ -13,6 +13,7 @@ import {
   aplicarModelo,
   criarTreino,
   definirDias,
+  carimbarPlano,
   descartarSessoesAbertas,
   guardarRegistros,
   editarExercicio,
@@ -213,7 +214,8 @@ export const useTreinosStore = create<TreinosState>()(
     {
       name: 'apexfit/treinos',
       storage: armazenamento,
-      version: 2,
+      // 3: treinos com dias ganham `planoDesde` (antes não havia data do plano)
+      version: 3,
       partialize: (state) => ({
         treinos: state.treinos,
         sessoes: state.sessoes,
@@ -233,12 +235,31 @@ export function migrarTreinos(persistido: unknown, versao: number) {
     Pick<TreinosState, 'treinos' | 'sessoes' | 'congelados'>
   >;
 
-  if (versao < 2) {
-    return { ...estado, congelados: [] };
+  const comCongelados = versao < 2 ? { ...estado, congelados: [] } : estado;
+
+  if (versao < 3 && Array.isArray(comCongelados.treinos)) {
+    // Sem saber quando o plano começou, ele vale a partir de hoje: nada fica vermelho para trás
+    return {
+      ...comCongelados,
+      treinos: carimbarPlano([], comCongelados.treinos, chaveDoDia(new Date())),
+    };
   }
 
-  return estado;
+  return comCongelados;
 }
+
+// Toda troca de treinos (telas, IA, coach) carimba desde quando os dias valem
+useTreinosStore.subscribe((estado, anterior) => {
+  if (estado.treinos === anterior.treinos) {
+    return;
+  }
+
+  const carimbados = carimbarPlano(anterior.treinos, estado.treinos, chaveDoDia(new Date()));
+
+  if (carimbados !== estado.treinos) {
+    useTreinosStore.setState({ treinos: carimbados });
+  }
+});
 
 /** A regra da sequência inteira (dias, congeladores, marcas e risco de hoje), calculada uma vez. */
 export function useResultadoSequencia(data: Date = new Date()) {
