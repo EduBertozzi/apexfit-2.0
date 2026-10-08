@@ -1,5 +1,6 @@
 import { minusculaInicial } from '@/shared/lib/texto';
 
+import { diasPadrao } from './diasIa';
 import { agruparPorGrupo } from './grupos';
 import { normalizarDias, temDias } from './logica';
 import { NOME_DIA, SIGLAS_DIA, type SiglaDia } from './semana';
@@ -99,15 +100,8 @@ export function atribuirDia(
  * Dias padrão por quantidade de treinos (mesma tabela da montagem pela IA).
  * 1 treino repete em seg, qua e sex; de 2 a 6, um treino por dia.
  */
-const PADRAO: Record<number, number[]> = {
-  1: [1, 3, 5],
-  2: [1, 4],
-  3: [1, 3, 5],
-  4: [1, 2, 4, 5],
-  5: [1, 2, 3, 4, 5],
-  6: [1, 2, 3, 4, 5, 6],
-  7: [1, 2, 3, 4, 5, 6, 0],
-};
+/** Um treino só repete em segunda, quarta e sexta, como um rodízio de três. */
+const TREINO_UNICO = diasPadrao(3);
 
 /**
  * Espalha os treinos pela semana na ordem da lista, trocando os dias que já
@@ -119,7 +113,7 @@ export function distribuirAutomatico(treinos: readonly Treino[]): Treino[] {
     return [];
   }
 
-  const padrao = PADRAO[Math.min(treinos.length, 7)];
+  const padrao = treinos.length === 1 ? TREINO_UNICO : diasPadrao(treinos.length);
 
   return treinos.map((treino, indice) => {
     const dias =
