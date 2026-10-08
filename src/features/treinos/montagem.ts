@@ -6,6 +6,8 @@ import {
   type ExercicioCatalogo,
   type Local,
 } from './catalogo';
+import { soPorTempo } from './aquecimento';
+import type { MedidaAquecimento } from './contratoIa';
 import { grupoDe, inferirGrupo } from './grupos';
 import type { Direcao } from './logica';
 import { LIMITES } from './schema';
@@ -143,6 +145,8 @@ export function validarNomeLivre(nome: string): { valido: boolean; erro?: string
  * Exercícios de musculação prontos para salvar: os marcados e, no fim, o nome
  * digitado (se for válido e não repetir um marcado). Todos com as mesmas séries
  * e repetições dos contadores. O grupo é o escolhido; sem grupo, o app adivinha.
+ * No aquecimento, `medida` "tempo" (ou bike e esteira, sempre) salva uma série
+ * de `minutos` ("5 min") em vez de repetições.
  */
 export function montarMusculacao(dados: {
   selecionados: readonly string[];
@@ -150,6 +154,8 @@ export function montarMusculacao(dados: {
   grupo?: GrupoMuscular;
   series: number;
   repeticoes: number;
+  medida?: MedidaAquecimento;
+  minutos?: number;
 }): DadosExercicio[] {
   const nomes = [...dados.selecionados];
   const livre = dados.nomeLivre?.trim() ?? '';
@@ -161,12 +167,33 @@ export function montarMusculacao(dados: {
     nomes.push(livre);
   }
 
-  return nomes.map((nome) => ({
-    nome,
-    grupo: dados.grupo ?? inferirGrupo(nome),
-    series: dados.series,
-    repeticoes: String(dados.repeticoes),
-  }));
+  return nomes.map((nome) => {
+    const grupo = dados.grupo ?? inferirGrupo(nome);
+    const porTempo = grupo === 'aquecimento' && (dados.medida === 'tempo' || soPorTempo(nome));
+
+    return porTempo
+      ? { nome, grupo, series: 1, repeticoes: `${dados.minutos ?? MINUTOS_AQUECIMENTO} min` }
+      : { nome, grupo, series: dados.series, repeticoes: String(dados.repeticoes) };
+  });
+}
+
+/** Minutos que já vêm no contador do aquecimento por tempo. */
+export const MINUTOS_AQUECIMENTO = 5;
+
+export const PASSOS_AQUECIMENTO = { min: 1, max: 30, passo: 1 } as const;
+
+export const MEDIDAS: { valor: MedidaAquecimento; rotulo: string }[] = [
+  { valor: 'repeticoes', rotulo: 'repetições' },
+  { valor: 'tempo', rotulo: 'tempo' },
+];
+
+/** Algum marcado só faz sentido por tempo (bike, esteira)? Aí o contador de minutos aparece. */
+export function precisaMinutos(
+  grupo: GrupoMuscular,
+  medida: MedidaAquecimento,
+  selecionados: readonly string[],
+): boolean {
+  return grupo === 'aquecimento' && (medida === 'tempo' || selecionados.some(soPorTempo));
 }
 
 /** Cardio: uma série, repetições em minutos ("20 min"). */

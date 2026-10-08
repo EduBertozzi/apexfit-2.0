@@ -11,31 +11,12 @@ import {
   textoOrigemDieta,
 } from '@/features/ia/textos';
 import { usePerfilStore } from '@/features/perfil/store';
-import {
-  DIAS_POR_SEMANA,
-  MINUTOS_TREINO,
-  type LocalTreino,
-  type MinutosTreino,
-} from '@/features/treinos/contratoIa';
+import { MontadorSemana } from '@/features/treinos/components/MontadorSemana';
+import { textoBotaoGerar } from '@/features/treinos/montadorIa';
 import { useTreinosIaStore } from '@/features/treinos/storeIa';
 import { espaco, raio } from '@/shared/theme/tokens';
 import { useCategorias, useCores } from '@/shared/theme/useCores';
-import { Botao, Cartao, Opcoes, Tela, Texto, type Opcao } from '@/shared/ui';
-
-const OPCOES_DIAS: Opcao[] = DIAS_POR_SEMANA.map((dias) => ({
-  valor: String(dias),
-  rotulo: String(dias),
-}));
-
-const OPCOES_LOCAL: Opcao[] = [
-  { valor: 'academia', rotulo: 'academia' },
-  { valor: 'casa', rotulo: 'casa' },
-];
-
-const OPCOES_MINUTOS: Opcao[] = MINUTOS_TREINO.map((minutos) => ({
-  valor: String(minutos),
-  rotulo: `${minutos} min`,
-}));
+import { Botao, Cartao, Tela, Texto } from '@/shared/ui';
 
 type Icone = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -60,8 +41,7 @@ export default function Ia() {
   const categorias = useCategorias();
   const perfil = usePerfilStore((state) => state.perfil);
 
-  const preferencias = useTreinosIaStore((state) => state.preferencias);
-  const mudarPreferencias = useTreinosIaStore((state) => state.mudarPreferencias);
+  const escolhas = useTreinosIaStore((state) => state.escolhas);
   const gerarTreinos = useTreinosIaStore((state) => state.gerar);
   const gerandoTreinos = useTreinosIaStore((state) => state.gerando);
   const erroTreinos = useTreinosIaStore((state) => state.erro);
@@ -80,11 +60,6 @@ export default function Ia() {
     return null;
   }
 
-  const mudar = (mudanca: Parameters<typeof mudarPreferencias>[0]) => {
-    setPronto(false);
-    mudarPreferencias(mudanca);
-  };
-
   const aoGerarTreinos = async () => {
     setPronto(false);
     setPronto(await gerarTreinos(perfil));
@@ -102,40 +77,17 @@ export default function Ia() {
       <Cartao>
         <Selo icone="brain" texto="treino com IA" cor={categorias.fundo.aquecimento} />
         <Texto variante="subtitulo" accessibilityRole="header">
-          monte seu treino com IA
+          monte sua semana
         </Texto>
-        <Texto secundario>
-          escolha como você treina. a IA monta os treinos com aquecimento, exercícios por grupo e
-          cardio, e eles aparecem na tela inicial.
-        </Texto>
+        <Texto secundario>escolha os dias e o que treinar em cada um.</Texto>
 
-        <Opcoes
-          rotulo="dias por semana"
-          compacto
-          opcoes={OPCOES_DIAS}
-          valor={String(preferencias.diasPorSemana)}
-          onMudar={(valor) => mudar({ diasPorSemana: Number(valor) })}
-        />
-        <Opcoes
-          rotulo="onde"
-          compacto
-          opcoes={OPCOES_LOCAL}
-          valor={preferencias.local}
-          onMudar={(valor) => mudar({ local: valor as LocalTreino })}
-        />
-        <Opcoes
-          rotulo="tempo por treino"
-          compacto
-          opcoes={OPCOES_MINUTOS}
-          valor={String(preferencias.minutos)}
-          onMudar={(valor) => mudar({ minutos: Number(valor) as MinutosTreino })}
-        />
+        <MontadorSemana />
 
         <Botao
-          titulo="gerar treino"
+          titulo={textoBotaoGerar(escolhas)}
           onPress={aoGerarTreinos}
           carregando={gerandoTreinos}
-          descricaoAcessivel={gerandoTreinos ? 'montando seus treinos' : 'gerar treino'}
+          descricaoAcessivel={gerandoTreinos ? 'montando seus treinos' : textoBotaoGerar(escolhas)}
         />
 
         {gerandoTreinos ? (

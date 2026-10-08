@@ -89,4 +89,23 @@ describe('<FolhaAdicionar />', () => {
       dias: undefined,
     });
   });
+
+  it('aquecimento: escolhe medir por tempo e salva em minutos', async () => {
+    const usuario = userEvent.setup();
+    const onSalvar = await abrir();
+
+    await usuario.press(screen.getByTestId('grupo-aquecimento'));
+    expect(screen.getByTestId('repeticoes-valor')).toBeTruthy();
+
+    await usuario.press(screen.getByRole('button', { name: 'medir por tempo' }));
+    expect(screen.queryByTestId('repeticoes-valor')).toBeNull();
+    await usuario.press(screen.getByTestId('minutos-aquecimento-mais'));
+    await usuario.press(screen.getByRole('button', { name: 'adicionar 3 exercícios' }));
+
+    const { exercicios } = onSalvar.mock.calls[0][0];
+    expect(exercicios).toHaveLength(3);
+    for (const exercicio of exercicios) {
+      expect(exercicio).toMatchObject({ grupo: 'aquecimento', series: 1, repeticoes: '6 min' });
+    }
+  });
 });

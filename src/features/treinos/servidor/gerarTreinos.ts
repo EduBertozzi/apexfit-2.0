@@ -6,7 +6,7 @@ import { lerJson } from '@/shared/servidor/esquemaEstrito';
 import { responderJson } from '@/shared/servidor/json';
 
 import { respostaTreinosIaSchema, type RespostaTreinosIa } from '../contratoIa';
-import { SISTEMA_AJUSTE_TREINOS, SISTEMA_TREINOS } from '../promptIa';
+import { SISTEMA_AJUSTE_TREINOS, SISTEMA_SEMANA, SISTEMA_TREINOS } from '../promptIa';
 
 /** Roda SÓ no servidor (rotas /api/treino e /api/coach). Nunca importe isto de uma tela. */
 
@@ -48,15 +48,16 @@ async function tentarClaude(
 /**
  * Gera os treinos com a IA escolhida, valida com o zod e tenta mais uma vez
  * se vier incompleto. `instrucoes`: dados do usuário e o pedido, em texto.
- * `modo`: "ajuste" edita os treinos atuais (vão nas instruções) em vez de montar outros.
+ * `modo`: "ajuste" edita os treinos atuais (vão nas instruções) em vez de montar outros;
+ * "semana" segue os dias e as áreas escolhidos no montador da central de IA.
  */
 export async function gerarTreinos(
   provedor: ProvedorIa,
   instrucoes: string,
-  modo: 'novo' | 'ajuste' = 'novo',
+  modo: 'novo' | 'ajuste' | 'semana' = 'novo',
 ): Promise<RespostaTreinosIa> {
-  const sistema =
-    modo === 'ajuste' ? `${SISTEMA_TREINOS}\n\n${SISTEMA_AJUSTE_TREINOS}` : SISTEMA_TREINOS;
+  const extra = { novo: null, ajuste: SISTEMA_AJUSTE_TREINOS, semana: SISTEMA_SEMANA }[modo];
+  const sistema = extra ? `${SISTEMA_TREINOS}\n\n${extra}` : SISTEMA_TREINOS;
 
   for (let tentativa = 1; tentativa <= TENTATIVAS; tentativa++) {
     const resposta =

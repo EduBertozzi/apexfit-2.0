@@ -3,13 +3,27 @@ import { persist } from 'zustand/middleware';
 
 import type { Perfil } from '@/features/perfil/types';
 import { armazenamento } from '@/shared/lib/armazenamento';
-import { SemIa, type ProvedorIa } from '@/shared/lib/semIa';
+import type { ProvedorIa } from '@/shared/lib/semIa';
 
-import { pedirTreinosIa } from './apiIa';
-import type { PreferenciasTreino } from './contratoIa';
-import { diasDoTexto } from './diasIa';
-import { comDias, paraDadosTreino } from './ia';
-import { montarTreinosPorRegras } from './regrasIa';
+import { pedirSemanaIa } from './apiIa';
+import { alternarItemAquecimento, mudarMedidaAquecimento, passoAquecimento } from './aquecimento';
+import {
+  primeiroErroEscolhas,
+  type AreaTreino,
+  type EscolhasSemana,
+  type MedidaAquecimento,
+} from './contratoIa';
+import { paraDadosTreino } from './ia';
+import {
+  alternarArea,
+  alternarDiaTreino,
+  alternarRegiao,
+  copiarDia,
+  ESCOLHAS_PADRAO,
+  escolhasValidas,
+  prepararSemana,
+} from './montadorIa';
+import { montarSemanaPorRegras } from './regrasSemana';
 import { useTreinosStore } from './store';
 
 /** Quem montou os treinos: uma das IAs ou o modo demonstração offline. */
@@ -24,92 +38,139 @@ export type UltimaGeracao = {
 };
 
 type TreinosIaState = {
-  preferencias: PreferenciasTreino;
+  /** Últimas escolhas do montador da semana: ficam salvas para reabrir rápido. */
+  escolhas: EscolhasSemana;
   ultima: UltimaGeracao | null;
   /** Os dois abaixo não são salvos: só valem enquanto o app está aberto. */
   gerando: boolean;
   erro: string | null;
-  mudarPreferencias: (mudanca: Partial<PreferenciasTreino>) => void;
-  /** Monta os treinos e substitui os atuais. Devolve true se deu certo. */
+  mudarEscolhas: (mudanca: Partial<EscolhasSemana>) => void;
+  alternarDia: (dia: number) => void;
+  alternarArea: (dia: number, area: AreaTreino) => void;
+  alternarRegiao: (dia: number, area: AreaTreino, regiao: string) => void;
+  copiarDia: (de: number, para: number) => void;
+  ligarAquecimento: (ativo: boolean) => void;
+  alternarAquecimento: (nome: string) => void;
+  medidaAquecimento: (nome: string, medida: MedidaAquecimento) => void;
+  passoAquecimento: (nome: string, sentido: 1 | -1) => void;
+  /** Monta um treino por dia escolhido e substitui os atuais. Devolve true se deu certo. */
   gerar: (perfil: Perfil) => Promise<boolean>;
   apagarTudo: () => void;
 };
 
-export const PREFERENCIAS_PADRAO: PreferenciasTreino = {
-  diasPorSemana: 3,
-  local: 'academia',
-  minutos: 60,
-};
-
 export const useTreinosIaStore = create<TreinosIaState>()(
   persist(
-    (set, get) => ({
-      preferencias: PREFERENCIAS_PADRAO,
-      ultima: null,
-      gerando: false,
-      erro: null,
+    (set, get) => {
+      /** Toda mudança nas escolhas apaga o erro antigo. */
+      const mudar = (funcao: (escolhas: EscolhasSemana) => EscolhasSemana) =>
+        set((state) => ({ escolhas: funcao(state.escolhas), erro: null }));
+      const noAquecimento = (
+        funcao: (
+          itens: EscolhasSemana['aquecimento']['itens'],
+        ) => EscolhasSemana['aquecimento']['itens'],
+      ) =>
+        mudar((escolhas) => ({
+          ...escolhas,
+          aquecimento: { ...escolhas.aquecimento, itens: funcao(escolhas.aquecimento.itens) },
+        }));
 
-      mudarPreferencias: (mudanca) =>
-        set((state) => ({ preferencias: { ...state.preferencias, ...mudanca } })),
+      return {
+        escolhas: ESCOLHAS_PADRAO,
+        ultima: null,
+        gerando: false,
+        erro: null,
 
-      gerar: async (perfil) => {
-        if (get().gerando) {
-          return false;
-        }
+        mudarEscolhas: (mudanca) => mudar((escolhas) => ({ ...escolhas, ...mudanca })),
+        alternarDia: (dia) => mudar((escolhas) => alternarDiaTreino(escolhas, dia)),
+        alternarArea: (dia, area) => mudar((escolhas) => alternarArea(escolhas, dia, area)),
+        alternarRegiao: (dia, area, regiao) =>
+          mudar((escolhas) => alternarRegiao(escolhas, dia, area, regiao)),
+        copiarDia: (de, para) => mudar((escolhas) => copiarDia(escolhas, de, para)),
+        ligarAquecimento: (ativo) =>
+          mudar((escolhas) => ({ ...escolhas, aquecimento: { ...escolhas.aquecimento, ativo } })),
+        alternarAquecimento: (nome) =>
+          noAquecimento((itens) => alternarItemAquecimento(itens, nome)),
+        medidaAquecimento: (nome, medida) =>
+          noAquecimento((itens) => mudarMedidaAquecimento(itens, nome, medida)),
+        passoAquecimento: (nome, sentido) =>
+          noAquecimento((itens) => passoAquecimento(itens, nome, sentido)),
 
-        const { preferencias } = get();
-        set({ gerando: true, erro: null });
-
-        let resultado;
-        let origem: OrigemTreinos;
-
-        try {
-          const resposta = await pedirTreinosIa(perfil, preferencias);
-          resultado = resposta.resultado;
-          origem = resposta.provedor;
-        } catch (erro) {
-          if (!(erro instanceof SemIa)) {
-            set({
-              gerando: false,
-              erro: erro instanceof Error ? erro.message : 'Erro inesperado.',
-            });
+        gerar: async (perfil) => {
+          if (get().gerando) {
             return false;
           }
 
-          // Sem IA (ou sem internet): o app monta os treinos sozinho, offline
-          resultado = montarTreinosPorRegras(perfil, preferencias);
-          origem = 'demo';
-        }
+          const { escolhas } = get();
+          const invalido = primeiroErroEscolhas(escolhas);
 
-        // Cada treino ganha o seu dia: os citados no pedido ou espalhados na semana
-        const dados = comDias(paraDadosTreino(resultado), diasDoTexto(preferencias.foco ?? ''));
+          if (invalido) {
+            set({ erro: invalido });
+            return false;
+          }
 
-        if (dados.length === 0) {
-          set({ gerando: false, erro: 'Os treinos vieram vazios. Tente de novo.' });
-          return false;
-        }
+          set({ gerando: true, erro: null });
 
-        useTreinosStore.getState().substituirTreinos(dados);
-        set({
-          gerando: false,
-          ultima: {
-            origem,
-            resumo: resultado.resumo,
-            quantidade: dados.length,
-            geradoEm: new Date().toISOString(),
-          },
-        });
+          // O modo offline também é a reserva de um dia que a IA deixar vazio
+          const offline = montarSemanaPorRegras(perfil, escolhas);
+          let resultado = offline;
+          let origem: OrigemTreinos = 'demo';
 
-        return true;
-      },
+          try {
+            const resposta = await pedirSemanaIa(perfil, escolhas);
+            resultado = resposta.resultado;
+            origem = resposta.provedor;
+          } catch {
+            // Sem IA, sem internet ou erro no servidor: a semana sai offline, a demo nunca falha
+          }
 
-      apagarTudo: () => set({ preferencias: PREFERENCIAS_PADRAO, ultima: null, erro: null }),
-    }),
+          const dados = prepararSemana(
+            paraDadosTreino(resultado),
+            escolhas,
+            paraDadosTreino(offline),
+          );
+
+          if (dados.length === 0) {
+            set({ gerando: false, erro: 'Os treinos vieram vazios. Tente de novo.' });
+            return false;
+          }
+
+          useTreinosStore.getState().substituirTreinos(dados);
+          set({
+            gerando: false,
+            ultima: {
+              origem,
+              resumo: resultado.resumo,
+              quantidade: dados.length,
+              geradoEm: new Date().toISOString(),
+            },
+          });
+
+          return true;
+        },
+
+        apagarTudo: () => set({ escolhas: ESCOLHAS_PADRAO, ultima: null, erro: null }),
+      };
+    },
     {
       name: 'apexfit/treinos-ia',
       storage: armazenamento,
-      version: 1,
-      partialize: ({ preferencias, ultima }) => ({ preferencias, ultima }),
+      // 2: as preferências antigas (dias por semana, local, minutos) viraram o montador da semana
+      version: 2,
+      partialize: ({ escolhas, ultima }) => ({ escolhas, ultima }),
+      migrate: (salvo) => {
+        const antigo = (salvo ?? {}) as { escolhas?: unknown; ultima?: UltimaGeracao | null };
+
+        return { escolhas: escolhasValidas(antigo.escolhas), ultima: antigo.ultima ?? null };
+      },
+      merge: (salvo, atual) => {
+        const dados = (salvo ?? {}) as Partial<TreinosIaState>;
+
+        return {
+          ...atual,
+          ...dados,
+          escolhas: escolhasValidas(dados.escolhas),
+        };
+      },
     },
   ),
 );

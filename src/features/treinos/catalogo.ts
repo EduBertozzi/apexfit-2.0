@@ -191,6 +191,11 @@ export const CATALOGO: readonly ExercicioCatalogo[] = [
     ['Polichinelo', 'ativacao', 'ambos', 2, '20'],
     ['Agachamento sem peso', 'ativacao', 'ambos', 2, '15'],
     ['Ativação de glúteo com elástico', 'ativacao', 'ambos', 2, '15'],
+    ['Flexão no joelho', 'ativacao', 'ambos', 1, '10'],
+    ['Corrida no lugar', 'ativacao', 'ambos', 1, '2 min'],
+    // Aparelho de cardio no aquecimento: sempre por tempo
+    ['Bike leve', 'ativacao', 'academia', 1, '5 min'],
+    ['Esteira leve', 'ativacao', 'academia', 1, '5 min'],
   ]),
   ...de('cardio', [
     ['Esteira', 'esteira', 'academia', 1, '10 min'],
