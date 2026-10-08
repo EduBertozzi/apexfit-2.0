@@ -28,6 +28,7 @@ const TAMANHO_CIRCULO = 44;
 const ESPACO_SEMANA_UNICA = 6;
 /** Abaixo disso a pílula fica espremida: a faixa volta a rolar. */
 const LARGURA_MINIMA_PILULA = 40;
+const CIRCULO_COMPACTO = 36;
 /** Anel de progresso por dentro do círculo do número. */
 const ESPESSURA_ANEL = 3.5;
 const MARGEM_ANEL = 2.5;
@@ -102,7 +103,10 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
   const cabe = larguraDividida >= LARGURA_MINIMA_PILULA;
   const larguraPilula = cabe ? Math.min(LARGURA_PILULA, larguraDividida) : LARGURA_PILULA;
   const espacoPilulas = cabe ? ESPACO_SEMANA_UNICA : ESPACO_PILULAS;
-  const tamanhoCirculo = Math.min(TAMANHO_CIRCULO, larguraPilula - 6);
+  // Semana inteira na tela: círculo menor, para a pílula ficar baixa
+  const tamanhoCirculo = cabe
+    ? Math.min(CIRCULO_COMPACTO, larguraPilula - 10)
+    : Math.min(TAMANHO_CIRCULO, larguraPilula - 6);
 
   // Centraliza o dia escolhido: na abertura sem animação, depois (ex: "voltar
   // para hoje") com animação. Espera a largura e a posição da pílula existirem.
@@ -211,7 +215,7 @@ export function FaixaSemana({ dias, resumo, selecionado, onSelecionar }: Props) 
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
-                style={[estilos.sigla, { color: cor.rotulo }]}
+                style={[estilos.sigla, cabe && estilos.siglaCompacta, { color: cor.rotulo }]}
               >
                 {dia.sigla}
               </Text>
@@ -275,8 +279,11 @@ const estilos = StyleSheet.create({
   },
   pilulaCompacta: {
     minHeight: 0,
-    paddingVertical: espaco.xs + 2,
-    gap: espaco.xs,
+    paddingVertical: espaco.xs,
+    gap: 2,
+  },
+  siglaCompacta: {
+    fontSize: 14,
   },
   sigla: {
     fontFamily: familia.display,
