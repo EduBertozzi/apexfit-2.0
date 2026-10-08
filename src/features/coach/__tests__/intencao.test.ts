@@ -146,6 +146,20 @@ describe('refeicoesPedidas e modoDaDieta', () => {
   it('sem plano salvo é sempre novo', () => {
     expect(modoDaDieta('troca o café da manhã', false)).toBe('novo');
   });
+
+  it.each([
+    'ué não era pra mudar tudo',
+    'adapta minha dieta pra delivery',
+    'só peço comida no ifood: restaurante do pato e chips bar',
+    'muda a dieta toda',
+    'quero a dieta inteira com marmita',
+  ])('pedido amplo, sem refeição citada, monta o plano inteiro: "%s"', (mensagem) => {
+    expect(modoDaDieta(mensagem, true)).toBe('novo');
+  });
+
+  it('com uma refeição citada continua ajuste, mesmo com palavra ampla', () => {
+    expect(modoDaDieta('troca o almoço por marmita do restaurante', true)).toBe('ajuste');
+  });
 });
 
 describe('confirmarPlano num ajuste', () => {

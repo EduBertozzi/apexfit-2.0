@@ -113,6 +113,12 @@ const TREINO_NOVO =
 const ASSUNTO_PLANO = /\b(dieta|plano|cardapio)\b/;
 const DIETA_NOVA =
   /\b(nov[oa]|outr[ao]) (dieta|plano|cardapio)\b|\b(dieta|plano|cardapio)( alimentar)? nov[oa]\b|\bdo zero\b/;
+/**
+ * Pedido que mexe no plano inteiro: "muda tudo", "a dieta toda", "adapta pra
+ * delivery", "só peço no ifood". Sem uma refeição citada, vira plano novo.
+ */
+const DIETA_AMPLA =
+  /\b(tudo|tod[ao]s?|inteir[ao]|complet[ao]|geral|adapt\w*|delivery|ifood|restaurantes?|marmitas?|pedir comida|peco comida)\b/;
 
 /**
  * Treino novo ("monta meu treino", "refaz minha ficha", "novo treino", "4 dias")
@@ -168,7 +174,9 @@ export function modoDaDieta(mensagem: string, temPlano: boolean): ModoMudanca {
     return 'ajuste';
   }
 
-  return DIETA_NOVA.test(texto) || (VERBO_NOVO.test(texto) && ASSUNTO_PLANO.test(texto))
+  return DIETA_NOVA.test(texto) ||
+    DIETA_AMPLA.test(texto) ||
+    (VERBO_NOVO.test(texto) && ASSUNTO_PLANO.test(texto))
     ? 'novo'
     : 'ajuste';
 }

@@ -107,7 +107,7 @@ export async function* montarDietaEConfirmar(
       `Pedido do usuário para a dieta: ${pedidoDieta}\n` +
       (alvos.length > 0
         ? `Mude SOMENTE estas refeições: ${nomes}. Copie todas as outras exatamente iguais, com os mesmos alimentos, quantidades, horários e calorias. A refeição nova deve ter calorias parecidas com a antiga.`
-        : 'Mude só o que foi pedido e copie todo o resto exatamente igual.') +
+        : 'Mude as refeições que forem necessárias para atender o pedido (pode ser mais de uma). As que não precisam mudar ficam exatamente iguais.') +
       ' Reaproveite os alimentos que já estão no plano sempre que der. Devolva o plano completo.';
   } else {
     const divisao = meta
